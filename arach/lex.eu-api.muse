@@ -1,0 +1,233 @@
+root?
+http://eur-lex.europa.eu/en/legis/20091201/index.htm
+you can possibly detect changes   ^^^^^^^^
+over time here...
+
+this page has 20 relevant links, like this:
+http://eur-lex.europa.eu/en/legis/20091201/chap01.htm
+                                               ^^
+the 20 chapters are:
+ - 01 General, financial and institutional matters (number of acts: 1193)
+ - 02 Customs Union and free movement of goods (number of acts: 876)
+ - 03 Agriculture (number of acts: 3027)
+ - 04 Fisheries (number of acts: 816)
+ - 05 Freedom of movement for workers and social policy (number of acts: 448)
+ - 06 Right of establishment and freedom to provide services (number of acts: 240)
+ - 07 Transport policy (number of acts: 634)
+ - 08 Competition policy (number of acts: 1679)
+ - 09 Taxation (number of acts: 176)
+ - 10 Economic and monetary policy and free movement of capital (number of acts: 405)
+ - 11 External relations (number of acts: 3170)
+ - 12 Energy (number of acts: 364)
+ - 13 Industrial policy and internal market (number of acts: 1447)
+ - 14 Regional policy and coordination of structural instruments (number of acts: 371)
+ - 15 Environment, consumers and health protection (number of acts: 1202)
+ - 16 Science, information, education and culture (number of acts: 393)
+ - 17 Law relating to undertakings (number of acts: 109)
+ - 18 Common Foreign and Security Policy (number of acts: 419)
+ - 19 Area of freedom, security and justice (number of acts: 562)
+ - 20 People's Europe (number of acts: 18)
+
+ - the number of acts varying over time could make a nice timecloud? there is an archive of older versions of this index: http://eur-lex.europa.eu/en/legis/available.htm - be careful: the older snapshots do not share the same link, as newer ones.
+
+from the 20 main chapters, you can navigate down a subchapter structure presently maximum 4 levels deep (external relations - ch11): http://eur-lex.europa.eu/en/legis/20091201/chap11401010.htm
+
+selecting here the main title celex link for each entry: http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX:32008R0065:EN:NOT brings us to a language/forma selection
+            ^^ here can be a two digit number in parens
+
+OJ link explanation:      http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ:L:2009:277:0035:01:EN:HTML
+alternative source CELEX: http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX:31999R1228:EN:HTML
+
+OJ:L:2009:277:0035:01:EN:HTML
+source:L:<year>:<issue>:<page>:<??>:<language>:HTML
+
+CELEX:31999R1228:EN:HTML
+source:<doc sector><year><legal code><annual serialno>:<language>:HTML
+
+language codes:
+BG  CS  DA  DE  EL  EN  ES  ET  FI  FR  HU  IT  LT  LV  MT  NL  PL  PT  RO  SK  SL  SV
+this should be easily exchangeable, if not available there should be no 'texteonly' id element to be scraped.
+
+** The publication reference
+
+The title of the act is followed by the publication reference of the Official Journal of the European Union.
+
+ - This reference consists of:
+ - the number of the Official Journal, preceded (in the case of post-1967 instruments) by the letter 'L' or 'C' to show the Official Journal series,
+ - the date of publication,
+ - the page number.
+
+*** Example
+
+ OJ L 105, 28.04.1977 p. 1:
+ OJ 	Official Journal of the European Union
+ L 105 	L series, No 105
+ 28.04.1977 	date of publication
+ p. 1 	OJ page (page on which the text of the act begins)
+
+The Official Journal of the European Union (OJ) is the only periodical published every working day in all official languages of the European Union (EU). It consists of two related series (L for legislation and C for information and notices) and a supplement (S for public procurement). There is also an electronic section to the C series, known as the OJ C E. Documents published in the OJ C E are only published electronically.
+
+** Explanation of the document number
+
+Number codes used in the document number, by CELEX documentary sector
+
+1 - Treaty on European Union, Treaties establishing the European Communities and Treaties amending or supplementing them.
+2 - External relations of the European Communities (or the Member States).
+3 - Secondary legislation.
+4 - Supplementary legislation (decisions of representatives of the Member States meeting within the Council, international conventions concluded between Member States under the treaty, etc).
+0 - Consolidated documents
+
+Sector 1 acts are not included in the Directory. However, the Accession Treaties of Denmark, Ireland and the UK (1972), Greece (1979), Spain and Portugal (1985), Austria, Finland and Sweden (1994) and the Czech Republic, Estonia, Cyprus, Latvia, Lithuania, Hungary, Malta, Poland, Slovenia and Slovakia (2003) are sometimes referred to in amendment references (document numbers '11972B', '11979H', '11985I', '11994N' or '12003T').
+
+** Letter codes indicating the legal form of the act
+
+A - Agreement, opinion
+B - Budget
+C - Declaration
+D - Decision
+E - Common foreign and security policy (CFSP) - common position, joint action, common strategy
+F - Justice and home affairs (JHA) - common position, framework decision
+G - Resolution
+H - Recommendation
+J - Non-opposition to a notified joint venture
+K - ECSC recommendation
+L - Directive
+M - Non-opposition to a notified concentration
+O - ECB guidelines
+Q - Institutional arrangement - rules of procedure - internal agreement
+R - Regulation
+S - ECSC decision of general interest
+X - Other document
+Y - Other act (published in the 'C' series of the Official Journal)
+
+src: http://eur-lex.europa.eu/en/legis/avis.htm
+
+OJ OnlinePlus contains documents gathered on a daily basis from EUR-Lex and it contains the Celex database, the inter-institutional documentation system for Community law. In addition, it delivers information collected from the principal EU Institutions and Agencies. The EU law database primarily covers documents published in the Official Journal of the European Communities and by the Court of Justice; legislation, treaties, case law and preparatory documents. The current trend is to extend coverage to documents considered by the issuing institution to be public, regardless of their publication in the Official Journal. Documents are given an identification number - a Celex number.
+About Celex Numbers
+
+In OJ OnlinePlus a Celex number can be used to retrieve individual records and is the basis for cross-referencing of documents in the database as well as for implementing hypertext links. Celex numbers are constructed as follows:
+
+Sector number
+
+
+Year
+
+
+Document type
+
+
+Reference number
+
+1 character
+
+
+4 digits
+
+
+1 or 2 characters
+
+
+3 or 4 digits
+
+    Sector number
+    The Celex database is split into sectors. Each of these represents a broad category of information such as Secondary legislation or Cases. The different sectors and type of information they contain are given below.
+
+    Year
+    The year is now represented by four digits, e.g.1992.
+
+    Note: OJ OnlinePlus offers the option of searching by Celex numbers with a two digit or a four digit year.
+
+    Document type
+    This is the code for the document type. For example sector 3 (Secondary legislation) contains Directives, Regulations, Decisions, etc. Each of these different types of record is represented by a one or two letter code, for example a Directive is represented by the letter L. The letter code for each record type is shown in the table below. [Note: the same codes are sometimes used in different sectors for different document types, e.g. the Treaty of Rome is document type E in Sector 1, but document type E in Sector 9 is a written question.]
+
+    Reference number
+    This is identifying number for the document, i.e. the legislation number, COM number or Case number. Where the reference number contains less than 4 digits, zeros are added to form a four digit number, e.g. the reference number for Directive 89/392/EEC is 0392. The exception is treaty articles, where the reference number must be a 3 digit number e.g. article 87 of the Treaty of Rome is 087.
+    Examples:
+
+    The following examples show Celex numbers for different types of record:
+
+    Article 86 of the 1957 EEC Treaty = 11957E086
+    Directive 79/112/EEC = 31979L0112
+    Regulation (EEC) No 3033/80 = 31980R3033
+    COM (92) 23 final = 51992PC0023
+    Judgment of case 290/90 = 61990J0290
+
+Celex sectors
+
+Celex has a subject classification system called the Register which is als used in the Directory of Community Legislation in Force. The Celex database is divided into the following sectors:
+
+Sector 1
+
+
+Treaties
+
+Sector 2
+
+
+External Agreements
+
+Sector 3
+
+
+Legislation
+
+Sector 4
+
+
+Internal Agreements
+
+Sector 5
+
+
+Proposals + preparatory documents
+
+Sector 6
+
+
+Case Law
+
+Sector 7
+
+
+National Implementation
+
+Sector 9
+
+
+European Parliamentary Questions
+
+Sector C
+
+
+OJC Documents
+
+Sector E
+
+
+EFTA Documents
+
+
+
+» More information on Celex sectors
+Using Celex Numbers in OJ OnlinePlus
+
+A search in the Celex number field will retrieve a document and all records related to that document. Simply type in the Celex number you require, or browse the index, and press <ENTER> or click on the go icon.
+
+A Celex number can also be entered into the following fields:
+
+Cross reference
+This field contains the Celex numbers from the Legal base, Legal citations, Modifies, Modified by and ECJ reference fields. A search for a Celex number in this field will retrieve all records related to the Celex number searched for.
+
+e.g. a search for 379L0112 in the Cross reference field will retrieve all records related to Directive 79/112/EEC. These may be acts that Directive 79/112/EEC has modified, or acts that modify 79/112/EEC. You will also retrieve any legislation that has Directive 79/112/EEC as its legal base or cites it in its text.
+
+Modifications
+This field links all records that directly have an affect on each other. Records that amend, add, replace, adopt etc. Simply enter the Celex number of the legislation or preparatory act you are interested in.
+
+Modified by
+This field contains the Celex number of all legislation that has modified a particular record. Enter the Celex number of the piece of legislation you are interested in and you will retrieve all legislation that it has modified.
+
+Modifies
+This field contains the Celex number of all legislation that modifies a particular record. Enter the Celex number of the piece of legislation you are interested in and you will retrieve all the legislation that modifies it.
+Celex table
+
+src:http://www.ellispub.com/ojolplus/help/celex.htm
