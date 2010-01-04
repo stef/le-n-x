@@ -1,4 +1,4 @@
-le-n-x is a set of tools for navigatin legislation.
+le-n-x is a set of tools for navigating legislation.
 
 (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 Licensed under the GNU Affero General Public License v3
