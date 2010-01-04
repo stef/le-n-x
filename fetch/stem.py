@@ -5,12 +5,9 @@ import nltk.tokenize
 from BeautifulSoup import BeautifulSoup
 from operator import itemgetter
 
-#stopwords=['the','of','and','in','to','for','by','that',
-#           'a','on','at','as','from','it','this', 'with',
-#           'into','their','also']
-# src: http://armandbrahaj.blog.al/2009/04/14/list-of-english-stop-words/
 # german stopwords: http://feya.solariz.de/wp-content/uploads/stopwords.txt
 # other languages (also hungarian) can be found here: http://snowball.tartarus.org/algorithms/
+# src: http://armandbrahaj.blog.al/2009/04/14/list-of-english-stop-words/
 stopwords=['a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 'again',
            'against', 'all', 'almost', 'alone', 'along', 'already',
            'also','although','always','am','among', 'amongst', 'amoungst', 'amount',
@@ -48,7 +45,8 @@ stopwords=['a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 'aga
            'where', 'whereafter', 'whereas', 'whereby', 'wherein', 'whereupon',
            'wherever', 'whether', 'which', 'while', 'whither', 'who', 'whoever', 'whole',
            'whom', 'whose', 'why', 'will', 'with', 'within', 'without', 'would', 'yet',
-           'you', 'your', 'yours', 'yourself', 'yourselves']
+           'you', 'your', 'yours', 'yourself', 'yourselves',
+           'shall', "Europa", "European", "states"]
 # remove single digits
 stopwords+=[str(x) for x in range(0,10)]
 # remove single chars
@@ -100,7 +98,7 @@ def gentags(text):
     return sorted([x for x in tags.items()],reverse=True,key=itemgetter(1))
 
 def tagcloud(file,limit=None):
-    return renderfont(gentags(scrapeContent(file)),limit)
+    return renderspan(gentags(scrapeContent(file)),limit)
 
 if __name__ == "__main__":
     f=open('/home/stef/data/eu/01 General, financial and institutional matters/0140 Provisions governing the institutions/32003D0174/EN', 'r')
