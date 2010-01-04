@@ -10,4 +10,5 @@ Licensed under the GNU Affero General Public License v3
 The django backend has some dependencies:
  * libhunspell >=1.2 + dictionaries
  * "pyhunspell":http://code.google.com/p/pyhunspell
+ * "beautifulsoup":http://www.crummy.com/software/BeautifulSoup/
  * "nltk":http://www.nltk.org/
