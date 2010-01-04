@@ -20,6 +20,7 @@ import hunspell
 import nltk.tokenize
 from BeautifulSoup import BeautifulSoup
 from operator import itemgetter
+import math
 
 # german stopwords: http://feya.solariz.de/wp-content/uploads/stopwords.txt
 # other languages (also hungarian) can be found here: http://snowball.tartarus.org/algorithms/
@@ -68,10 +69,17 @@ stopwords+=[str(x) for x in range(0,10)]
 # remove single chars
 stopwords+=[chr(x) for x in range(ord('a'),ord('z'))+range(ord('A'),ord('Z'))]
 
+"""calculates log weight over a list"""
+def log2lin(a, pmax, classes): return int(round((classes-1)*((math.exp(a))/pmax)))
+
 """ renders a tagcloud using <span> tags """
-def renderspan(tags,len=None):
+def renderspan(tags,len=None,classes=9):
+    tags=sorted(tags[0:len])
+    pmax=max(tags,key=itemgetter(1))[1]
+    # recalculate logarithmic weights
+    tags=map(lambda x: (x[0],log2lin(x[1],pmax,classes)),  map(lambda x: (x[0],math.log(x[1])), tags))
     return ' '.join([('<span class="size%d">%s</span>'%
-                      (min(1+p*9/max(map(itemgetter(1), tags)), 9), x)) for (x, p) in sorted(tags[0:len])])
+                      (min(1+p*9/max(map(itemgetter(1), tags)), 9), x)) for (x, p) in tags])
 
 """
 renders a tagcloud using <font size="%d"> tags:
@@ -118,5 +126,5 @@ def tagcloud(file,limit=None):
 
 if __name__ == "__main__":
     f=open('/home/stef/data/eu/01 General, financial and institutional matters/0140 Provisions governing the institutions/32003D0174/EN', 'r')
-    print gentags(scrapeContent(f))
+    #print gentags(scrapeContent(f))
     print tagcloud(f)
