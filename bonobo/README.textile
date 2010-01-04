@@ -1,0 +1,8 @@
+Dependencies
+1. firefox
+2. greasemonkey firefox plugin:
+   https://addons.mozilla.org/en-US/firefox/addon/748
+3. my bonobo script:
+   http://www.ctrlc.hu/~stef/bonobo.user.js
+4. visit "any" english content on eur-lex, e.g.:
+   http://eur-lex.europa.eu/en/legis/20091201/chap1950.htm

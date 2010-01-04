@@ -1,0 +1,13 @@
+le-n-x is a set of tools for navigatin legislation.
+
+(C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
+Licensed under the GNU Affero General Public License v3
+
+ * arach: artful shell script to scrape eur-lex legislative texts.
+ * bonobo: greasemonkey script for displaying tagclouds when browsing eur-lex
+ * fetch et all: django backend for bonobo.
+
+The django backend has some dependencies:
+ * libhunspell >=1.2 + dictionaries
+ * "pyhunspell":http://code.google.com/p/pyhunspell
+ * nltk:http://www.nltk.org/
