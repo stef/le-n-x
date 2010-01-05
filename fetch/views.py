@@ -22,6 +22,9 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django import forms
 import stem
+import cache
+
+cache=cache.Cache('cache');
 
 class FetchForm(forms.Form):
     url = forms.CharField(required=True)
@@ -30,8 +33,7 @@ def handler(request):
     form = FetchForm(request.GET)
     if form.is_valid():
         url=form.cleaned_data['url']
-        import urllib2
-        text = urllib2.urlopen(url)
+        text=cache.fetchUrl(url)
         cloud=stem.tagcloud(text,25)
 
         return HttpResponse('%s' % (unicode(str(cloud),'utf8')))

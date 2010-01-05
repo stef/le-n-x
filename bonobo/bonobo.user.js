@@ -72,7 +72,7 @@ addGlobalStyle('.size6 { font-size: 1em }');
 addGlobalStyle('.size7 { font-size: 1.1em }');
 addGlobalStyle('.size8 { font-size: 1.2em }');
 addGlobalStyle('.size9 { font-size: 1.3em }');
-addGlobalStyle('.tagcloud { float: right; width: 400px; height: 70px; border: 1px dotted blue; }');
+addGlobalStyle('.tagcloud { float: right; width: 400px; border: 1px dotted blue; }');
 
 
 var docs = document.evaluate("//ul[@class='tSearchTable5']/li", document, null,

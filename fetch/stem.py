@@ -82,13 +82,6 @@ def renderspan(tags,len=None,classes=9):
                       (min(1+p*9/max(map(itemgetter(1), tags)), 9), x)) for (x, p) in tags])
 
 """
-renders a tagcloud using <font size="%d"> tags:
-param limit of tags to be rendered """
-def renderfont(tags,len=None):
-    return ' '.join([('<font size="%d">%s</font>'%
-                      (min(1+p*9/max(map(itemgetter(1), tags)), 9), x)) for (x, p) in sorted(tags[0:len])])
-
-"""
 returns a hunspell object
 param: language code """
 def init(lang='en_US'):
@@ -97,7 +90,11 @@ def init(lang='en_US'):
 """ returns the text-only version of the main content (identified by id="TexteOnly") """
 def scrapeContent(file):
     soup = BeautifulSoup(file)
-    return soup.find(id='TexteOnly').findAll(text=True)
+    try:
+        txt=soup.find(id='TexteOnly').findAll(text=True)
+    except:
+        return None
+    return txt
 
 """ converts a text into a list of weighted words """
 def gentags(text):
@@ -126,5 +123,4 @@ def tagcloud(file,limit=None):
 
 if __name__ == "__main__":
     f=open('/home/stef/data/eu/01 General, financial and institutional matters/0140 Provisions governing the institutions/32003D0174/EN', 'r')
-    #print gentags(scrapeContent(f))
     print tagcloud(f)
