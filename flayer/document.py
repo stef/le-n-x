@@ -120,6 +120,34 @@ class Doc:
 if __name__ == "__main__":
     import difflib
 
+##     f=open("cankor",'r')
+##     docs=f.readlines()
+##     d1=Doc("Canada")
+##     d2=Doc("Korea")
+##     matcher = difflib.SequenceMatcher(None,d1.stems,d2.stems)
+##     for match in matcher.get_matching_blocks():
+##         if match[2]:
+##             d1.quotes[d2.id]=match
+##             d2.quotes[d1.id]=match
+##     db=[d1,d2]
+##     for d in docs:
+##         newd=Doc(d)
+##         for oldd in db:
+##             matcher = difflib.SequenceMatcher(None,newd.stems,oldd.stems)
+##             for match in matcher.get_matching_blocks():
+##                 if match[2]:
+##                     newd.quotes[oldd.id]=(match[0],match[2])
+##                     oldd.quotes[newd.id]=(match[1],match[2])
+##         if newd.quotes:
+##             db.append(newd)
+##     frags={}
+##     for d in db:
+##         for (k,v) in d.quotes.items():
+##             frag=' '.join(d.tokens[v[0]:v[0]+v[1]]).encode('utf8')
+##             frags[frag]=frags.get(frag,[])+[k]
+##     for (k,v) in sorted(frags.items(),key=lambda x: len(x[1])):
+##         print k, '.-.>', v
+
     d1=Doc(sys.argv[1])
     d2=Doc(sys.argv[2])
     matcher = difflib.SequenceMatcher(None,d1.stems,d2.stems)
