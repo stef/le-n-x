@@ -38,6 +38,8 @@ selecting here the main title celex link for each entry: http://eur-lex.europa.e
 OJ link explanation:      http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ:L:2009:277:0035:01:EN:HTML
 alternative source CELEX: http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX:31999R1228:EN:HTML
 
+a very detailed explanation of the celex codes: http://www.ellispub.com/ojolplus/help/celex.htm#sectors2
+
 OJ:L:2009:277:0035:01:EN:HTML
 source:L:<year>:<issue>:<page>:<??>:<language>:HTML
 
