@@ -16,7 +16,23 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-debug = True
+# usage: python pippi.py Doc1 Doc2
+# where Doc1 and Doc2 either are valid Celex or OJ ids on eur-lex, in which
+# case the tool automatically fetches these docs and caches them before
+# analysis. 
+#
+# Doc1 and Doc2 can also be any kind of html file in the cache. If you have
+# docs that are not available on eur-lex: 
+#     1. download them, 
+#     2. important: convert - if necessary - to html
+#     3. important: enclose the text to analyse into <div id="TexteOnly"> tags 
+#     4. store these files in the cache
+#     5. run pippi. it should find the files in the cache and analyze them properly.
+#
+# setup. you need pyhunspell, the english hunspell dictionary, nltk, and
+# beautiful soup. check the import section later.
+# you also need to set an existing cache directory.
+
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 LANG='en_US'
 DICTDIR='/usr/share/hunspell/'
