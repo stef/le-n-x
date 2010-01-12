@@ -63,6 +63,9 @@ class Doc:
             self.__dict__[name]=value
         else:  raise AttributeError, name
 
+    def __repr__(self):
+        return "%s" % self.id
+
     def gettext(self):
         soup = BeautifulSoup(self.raw)
         try:
@@ -117,46 +120,95 @@ class Doc:
                    itemgetter(1),
                    reverse=True))
 
+class MatchDb:
+    def __init__(self):
+        self.__dict__={}
+        self.__dict__['docs'] = []
+        self.__dict__['db'] = {}
+
+    def __getattr__(self, name):
+        if name in self.__dict__.keys():
+            return self.__dict__[name]
+        else:  raise AttributeError, name
+
+    def __setattr__(self, name, value):
+        if name in self.__dict__.keys():
+            self.__dict__[name]=value
+        else:  raise AttributeError, name
+
+    def addMatch(self,doc1,doc2,match):
+        m1=(doc1,match[0],match[2])
+        m2=(doc2,match[1],match[2])
+        stem=tuple(doc1.stems[match[0]:match[0]+match[2]])
+        if not self.db.has_key(stem): self.db[stem]=[]
+        if not m1 in self.db[stem]: self.db[stem].append(m1)
+        if not m2 in self.db[stem]: self.db[stem].append(m2)
+        doc1.quotes[doc2.id]=(match[0],match[2])
+        doc2.quotes[doc1.id]=(match[1],match[2])
+
+    def analyze(self,doc1,doc2):
+        if doc1==doc2: return
+        print "analyzing",doc1.id,"and",doc2.id
+        matcher = difflib.SequenceMatcher(None,doc1.stems,doc2.stems)
+        for match in matcher.get_matching_blocks():
+            if match[2]: self.addMatch(doc1,doc2,match)
+        if not doc1 in self.docs: self.docs.append(doc1)
+        if not doc2 in self.docs: self.docs.append(doc2)
+
+    def dump(self):
+        return "%s\n%s" % (self.docs,self.db)
+
+    def stats(self):
+        print "number of total common phrases:", len(self.db)
+        print "number of multigrams:", len(filter(lambda x: len(x)>2,self.db.keys()))
+        print "most frequent frags"
+        topfrags=sorted(self.db.items(),reverse=True,cmp=lambda x,y: cmp(len(x[1]), len(y[1])))
+        for (k,docs) in topfrags[:100]:
+            print "%d: %s" % (len(docs)," ".join(docs[0][0].tokens[docs[0][1]:docs[0][1]+docs[0][2]]).encode('utf8'))
+
+        longestfrags=sorted(self.db.items(),reverse=True,cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
+        print "max len of frag:", len(longestfrags[0][0])
+        print "longest frags"
+        for (k,docs) in longestfrags:
+            for d in docs:
+                print "\t",d,":"," ".join(d[0].tokens[d[1]:d[1]+d[2]]).encode('utf8')
+            print '-----'
+
 if __name__ == "__main__":
     import difflib
 
-##     f=open("cankor",'r')
-##     docs=f.readlines()
-##     d1=Doc("Canada")
-##     d2=Doc("Korea")
-##     matcher = difflib.SequenceMatcher(None,d1.stems,d2.stems)
-##     for match in matcher.get_matching_blocks():
-##         if match[2]:
-##             d1.quotes[d2.id]=match
-##             d2.quotes[d1.id]=match
-##     db=[d1,d2]
-##     for d in docs:
-##         newd=Doc(d)
-##         for oldd in db:
-##             matcher = difflib.SequenceMatcher(None,newd.stems,oldd.stems)
-##             for match in matcher.get_matching_blocks():
-##                 if match[2]:
-##                     newd.quotes[oldd.id]=(match[0],match[2])
-##                     oldd.quotes[newd.id]=(match[1],match[2])
-##         if newd.quotes:
-##             db.append(newd)
-##     frags={}
-##     for d in db:
-##         for (k,v) in d.quotes.items():
-##             frag=' '.join(d.tokens[v[0]:v[0]+v[1]]).encode('utf8')
-##             frags[frag]=frags.get(frag,[])+[k]
-##     for (k,v) in sorted(frags.items(),key=lambda x: len(x[1])):
-##         print k, '.-.>', v
+    db=MatchDb()
+    d1=Doc("Canada")
+    d2=Doc("Korea")
+    db.analyze(d1,d2)
+    f=open("cankor",'r')
+    docs=f.readlines()
+    for d in docs:
+        newd=Doc(d.strip('\t\n'))
+        for oldd in db.docs:
+            db.analyze(newd,oldd)
+    #print db.stats()
 
-    d1=Doc(sys.argv[1])
-    d2=Doc(sys.argv[2])
-    matcher = difflib.SequenceMatcher(None,d1.stems,d2.stems)
-    res = matcher.get_matching_blocks()
-    for match in sorted(res,key=itemgetter(2),reverse=True):
-        if match[2]:
-            print "token offsets:", match[0], '@canada - ', match[1], '@'+sys.argv[1]
-            print ' '.join(d1.tokens[match[0]:match[0]+match[2]]).encode('utf8')
-            print ' '.join(d2.tokens[match[1]:match[1]+match[2]]).encode('utf8')
-            print "----------------------------------------------"
+#import sqlobject
+#import sys, os, platform
+#if(platform.machine()=='i686'):
+   #import psyco
+#sqlobject.sqlhub.processConnection = sqlobject.connectionForURI('sqlite:' + DBPATH)
+#class Message(sqlobject.SQLObject):
+    #""" represents a message object """
+    #delivered = sqlobject.col.DateTimeCol()
+    #messageid = sqlobject.col.StringCol()
+    #headers = sqlobject.SQLMultipleJoin("HeaderValue")
+    #sender = sqlobject.col.ForeignKey("Email")
+    #path = sqlobject.col.StringCol()
 
-
+   #def main():
+      #""" this function creates a new database"""
+      #Header.createTable(ifNotExists = True)
+      #HeaderValue.createTable(ifNotExists = True)
+      #Person.createTable(ifNotExists = True)
+      #Email.createTable(ifNotExists = True)
+      #Role.createTable(ifNotExists = True)
+      #Message.createTable(ifNotExists = True)
+   #psyco.full()
+   #sys.exit(main())
