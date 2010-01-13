@@ -147,7 +147,7 @@ class MatchDb:
         doc2.quotes[doc1.id]=(match[1],match[2])
 
     def analyze(self,doc1,doc2):
-        if doc1==doc2: return
+        if doc1.id==doc2.id: return
         print "analyzing",doc1.id,"and",doc2.id
         matcher = difflib.SequenceMatcher(None,doc1.stems,doc2.stems)
         for match in matcher.get_matching_blocks():
@@ -161,17 +161,18 @@ class MatchDb:
     def stats(self):
         print "number of total common phrases:", len(self.db)
         print "number of multigrams:", len(filter(lambda x: len(x)>2,self.db.keys()))
-        print "most frequent frags"
-        topfrags=sorted(self.db.items(),reverse=True,cmp=lambda x,y: cmp(len(x[1]), len(y[1])))
-        for (k,docs) in topfrags[:100]:
-            print "%d: %s" % (len(docs)," ".join(docs[0][0].tokens[docs[0][1]:docs[0][1]+docs[0][2]]).encode('utf8'))
+        #print "most frequent frags"
+        #topfrags=sorted(self.db.items(),reverse=True,cmp=lambda x,y: cmp(len(x[1]), len(y[1])))
+        #for (k,docs) in topfrags[:100]:
+        #    print "%d: %s" % (len(docs)," ".join(docs[0][0].tokens[docs[0][1]:docs[0][1]+docs[0][2]]).encode('utf8'))
 
         longestfrags=sorted(self.db.items(),reverse=True,cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
         print "max len of frag:", len(longestfrags[0][0])
         print "longest frags"
         for (k,docs) in longestfrags:
             for d in docs:
-                print "\t",d,":"," ".join(d[0].tokens[d[1]:d[1]+d[2]]).encode('utf8')
+                print d,":"," ".join(d[0].tokens[d[1]:d[1]+d[2]]).encode('utf8')
+                print
             print '-----'
 
 if __name__ == "__main__":
@@ -187,7 +188,7 @@ if __name__ == "__main__":
         newd=Doc(d.strip('\t\n'))
         for oldd in db.docs:
             db.analyze(newd,oldd)
-    #print db.stats()
+    print db.stats()
 
 #import sqlobject
 #import sys, os, platform
