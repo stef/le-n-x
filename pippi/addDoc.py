@@ -1,4 +1,5 @@
-#    This file is part of le-n-x.
+#!/usr/bin/env python
+#    This file is part of le(n)x.
 
 #    le(n)x is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as published by
@@ -11,10 +12,26 @@
 #    GNU Affero General Public License for more details.
 
 #    You should have received a copy of the GNU Affero General Public License
-#    along with le(n)x  If not, see <http://www.gnu.org/licenses/>.
+#    along with le(n)x.  If not, see <http://www.gnu.org/licenses/>.
 
-# (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
+# (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from django.db import models
+import document, sys
 
-# Create your models here.
+db=document.MatchDb()
+d=sys.argv[1].strip('\t\n')
+
+if not db.load():
+    print "ERR cannot load db"
+    sys.exit(1)
+if d in db.docs.keys():
+    print "ERR already loaded"
+    sys.exit(1)
+
+newd=document.Doc(d)
+for oldd in db.docs.values():
+    db.analyze(newd,oldd)
+db.addDoc(newd)
+db.save()
+
+print db.docs
