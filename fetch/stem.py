@@ -63,7 +63,7 @@ stopwords=['a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 'aga
            'wherever', 'whether', 'which', 'while', 'whither', 'who', 'whoever', 'whole',
            'whom', 'whose', 'why', 'will', 'with', 'within', 'without', 'would', 'yet',
            'you', 'your', 'yours', 'yourself', 'yourselves',
-           'shall', "Europa", "European", "states"]
+           'shall', "Europa", "European", "states", "quot", "gt"]
 # remove single digits
 stopwords+=[str(x) for x in range(0,10)]
 # remove single chars

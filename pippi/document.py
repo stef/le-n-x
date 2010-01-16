@@ -40,7 +40,7 @@ class Doc:
         self.__dict__['id'] = id
         #self.__dict__['lang'] = id.split(":")[-2]
         self.__dict__['raw'] = cache.fetchUrl(EURLEXURL+id) #.decode('utf-8')
-        self.__dict__['quotes'] = {}
+        self.__dict__['refs'] = {}
 
     def __getattr__(self, name):
         if name == "text":
@@ -120,10 +120,29 @@ class Doc:
                    itemgetter(1),
                    reverse=True))
 
+    def addRef(self,stem,match,ref):
+        if not self.refs.has_key(stem): self.refs[stem]={'matches':[],'refs':[]}
+        if not match in self.refs[stem]['matches']:
+            self.refs[stem]['matches'].append(match)
+        if not ref in self.refs[stem]['refs']:
+            self.refs[stem]['refs'].append(ref)
+
+    def dumpRefs(self):
+        refs=sorted(self.refs.items(),reverse=True,cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
+        for ref in refs:
+            print ">>",self.getFrag(ref[1]['matches'][0][0],ref[1]['matches'][0][1])
+            print "in",self.id,":",ref[1]['matches']
+            for doc in ref[1]['refs']:
+                print "occurs in",doc.id,doc.refs[ref[0]]['matches']
+            print
+
+    def getFrag(self,start,len):
+        return " ".join(self.tokens[start:start+len]).encode('utf8')
+
 class MatchDb:
     def __init__(self):
         self.__dict__={}
-        self.__dict__['docs'] = []
+        self.__dict__['docs'] = {}
         self.__dict__['db'] = {}
 
     def __getattr__(self, name):
@@ -137,14 +156,14 @@ class MatchDb:
         else:  raise AttributeError, name
 
     def addMatch(self,doc1,doc2,match):
-        m1=(doc1,match[0],match[2])
-        m2=(doc2,match[1],match[2])
+        m1=(match[0],match[2])
+        m2=(match[1],match[2])
         stem=tuple(doc1.stems[match[0]:match[0]+match[2]])
         if not self.db.has_key(stem): self.db[stem]=[]
-        if not m1 in self.db[stem]: self.db[stem].append(m1)
-        if not m2 in self.db[stem]: self.db[stem].append(m2)
-        doc1.quotes[doc2.id]=(match[0],match[2])
-        doc2.quotes[doc1.id]=(match[1],match[2])
+        if not m1 in self.db[stem]: self.db[stem].append((doc1,)+m1)
+        if not m2 in self.db[stem]: self.db[stem].append((doc2,)+m2)
+        doc1.addRef(stem,m1,doc2)
+        doc2.addRef(stem,m2,doc1)
 
     def analyze(self,doc1,doc2):
         if doc1.id==doc2.id: return
@@ -152,8 +171,8 @@ class MatchDb:
         matcher = difflib.SequenceMatcher(None,doc1.stems,doc2.stems)
         for match in matcher.get_matching_blocks():
             if match[2]: self.addMatch(doc1,doc2,match)
-        if not doc1 in self.docs: self.docs.append(doc1)
-        if not doc2 in self.docs: self.docs.append(doc2)
+        if not self.docs.has_key(doc1.id): self.docs[doc1.id]=doc1
+        if not self.docs.has_key(doc2.id): self.docs[doc2.id]=doc2
 
     def dump(self):
         return "%s\n%s" % (self.docs,self.db)
@@ -186,8 +205,12 @@ if __name__ == "__main__":
     docs=f.readlines()
     for d in docs:
         newd=Doc(d.strip('\t\n'))
-        for oldd in db.docs:
-            db.analyze(newd,oldd)
+        for oldd in db.docs.keys():
+            db.analyze(newd,db.docs[oldd])
+    print "---Canada References---"
+    d1.dumpRefs()
+    print "---Korea References---"
+    d2.dumpRefs()
     print db.stats()
 
 #import sqlobject
