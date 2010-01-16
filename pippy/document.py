@@ -17,7 +17,8 @@
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 DICTDIR='/usr/share/hunspell/'
-cache=Cache('../cache');
+import cache as Cache
+cache=Cache.Cache('../cache');
 
 import sys, os, platform
 import hashlib, cPickle, difflib
