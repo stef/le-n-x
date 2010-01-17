@@ -264,7 +264,7 @@ class MatchDb:
             res.append(u'<table width="100%" class="frag"><tr>')
             for d in docs:
                 res.append((u'<td style="width: %d%%;">' % (int(100)/len(docs))))
-                res.append(htmlPippi(d[0],d[1:],self.docs[d[0]].getFrag(d[1],d[2]).decode('utf8')))
+                res.append(htmlPippi(d[0],d[1:],self.docs[d[0]].getFrag(d[1],d[2])))
                 res.append(u'</td>')
             res.append(u'</tr></table><hr />')
         return '\n'.join(res).encode('utf8')
@@ -298,7 +298,7 @@ class MatchDb:
         res=[]
         for (k,docs) in frags:
             for d in docs:
-                res.append(u'%s: %s\n' % (d,self.docs[d[0]].getFrag(d[1],d[2]).decode('utf8')))
+                res.append(u'%s: %s\n' % (d,self.docs[d[0]].getFrag(d[1],d[2])))
             res.append(u'-----\n')
         return '\n'.join(res).encode('utf8')
 
