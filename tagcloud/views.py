@@ -15,6 +15,26 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from django.db import models
+# Create your views here.
 
-# Create your models here.
+from django.http import HttpResponse
+from django.template import RequestContext
+from django.shortcuts import render_to_response
+from django import forms
+from brain import cache, tagcloud
+
+cache=cache.Cache('cache');
+
+class FetchForm(forms.Form):
+    url = forms.CharField(required=True)
+
+def handler(request):
+    form = FetchForm(request.GET)
+    if form.is_valid():
+        url=form.cleaned_data['url']
+        text=cache.fetchUrl(url)
+        cloud=tagcloud.tagcloud(text,25)
+
+        return HttpResponse('%s' % (unicode(str(cloud),'utf8')))
+    else:
+        return render_to_response('fetch.html', { 'form': form, })

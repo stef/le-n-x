@@ -18,7 +18,7 @@
 
 DICTDIR='/usr/share/hunspell/'
 import cache as Cache
-cache=Cache.Cache('../cache');
+cache=Cache.Cache('cache');
 
 import sys, os, platform
 import hashlib, cPickle, difflib
@@ -54,6 +54,10 @@ def loadVal(key):
     res=file.read()
     file.close()
     return res
+
+""" template to format a pippi (doc, match_pos, text) """
+def htmlPippi(doc,matches,frag):
+    return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag.decode('utf8'))
 
 """ class representing a dictinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc:
@@ -149,18 +153,28 @@ class Doc:
         if not ref.id in self.refs[stem]['refs']:
             self.refs[stem]['refs'].append(ref.id)
 
-    def dumpRefs(self,docs):
-        refs=sorted(self.refs.items(),reverse=True,cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
+    def htmlRefs(self,docs):
+        refs=sorted(self.refs.items(),
+                    reverse=True,
+                    cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
+        res=[]
         for (stem,ref) in refs:
-            if len(stem) < 5: return
-            print "----- new frag -----\n>>","from",self.id+":",ref['matches']
-            print self.getFrag(ref['matches'][0][0],ref['matches'][0][1])
+            if len(stem) < 5: break
+            columns=(int(100)/(len(ref['refs'])+1))
+            res.append(u'<table class="frag" width="100%"><tr>')
+            res.append(u'<td style="width:%d%%;">' % columns)
+            res.append(htmlPippi(self.id,
+                        ref['matches'],
+                        self.getFrag(ref['matches'][0][0],ref['matches'][0][1])))
+            res.append(u'</td>')
             for doc in ref['refs']:
                 d=docs[doc]
                 m=d.refs[stem]['matches']
-                for f in m:
-                    print "\noccurs also in",doc,m,"\n",d.getFrag(f[0],f[1])
-            print
+                res.append(u'<td style="width:%d%%;">' % columns)
+                res.append(htmlPippi(doc, m, d.getFrag(m[0][0],m[0][1])))
+                res.append(u'</td>')
+            res.append(u'</tr></table><hr />')
+        return '\n'.join(res).encode('utf8')
 
     def getFrag(self,start,len):
         return " ".join(self.tokens[start:start+len]).encode('utf8')
@@ -175,6 +189,20 @@ class Doc:
         if dbdir:
             for attr in ['text','tokens','stems','tokenfreq','stemfreq','refs','wpos','spos']:
                 self.__dict__[attr]=cPickle.loads(loadVal(dbdir+"/"+attr))
+
+    """ misc functions """
+    def dumpRefs(self,docs):
+        refs=sorted(self.refs.items(),reverse=True,cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
+        for (stem,ref) in refs:
+            if len(stem) < 5: return
+            print u"----- new frag -----\n>>",u"from",self.id+u":",ref['matches']
+            print self.getFrag(ref['matches'][0][0],ref['matches'][0][1])
+            for doc in ref['refs']:
+                d=docs[doc]
+                m=d.refs[stem]['matches']
+                for f in m:
+                    print u"\noccurs also in",doc,m,u"\n",d.getFrag(f[0],f[1])
+            print
 
 class MatchDb:
     def __init__(self):
@@ -195,7 +223,7 @@ class MatchDb:
     def analyze(self,doc1,doc2):
         if doc1.id==doc2.id: return
         if doc1.id in self.docs.keys() and doc2.id in self.docs.keys(): return
-        print "analyzing",doc1.id,"and",doc2.id
+        print u"analyzing",doc1.id,u"and",doc2.id
         matcher = difflib.SequenceMatcher(None,doc1.stems,doc2.stems)
         for match in matcher.get_matching_blocks():
             if not match[2]: continue
@@ -207,9 +235,6 @@ class MatchDb:
             if not (doc2.id,)+m2 in self.db[stem]: self.db[stem].append((doc2.id,)+m2)
             doc1.addRef(stem,m1,doc2)
             doc2.addRef(stem,m2,doc1)
-
-    def dump(self):
-        return "%s\n%s" % (self.docs,self.db)
 
     def save(self,dir="db/"):
         for doc in self.docs.values():
@@ -228,51 +253,82 @@ class MatchDb:
         return True
 
     def longestFrags(self):
-        return sorted(self.db.items(),reverse=True,cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
+        return sorted(self.db.items(),
+                      reverse=True,
+                      cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
 
-    def frequentFrags(self):
-        return sorted(self.db.items(),reverse=True,cmp=lambda x,y: cmp(len(x[1]), len(y[1])))
-
-    def stats(self):
-        print "number of total common phrases:", len(self.db)
-        print "number of multigrams:", len(filter(lambda x: len(x)>2,self.db.keys()))
-        #print "most frequent frags"
-        #topfrags=self.frequentFrags()
-        #for (k,docs) in topfrags[:100]:
-        #    print "%d: %s" % (len(docs)," ".join(docs[0][0].tokens[docs[0][1]:docs[0][1]+docs[0][2]]).encode('utf8'))
-
-        longestfrags=self.longestFrags()
-        print "max len of frag:", len(longestfrags[0][0])
-        print "longest frags"
-        for (k,docs) in longestfrags:
+    def htmlLongFrags(self):
+        frags=self.longestFrags()
+        res=[]
+        for (k,docs) in frags:
+            res.append(u'<table width="100%" class="frag"><tr>')
             for d in docs:
-                print d,u":",self.docs[d[0]].getFrag(d[1],d[2]).decode('utf8')
-                print
-            print '-----'
+                res.append((u'<td style="width: %d%%;">' % (int(100)/len(docs))))
+                res.append(htmlPippi(d[0],d[1:],self.docs[d[0]].getFrag(d[1],d[2]).decode('utf8')))
+                res.append(u'</td>')
+            res.append(u'</tr></table><hr />')
+        return '\n'.join(res).encode('utf8')
 
     def addDoc(self,doc):
         if not self.docs.has_key(doc.id): self.docs[doc.id]=doc
 
+    def insert(self,doc):
+        if doc.id in self.docs.keys(): return
+        for old in self.docs.values():
+            self.analyze(newd,old)
+        self.addDoc(doc)
+
+    """ misc functions """
+    def dump(self):
+        return "%s\n%s" % (self.docs,self.db)
+
+    def frequentFrags(self):
+        return sorted(self.db.items(),
+                      reverse=True,
+                      cmp=lambda x,y: cmp(len(x[1]), len(y[1])))
+
+    def stats(self):
+        res="number of total common phrases: %d\n" % (len(self.db))
+        res+="number of multigrams: %d\n" % (len(filter(lambda x: len(x)>2,self.db.keys())))
+        res+="max len of frag: %d\n" % (len(self.longestFrags()[0][0]))
+        return res
+
+    def printLongFrags(self):
+        frags=self.longestFrags()
+        res=[]
+        for (k,docs) in frags:
+            for d in docs:
+                res.append(u'%s: %s\n' % (d,self.docs[d[0]].getFrag(d[1],d[2]).decode('utf8')))
+            res.append(u'-----\n')
+        return '\n'.join(res).encode('utf8')
+
+    def printFreqFrags(self):
+        frags=self.frequentFrags()
+        res=[]
+        for (k,docs) in frags:
+            if len(k)>1:
+                res.append(u'%d\t%s' % (len(docs),k))
+        return '\n'.join(res).encode('utf8')
+
+    def printFreqTokens(self):
+        frags=self.frequentFrags()
+        res=[]
+        for (k,docs) in frags:
+            if len(k)==1:
+                res.append(u'%d\t%s' % (len(docs),k))
+        return '\n'.join(res).encode('utf8')
+
+
 if __name__ == "__main__":
     db=MatchDb()
+    print "loading..."
     db.load()
+    print "done"
+    print "---stats"
     print db.stats()
-    #if not db.load():
-    #    d1=Doc("Canada")
-    #    d2=Doc("Korea")
-    #    db.analyze(d1,d2)
-    #    db.addDoc(d1)
-    #    db.addDoc(d2)
-    #    f=open("cankor",'r')
-    #    docs=f.readlines()
-    #    for d in docs:
-    #        if d in db.docs.keys(): continue
-    #        newd=Doc(d.strip('\t\n'))
-    #        for oldd in db.docs.keys():
-    #            db.analyze(newd,db.docs[oldd])
-    #        db.addDoc(newd)
-    #    db.save()
-    #print "---Canada References---"
-    #db.docs["Canada"].dumpRefs(db.docs)
-    #print "---Korea References---"
-    #db.docs["Korea"].dumpRefs(db.docs)
+    print "---long frags"
+    print db.printLongFrags()
+    print "---frequent frags"
+    print db.printFreqFrags()
+    print "---frequent tokens"
+    print db.printFreqTokens()

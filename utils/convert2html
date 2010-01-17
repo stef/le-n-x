@@ -1,0 +1,5 @@
+#!/bin/ksh
+
+echo "<html><body><div id='TexteOnly'>"
+grep -vf clean-OJ-boilerp $1 | cat -s | sed 's/\(..*\)/<p>\1<\/p>/'
+echo "</div></body></html>"

@@ -1,19 +1,9 @@
 from django.conf.urls.defaults import *
 
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
-
 urlpatterns = patterns('',
     # Example:
-    # (r'^ucloud/', include('ucloud.foo.urls')),
-    #(r'^ucloud/(?P<url>.+)/$', 'ucloud.fetch.views.handler'),
-    (r'^ucloud/$', 'ucloud.fetch.views.handler'),
-
-    # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
-    # to INSTALLED_APPS to enable admin documentation:
-    # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    # Uncomment the next line to enable the admin:
-    # (r'^admin/', include(admin.site.urls)),
+    #(r'^tagcloud/(?P<url>.+)/$', 'ucloud.tagcloud.views.handler'),
+    (r'^tagcloud/$', 'lenx.tagcloud.views.handler'),
+    (r'^pippi/$', 'lenx.pippy.views.pippi'),
+    (r'^xpippi/$', 'lenx.pippy.views.xpippi'),
 )

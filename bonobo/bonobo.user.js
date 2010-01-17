@@ -21,7 +21,7 @@
 
 // (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-var tagserver="http://92.243.28.240:14148/ucloud/?url=";
+var tagserver="http://92.243.28.240:14148/tagcloud/?url=";
 
 function addGlobalStyle(css) {
   try {
