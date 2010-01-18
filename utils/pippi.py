@@ -172,9 +172,6 @@ class MatchDb:
         if not doc1 in self.docs: self.docs.append(doc1)
         if not doc2 in self.docs: self.docs.append(doc2)
 
-    def dump(self):
-        return "%s\n%s" % (self.docs,self.db)
-
     def stats(self):
         print "number of multigrams:", len(filter(lambda x: len(x)>2,self.db.keys()))
         longestfrags=sorted(self.db.items(),reverse=True,cmp=lambda x,y: cmp(len(x[0]), len(y[0])))

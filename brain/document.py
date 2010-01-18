@@ -18,11 +18,12 @@
 
 DICTDIR='/usr/share/hunspell/'
 import cache as Cache
-cache=Cache.Cache('cache');
+CACHE=Cache.Cache('cache');
+from fsdb import FilesystemDB
+FSDB=FilesystemDB('db')
 
-import sys, os, platform
-import hashlib, cPickle, difflib
-from operator import itemgetter
+import platform
+import cPickle, difflib
 import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
@@ -35,39 +36,16 @@ LANG='en_US'
 DICT=DICTDIR+LANG
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
-""" some helper fns for a very simple file- and cPickle-based key-value store of computed data"""
-def getDict(dir,create=True):
-    if not os.path.exists(dir):
-        if create:
-            os.mkdir(dir)
-        else:
-            return None
-    return dir
-
-def storeVal(key,value):
-    file=open(key,'w')
-    file.write(value)
-    file.close()
-
-def loadVal(key):
-    file=open(key,'r')
-    res=file.read()
-    file.close()
-    return res
-
-""" template to format a pippi (doc, match_pos, text) """
-def htmlPippi(doc,matches,frag):
-    return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag.decode('utf8'))
-
-""" class representing a dictinct document, does stemming, some minimal nlp, can be saved and loaded """
+""" class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc:
-    def __init__(self,id):
+    def __init__(self,id,cache=CACHE,storage=FSDB):
         self.__dict__={}
         self.__dict__['id'] = id
         #self.__dict__['lang'] = id.split(":")[-2]
         self.__dict__['raw'] = cache.fetchUrl(EURLEXURL+id).decode('utf-8')
         self.__dict__['refs'] = {}
-        if getDict("db/"+self.id,create=False):
+        self.__dict__['attrs'] = ['text','tokens','stems','refs','wpos','spos']
+        if storage.getDict("docs"+self.id,create=False):
             self.load()
 
     def __getattr__(self, name):
@@ -79,10 +57,6 @@ class Doc:
             (self.__dict__['tokens'],self.__dict__['wpos'])=self.gettokens()
         elif name in ["stems", "spos"]:
             (self.__dict__['stems'],self.__dict__['spos'])=self.getstems()
-        elif name == "tokenfreq":
-            self.__dict__[name]=self.gettokenfreq()
-        elif name == "stemfreq":
-            self.__dict__[name]=self.getstemfreq()
         if name in self.__dict__.keys():
             return self.__dict__[name]
         else:  raise AttributeError, name
@@ -115,14 +89,6 @@ class Doc:
                 i+=1
         return (tokens,wpos)
 
-    def gettokenfreq(self):
-        return map(
-            lambda x: (x[0],len(x[1])),
-            sorted(self.wpos.items(),
-                   lambda x,y: cmp(len(x),len(y)),
-                   itemgetter(1),
-                   reverse=True))
-
     def getstems(self):
         # start stemming
         engine = hunspell.HunSpell(DICT+'.dic', DICT+'.aff')
@@ -137,15 +103,6 @@ class Doc:
             i+=1
         return (stems,spos)
 
-    def getstemfreq(self):
-        return map(
-            lambda x: (x[0],len(x[1])),
-            sorted(filter(lambda x: x[0],
-                          self.spos.items()),
-                   lambda x,y: cmp(len(x),len(y)),
-                   itemgetter(1),
-                   reverse=True))
-
     def addRef(self,stem,match,ref):
         if not self.refs.has_key(stem): self.refs[stem]={'matches':[],'refs':[]}
         if not match in self.refs[stem]['matches']:
@@ -153,56 +110,19 @@ class Doc:
         if not ref.id in self.refs[stem]['refs']:
             self.refs[stem]['refs'].append(ref.id)
 
-    def htmlRefs(self,docs):
-        refs=sorted(self.refs.items(),
-                    reverse=True,
-                    cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
-        res=[]
-        for (stem,ref) in refs:
-            if len(stem) < 5: break
-            columns=(int(100)/(len(ref['refs'])+1))
-            res.append(u'<table class="frag" width="100%"><tr>')
-            res.append(u'<td style="width:%d%%;">' % columns)
-            res.append(htmlPippi(self.id,
-                        ref['matches'],
-                        self.getFrag(ref['matches'][0][0],ref['matches'][0][1])))
-            res.append(u'</td>')
-            for doc in ref['refs']:
-                d=docs[doc]
-                m=d.refs[stem]['matches']
-                res.append(u'<td style="width:%d%%;">' % columns)
-                res.append(htmlPippi(doc, m, d.getFrag(m[0][0],m[0][1])))
-                res.append(u'</td>')
-            res.append(u'</tr></table><hr />')
-        return '\n'.join(res).encode('utf8')
-
     def getFrag(self,start,len):
         return " ".join(self.tokens[start:start+len]).encode('utf8')
 
-    def save(self,dir="db/docs/"):
-        dbdir=getDict(dir+"/"+self.id)
-        for attr in ['text','tokens','stems','tokenfreq','stemfreq','refs','wpos','spos']:
-            storeVal(dbdir+"/"+attr,cPickle.dumps(self.__getattr__(attr)))
+    def save(self,dir="docs",storage=FSDB):
+        dbdir=storage.getDict(dir+"/"+self.id)
+        for attr in self.attrs:
+            storage.storeVal(dbdir+"/"+attr,cPickle.dumps(self.__getattr__(attr)))
 
-    def load(self,dir="db/docs/"):
-        dbdir=getDict(dir+"/"+self.id,create=False)
+    def load(self,dir="docs",storage=FSDB):
+        dbdir=storage.getDict(dir+"/"+self.id,create=False)
         if dbdir:
-            for attr in ['text','tokens','stems','tokenfreq','stemfreq','refs','wpos','spos']:
-                self.__dict__[attr]=cPickle.loads(loadVal(dbdir+"/"+attr))
-
-    """ misc functions """
-    def dumpRefs(self,docs):
-        refs=sorted(self.refs.items(),reverse=True,cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
-        for (stem,ref) in refs:
-            if len(stem) < 5: return
-            print u"----- new frag -----\n>>",u"from",self.id+u":",ref['matches']
-            print self.getFrag(ref['matches'][0][0],ref['matches'][0][1])
-            for doc in ref['refs']:
-                d=docs[doc]
-                m=d.refs[stem]['matches']
-                for f in m:
-                    print u"\noccurs also in",doc,m,u"\n",d.getFrag(f[0],f[1])
-            print
+            for attr in self.attrs:
+                self.__dict__[attr]=cPickle.loads(storage.loadVal(dbdir+"/"+attr))
 
 class MatchDb:
     def __init__(self):
@@ -236,19 +156,19 @@ class MatchDb:
             doc1.addRef(stem,m1,doc2)
             doc2.addRef(stem,m2,doc1)
 
-    def save(self,dir="db/"):
+    def save(self,storage=FSDB):
         for doc in self.docs.values():
-            doc.save()
-        storeVal(dir+"/matches",cPickle.dumps(self.db))
+            doc.save(storage=storage)
+        storage.storeVal("matches",cPickle.dumps(self.db))
 
-    def load(self,dir="db/"):
+    def load(self,storage=FSDB,cache=CACHE):
         try:
-            self.db=cPickle.loads(loadVal(dir+"/matches")) or {}
+            self.db=cPickle.loads(storage.loadVal("matches")) or {}
         except:
             return
-        for doc in os.listdir(dir+"/docs/"):
-            d=Doc(doc)
-            d.load()
+        for doc in storage.getKeys("docs"):
+            d=Doc(doc,cache=cache,storage=storage)
+            d.load(storage=storage)
             self.docs[doc]=d
         return True
 
@@ -256,18 +176,6 @@ class MatchDb:
         return sorted(self.db.items(),
                       reverse=True,
                       cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
-
-    def htmlLongFrags(self):
-        frags=self.longestFrags()
-        res=[]
-        for (k,docs) in frags:
-            res.append(u'<table width="100%" class="frag"><tr>')
-            for d in docs:
-                res.append((u'<td style="width: %d%%;">' % (int(100)/len(docs))))
-                res.append(htmlPippi(d[0],d[1:],self.docs[d[0]].getFrag(d[1],d[2])))
-                res.append(u'</td>')
-            res.append(u'</tr></table><hr />')
-        return '\n'.join(res).encode('utf8')
 
     def addDoc(self,doc):
         if not self.docs.has_key(doc.id): self.docs[doc.id]=doc
@@ -278,57 +186,9 @@ class MatchDb:
             self.analyze(newd,old)
         self.addDoc(doc)
 
-    """ misc functions """
-    def dump(self):
-        return "%s\n%s" % (self.docs,self.db)
-
-    def frequentFrags(self):
-        return sorted(self.db.items(),
-                      reverse=True,
-                      cmp=lambda x,y: cmp(len(x[1]), len(y[1])))
-
-    def stats(self):
-        res="number of total common phrases: %d\n" % (len(self.db))
-        res+="number of multigrams: %d\n" % (len(filter(lambda x: len(x)>2,self.db.keys())))
-        res+="max len of frag: %d\n" % (len(self.longestFrags()[0][0]))
-        return res
-
-    def printLongFrags(self):
-        frags=self.longestFrags()
-        res=[]
-        for (k,docs) in frags:
-            for d in docs:
-                res.append(u'%s: %s\n' % (d,self.docs[d[0]].getFrag(d[1],d[2])))
-            res.append(u'-----\n')
-        return '\n'.join(res).encode('utf8')
-
-    def printFreqFrags(self):
-        frags=self.frequentFrags()
-        res=[]
-        for (k,docs) in frags:
-            if len(k)>1:
-                res.append(u'%d\t%s' % (len(docs),k))
-        return '\n'.join(res).encode('utf8')
-
-    def printFreqTokens(self):
-        frags=self.frequentFrags()
-        res=[]
-        for (k,docs) in frags:
-            if len(k)==1:
-                res.append(u'%d\t%s' % (len(docs),k))
-        return '\n'.join(res).encode('utf8')
-
-
 if __name__ == "__main__":
     db=MatchDb()
     print "loading..."
-    db.load()
+    db.load(cache=Cache.Cache('../cache'),
+            storage=FilesystemDB('../db'))
     print "done"
-    print "---stats"
-    print db.stats()
-    print "---long frags"
-    print db.printLongFrags()
-    print "---frequent frags"
-    print db.printFreqFrags()
-    print "---frequent tokens"
-    print db.printFreqTokens()

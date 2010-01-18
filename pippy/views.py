@@ -28,6 +28,45 @@ class PippiForm(forms.Form):
 class XpippiForm(forms.Form):
     doc = forms.CharField(required=True)
 
+""" template to format a pippi (doc, match_pos, text) """
+def htmlPippi(doc,matches,frag):
+    return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag.decode('utf8'))
+
+def htmlRefs(this,docs):
+    refs=sorted(this.refs.items(),
+                reverse=True,
+                cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
+    res=[]
+    for (stem,ref) in refs:
+        if len(stem) < 5: break
+        columns=(int(100)/(len(ref['refs'])+1))
+        res.append(u'<table class="frag" width="100%"><tr>')
+        res.append(u'<td style="width:%d%%;">' % columns)
+        res.append(htmlPippi(this.id,
+                    ref['matches'],
+                    this.getFrag(ref['matches'][0][0],ref['matches'][0][1])))
+        res.append(u'</td>')
+        for doc in ref['refs']:
+            d=docs[doc]
+            m=d.refs[stem]['matches']
+            res.append(u'<td style="width:%d%%;">' % columns)
+            res.append(htmlPippi(doc, m, d.getFrag(m[0][0],m[0][1])))
+            res.append(u'</td>')
+        res.append(u'</tr></table><hr />')
+    return '\n'.join(res).encode('utf8')
+
+def htmlLongFrags(this):
+    frags=this.longestFrags()
+    res=[]
+    for (k,docs) in frags:
+        res.append(u'<table width="100%" class="frag"><tr>')
+        for d in docs:
+            res.append((u'<td style="width: %d%%;">' % (int(100)/len(docs))))
+            res.append(htmlPippi(d[0],d[1:],this.docs[d[0]].getFrag(d[1],d[2])))
+            res.append(u'</td>')
+        res.append(u'</tr></table><hr />')
+    return '\n'.join(res).encode('utf8')
+
 def pippi(request):
     form = PippiForm(request.GET)
     if form.is_valid():
@@ -37,7 +76,7 @@ def pippi(request):
         db.analyze(d1,d2)
         db.addDoc(d1)
         db.addDoc(d2)
-        result=db.htmlLongFrags()
+        result=htmlLongFrags(db)
 
         return HttpResponse('%s' % (unicode(str(result),'utf8')))
     else:
@@ -50,12 +89,12 @@ def xpippi(request):
         db.load()
         doc=form.cleaned_data['doc'].strip('\t\n')
         if doc in db.docs.keys():
-            result=db.docs[doc].htmlRefs(db.docs)
+            result=htmlRefs(db.docs[doc],db.docs)
         else:
             d=Doc(doc)
             if d:
                 db.insert(d)
-            result=d.htmlRefs(db.docs)
+            result=htmlRefs(d,db.docs)
         return HttpResponse('%s' % (unicode(str(result),'utf8')))
     return render_to_response('xpippi.html', { 'form': form, })
 

@@ -17,12 +17,25 @@
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 import document, sys
+import document, sys, cache
+CACHE=cache.Cache('../cache');
+from fsdb import FilesystemDB
+FSDB=FilesystemDB('../db')
 
 db=document.MatchDb()
 d=sys.argv[1].strip('\t\n')
 
-if not db.load():
+if not db.load(FSDB,CACHE):
     print "ERR cannot load db"
     sys.exit(1)
+if d in db.docs.keys():
+    print "ERR already loaded"
+    sys.exit(1)
 
-db.docs[d].dumpRefs(db.docs)
+newd=document.Doc(d,cache=CACHE,storage=FSDB)
+for oldd in db.docs.values():
+    db.analyze(newd,oldd)
+db.addDoc(newd)
+db.save()
+
+print db.docs
