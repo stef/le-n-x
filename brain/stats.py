@@ -49,26 +49,43 @@ class SMatchDb(document.MatchDb):
                       cmp=lambda x,y: cmp(len(x[1]), len(y[1])))
 
     def stats(self):
-        res="number of total common phrases: %d\n" % (len(self.db))
-        res+="number of multigrams: %d\n" % (len(filter(lambda x: len(x)>2,self.db.keys())))
-        res+="max len of frag: %d\n" % (len(self.longestFrags()[0][0]))
+        res=[]
+        res.append("number of total common phrases: %d" % (len(self.db)))
+        res.append("number of multigrams: %d" % (len(filter(lambda x: len(x)>2,self.db.keys()))))
+        lfrags=self.longestFrags()
+        res.append("max len of frag: %d" % (len(lfrags[0][0])))
         return res
 
-    def printFreqFrags(self):
+    def frequencyDistribution(self):
+        res=[]
+        lfrags=self.longestFrags()
+        res.append(map(lambda x: len(x[0]), lfrags)))
+        res.append(map(lambda x: len(x[1]), lfrags)))
+        return res
+
+        res.append("<table><tr>")
+        res.append(u"\n".join(map(lambda x:
+                                  (len(x[1])>2 and"<td>%s</td>" % len(x[0])) or "", lfrags)))
+        res.append("</tr><tr>")
+        res.append(u"\n".join(map(lambda x:
+                                  (len(x[1])>2 and "<td>%s</td>" % len(x[1])) or "", lfrags)))
+        res.append("</tr></table>")
+
+    def getFreqFrags(self):
         frags=self.frequentFrags()
         res=[]
         for (k,docs) in frags:
             if len(k)>1:
                 res.append(u'%d\t%s' % (len(docs),k))
-        return '\n'.join(res).encode('utf8')
+        return res
 
-    def printFreqTokens(self):
+    def getFreqTokens(self):
         frags=self.frequentFrags()
         res=[]
         for (k,docs) in frags:
             if len(k)==1:
                 res.append(u'%d\t%s' % (len(docs),k))
-        return '\n'.join(res).encode('utf8')
+        return res
 
 if __name__ == "__main__":
     db=SMatchDb()
@@ -76,8 +93,8 @@ if __name__ == "__main__":
     db.load(cache=CACHE,storage=FSDB)
     print "done"
     print "---stats"
-    print db.stats()
+    print '\n'.join(db.stats()).encode('utf8')
     print "---frequent frags"
-    print db.printFreqFrags()
+    print '\n'.join(db.getFreqFrags()).encode('utf8')
     print "---frequent tokens"
-    print db.printFreqTokens()
+    print '\n'.join(db.printFreqTokens()).encode('utf8')

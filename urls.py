@@ -7,4 +7,5 @@ urlpatterns = patterns('',
     (r'^ucloud/$', 'lenx.tagcloud.views.handler'),
     (r'^pippi/$', 'lenx.pippy.views.pippi'),
     (r'^xpippi/$', 'lenx.pippy.views.xpippi'),
+    (r'^stats/$', 'lenx.stats.views.stats'),
 )
