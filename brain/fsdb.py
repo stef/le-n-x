@@ -16,7 +16,7 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-import os
+import os, cPickle
 
 class FilesystemDB():
     def __init__(self,base):
@@ -43,12 +43,12 @@ class FilesystemDB():
 
     def storeVal(self,key,value):
         file=open(self.base+key,'w')
-        file.write(value)
+        file.write(cPickle.dumps(value))
         file.close()
 
     def loadVal(self,key):
         file=open(self.base+key,'r')
-        res=file.read()
+        res=cPickle.loads(file.read())
         file.close()
         return res
 

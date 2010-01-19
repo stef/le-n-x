@@ -23,7 +23,7 @@ from fsdb import FilesystemDB
 FSDB=FilesystemDB('db')
 
 import platform
-import cPickle, difflib
+import difflib
 import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
@@ -116,13 +116,13 @@ class Doc:
     def save(self,dir="docs",storage=FSDB):
         dbdir=storage.getDict(dir+"/"+self.id)
         for attr in self.attrs:
-            storage.storeVal(dbdir+"/"+attr,cPickle.dumps(self.__getattr__(attr)))
+            storage.storeVal(dbdir+"/"+attr,self.__getattr__(attr))
 
     def load(self,dir="docs",storage=FSDB):
         dbdir=storage.getDict(dir+"/"+self.id,create=False)
         if dbdir:
             for attr in self.attrs:
-                self.__dict__[attr]=cPickle.loads(storage.loadVal(dbdir+"/"+attr))
+                self.__dict__[attr]=storage.loadVal(dbdir+"/"+attr)
 
 class MatchDb:
     def __init__(self):
@@ -159,11 +159,11 @@ class MatchDb:
     def save(self,storage=FSDB):
         for doc in self.docs.values():
             doc.save(storage=storage)
-        storage.storeVal("matches",cPickle.dumps(self.db))
+        storage.storeVal("matches",self.db)
 
     def load(self,storage=FSDB,cache=CACHE):
         try:
-            self.db=cPickle.loads(storage.loadVal("matches")) or {}
+            self.db=storage.loadVal("matches") or {}
         except:
             return
         for doc in storage.getKeys("docs"):
