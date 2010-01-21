@@ -16,34 +16,31 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-import document, sys, cache
+import document, sys, cache, os
 CACHE=cache.Cache('cache/');
 from fsdb import FilesystemDB
 FSDB=FilesystemDB('db/')
-
-def loadDoc(d,db):
-   newd=document.Doc(d,cache=CACHE,storage=FSDB)
-   for oldd in db.docs.values():
-      db.analyze(newd,oldd)
-   db.addDoc(newd)
-
 
 d=sys.argv[1].strip('\t\n')
 db=document.MatchDb()
 if not db.load(FSDB,CACHE):
     print "ERR cannot load db"
     sys.exit(1)
-if d in db.docs.keys():
-    print "ERR already loaded"
-    sys.exit(1)
-
-f=None
-if os.path.isfile(f):
+if os.path.isfile(d):
    f=open(d,'r')
    for doc in f.readlines():
-      loadDoc(doc.strip('\t\n'),db)
-      db.save(storage=FSDB)
+      db.insert(document.Doc(doc.strip('\t\n')))
 else:
-   loadDoc(d,db)
-   db.save()
-print db.docs
+   if d in db.docs.keys():
+      print "ERR already loaded"
+      sys.exit(1)
+   db.insert(document.Doc(d))
+
+db.save(storage=FSDB)
+print "this code is buggy! it does not respect what's in the db already"
+print "diff"
+print "rm -rf db ; mkdir -p db/docs; ../brain/pippy.py Canada CARIFORUM; ../brain/addDoc.py asdf | sort >ad"
+print "vs"
+print "rm -rf db ; mkdir -p db/docs; cat asdf | ../brain/bulkproducer.py 0 1 | tee | ../brain/bulkprocessor.py | ../brain/bulkadd.py | sort >ba"
+print "while both print this in the end: "
+print "print '\n'.join([str((x[0],len(x[1]))) for x in sorted(db.db.items())])"

@@ -143,20 +143,24 @@ class MatchDb:
     def getMatches(self,doc1,doc2):
         return difflib.SequenceMatcher(None,doc1.stems,doc2.stems).get_matching_blocks()
 
+    def storeMatch(self,doc1,doc2,match):
+        if not match[2] or doc1.id==doc2.id: return
+        m1=(match[0],match[2])
+        m2=(match[1],match[2])
+        stem=tuple(doc1.stems[match[0]:match[0]+match[2]])
+        if not self.db.has_key(stem): self.db[stem]=[]
+        if not (doc1.id,)+m1 in self.db[stem]: self.db[stem].append((doc1.id,)+m1)
+        if not (doc2.id,)+m2 in self.db[stem]: self.db[stem].append((doc2.id,)+m2)
+        doc1.addRef(stem,m1,doc2)
+        doc2.addRef(stem,m2,doc1)
+        return (doc1,doc2)
+
     def analyze(self,doc1,doc2):
-        if doc1.id==doc2.id: return
         if doc1.id in self.docs.keys() and doc2.id in self.docs.keys(): return
-        print u"analyzing",doc1.id,u"and",doc2.id
-        for match in self.getMatches():
-            if not match[2]: continue
-            m1=(match[0],match[2])
-            m2=(match[1],match[2])
-            stem=tuple(doc1.stems[match[0]:match[0]+match[2]])
-            if not self.db.has_key(stem): self.db[stem]=[]
-            if not (doc1.id,)+m1 in self.db[stem]: self.db[stem].append((doc1.id,)+m1)
-            if not (doc2.id,)+m2 in self.db[stem]: self.db[stem].append((doc2.id,)+m2)
-            doc1.addRef(stem,m1,doc2)
-            doc2.addRef(stem,m2,doc1)
+        #print u"analyzing",doc1.id,u"and",doc2.id
+        for match in self.getMatches(doc1,doc2):
+            doc1,doc2=self.storeMatch(doc1,doc2,match)
+        return (doc1,doc2)
 
     def save(self,storage=FSDB):
         for doc in self.docs.values():
@@ -179,14 +183,13 @@ class MatchDb:
                       reverse=True,
                       cmp=lambda x,y: cmp(len(x[0]), len(y[0])))
 
-    def addDoc(self,doc):
-        if not self.docs.has_key(doc.id): self.docs[doc.id]=doc
-
     def insert(self,doc):
         if doc.id in self.docs.keys(): return
         for old in self.docs.values():
-            self.analyze(newd,old)
-        self.addDoc(doc)
+            # order reversed for identical output with bulkadd
+            old,doc=self.analyze(old,doc)
+            self.docs[old.id]=old
+        self.docs[doc.id]=doc
 
 if __name__ == "__main__":
     db=MatchDb()

@@ -16,25 +16,25 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-import document, sys, cache
-CACHE=cache.Cache('cache');
+import document, sys, os
+import cache as Cache
+CACHE=Cache.Cache('cache');
 from fsdb import FilesystemDB
 FSDB=FilesystemDB('db')
 
-def printLongFrags(self):
-    frags=self.longestFrags()
-    res=[]
-    for (k,docs) in frags:
-        for d in docs:
-            res.append(u'%s: %s' % (d,self.docs[d[0]].getFrag(d[1],d[2]).decode("utf8")))
-        res.append(u'-----\n')
-    return '\n'.join(res).encode('utf8')
+def getDoc(db,doc):
+    if db.docs.has_key(doc): return db.docs[doc]
+    db.docs[doc]=document.Doc(doc,storage=FSDB, cache=CACHE)
+    return db.docs[doc]
 
 db=document.MatchDb()
-d1=document.Doc(sys.argv[1].strip('\t\n'),cache=CACHE,storage=FSDB)
-d2=document.Doc(sys.argv[2].strip('\t\n'),cache=CACHE,storage=FSDB)
-db.analyze(d1,d2)
-db.docs[d1.id]=d1
-db.docs[d2.id]=d2
-#db.save(storage=FSDB)
-#print printLongFrags(db)
+for line in sys.stdin:
+    (doc1,doc2,matches)=eval(line)
+    d1=getDoc(db,doc1)
+    d2=getDoc(db,doc2)
+    for match in matches:
+        db.storeMatch(d1,d2,match)
+    db.docs[doc1]=d1
+    db.docs[doc2]=d2
+db.save(storage=FSDB)
+print "\n".join([str((x[0],len(x[1]))) for x in sorted(db.db.items())])
