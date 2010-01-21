@@ -31,4 +31,4 @@ for line in sys.stdin:
     (doc1,doc2)=eval(line)
     d1=getDoc(doc1)
     d2=getDoc(doc2)
-    print "%s\t%s\t%s" % (doc1,doc2,db.getMatches(d1,d2))
+    print (doc1,doc2,db.getMatches(d1,d2))
