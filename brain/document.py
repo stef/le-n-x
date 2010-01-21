@@ -140,12 +140,14 @@ class MatchDb:
             self.__dict__[name]=value
         else:  raise AttributeError, name
 
+    def getMatches(self,doc1,doc2):
+        return difflib.SequenceMatcher(None,doc1.stems,doc2.stems).get_matching_blocks()
+
     def analyze(self,doc1,doc2):
         if doc1.id==doc2.id: return
         if doc1.id in self.docs.keys() and doc2.id in self.docs.keys(): return
         print u"analyzing",doc1.id,u"and",doc2.id
-        matcher = difflib.SequenceMatcher(None,doc1.stems,doc2.stems)
-        for match in matcher.get_matching_blocks():
+        for match in self.getMatches():
             if not match[2]: continue
             m1=(match[0],match[2])
             m2=(match[1],match[2])
