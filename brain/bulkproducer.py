@@ -18,6 +18,13 @@
 
 import sys
 
-alldocs=map(lambda x: x.strip('\t\n'),sys.stdin.readlines())
-allops=[(x,y) for x,i in zip(alldocs,xrange(len(alldocs))) for y in alldocs[i+1:]]
-print "\n".join([str(x) for x in allops][:3])
+alldocs=[x.strip('\t\n') for x in sys.stdin]
+l=len(alldocs)*(len(alldocs)-1)/2
+allops=[(x,y) for x,i in zip(alldocs,xrange(l)) for y in alldocs[i+1:]]
+
+idx=int(sys.argv[1])
+clusters=int(sys.argv[2])
+
+start=idx*l/clusters
+end=start+l/clusters
+print "\n".join([str(x) for x in allops][start:end])
