@@ -1,0 +1,5 @@
+stopfrags=(
+    ('limited',),
+    ('article',()),
+    ('article',(),(),()),
+    )
