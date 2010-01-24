@@ -101,9 +101,9 @@ def pippi(request):
         db=MatchDb()
         d1=Doc(form.cleaned_data['doc1'])
         d2=Doc(form.cleaned_data['doc2'])
-        db.analyze(d1,d2)
-        db.addDoc(d1)
-        db.addDoc(d2)
+        d1,d2=db.analyze(d1,d2)
+        db.docs[d1.id]=d1
+        db.docs[d2.id]=d2
         result=htmlLongFrags(db)
 
         return HttpResponse('%s\n%s' % (CSSHEADER,unicode(str(result),'utf8')))

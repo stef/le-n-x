@@ -144,7 +144,7 @@ class MatchDb:
         return difflib.SequenceMatcher(None,doc1.stems,doc2.stems).get_matching_blocks()
 
     def storeMatch(self,doc1,doc2,match):
-        if not match[2] or doc1.id==doc2.id: return
+        if not match[2] or doc1.id==doc2.id: return (doc1,doc2)
         m1=(match[0],match[2])
         m2=(match[1],match[2])
         stem=tuple(doc1.stems[match[0]:match[0]+match[2]])
