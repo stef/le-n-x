@@ -21,8 +21,9 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django import forms
 from BeautifulSoup import BeautifulSoup, Tag
-import re, urllib
+import re, urllib, itertools
 import stopwords
+import nltk.tokenize # get this from http://www.nltk.org/
 
 CSSHEADER="""<head>
 <script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"></script>
@@ -53,18 +54,94 @@ def getNote(docs,soup,cutoff):
     note.insert(0,span)
     return note
 
-def pippify(match,refs,soup,cutoff,regex):
-    container = []
-    segments=re.split(regex, match)
-    for text in segments:
-        if(re.match(regex,text)):
-            container.append(getNote(refs,soup,cutoff))
-            markedmatch = Tag(soup, "span", [("class","pippi"),('title','Matches in: %s' % ", ".join(refs))])
-            markedmatch.insert(0,text)
-            container.append(markedmatch)
-        else:
-            container.append(text)
-    return container
+def getMarkedFrag(soup,refs,text):
+    markedmatch = Tag(soup, "span", [("class","pippi"),('title','Matches in: %s' % ", ".join(refs))])
+    markedmatch.insert(0,text)
+    return markedmatch
+
+def markMatch(node,regex,soup,refs,cutoff,head=True):
+    nodeidx=node.parent.contents.index(node)
+    # handle full frags in text nodes,
+    # this also handles multiple matches in a text node
+    segments=re.split(regex, node)
+    if len(segments)>1:
+        for txt in reversed(segments):
+            print "txt", txt
+            if(re.match(regex,txt)):
+                print "matched regex", regex.pattern
+                node.parent.insert(nodeidx,getMarkedFrag(soup,refs,txt))
+                if head: node.parent.insert(nodeidx,getNote(refs,soup,cutoff))
+            else:
+                print "non matching regex", txt
+                node.parent.insert(nodeidx,txt)
+            last=node.parent.contents[nodeidx]
+        # delete split node
+        node.extract()
+        return last
+    else:
+        return node
+
+def pippify(match,refs,soup,cutoff,regex,stem,tokens):
+    fullregex=re.compile("\s*".join(
+        map(lambda x: re.escape(x), tokens)),
+        re.I | re.M)
+    # handle full frags in text nodes,
+    # this also handles multiple matches in a text node
+    match=markMatch(match,fullregex,soup,refs,cutoff)
+    #print 'full regex',fullregex.pattern
+    print 'match parent after smallpippies',match.parent
+    # handle frags spanning multiple elements
+    #print 'match',match.string
+    print 'tail match',re.findall(regex,match.string)
+    span=zip(re.findall(regex,match.string),itertools.repeat(match))
+    print 'head span',span
+    if span:
+        nodes=match.findAllNext(text=True)
+        print 'next nodes',nodes
+        tailr=re.compile(tailRe(tokens))
+        for node in nodes:
+            if node in ['','\n']:
+                continue
+            m=re.match(tailr,node)
+            words=nltk.tokenize.wordpunct_tokenize(unicode(node))
+            # check if current node is contained in the middle of a pippi
+            if u"".join(words) in u"".join(tokens):
+                print "inner span match",node
+                span.append((str(node),node))
+            # check if current node is the tail of a pippi
+            elif m:
+                print 'nodenex', m.string
+                print 'tailmatch', m.group()
+                span.append((m.group(),node))
+                if len(m.group())<len(node.string):
+                    break
+            else:
+                break
+        sspan=u' '.join([x[0] for x in span])
+        print 'sspan', sspan
+        print 'fr',fullregex.pattern
+        fm=re.search(fullregex,sspan)
+        if fm:
+            print 'yay! fragmatch', fm.group()
+            head=span[0][1]
+            print 'multi head1',head
+            head=markMatch(head,regex,soup,refs,cutoff)
+            print 'multi head2',head
+            for text,node in span[1:-1]:
+                nodeidx=node.parent.contents.index(node)
+                node.parent.insert(nodeidx,getMarkedFrag(soup,refs,text))
+                node.extract()
+            tail=span[-1][1]
+            match=markMatch(tail,tailr,soup,refs,cutoff,head=False)
+            print "after multi",match
+    return match
+
+def headRe(tokens):
+    if not tokens: return ''
+    return r'\s*(?:(?:\s*'+re.escape(tokens[0])+headRe(tokens[1:])+')|$)'
+
+def tailRe(tokens):
+    return r'(^\s*'+reduce(lambda x,y: r'(?:'+x+re.escape(y)+r')?\s*',tokens[:-1])+re.escape(tokens[-1])+')'
 
 def viewPippiDoc(request,doc=None,cutoff=7,db=None):
     if not db:
@@ -79,33 +156,36 @@ def viewPippiDoc(request,doc=None,cutoff=7,db=None):
     soup = BeautifulSoup(d.raw)
     # TexteOnly is the id used on eur-lex pages containing distinct docs
     meat=soup.find(id='TexteOnly')
-    for (stem,ref) in sorted(d.refs.items(),cmp=lambda x,y: cmp(len(x[0]),len(y[0])),reverse=True):
+    for (stem,ref) in sorted(d.refs.items(),
+                             reverse=True,
+                             cmp=lambda x,y: cmp(len(x[0]),len(y[0]))):
         if stem in stopwords.stopfrags or len(stem)<int(cutoff): continue
-        for (start,length) in ref['matches']:
-            regex=re.compile('('+"\s*".join(
-                map(lambda x: re.escape(x),
-                    d.tokens[start:start+length]))+')',
-                re.I | re.M)
-            try:
-                node=meat.find(text=regex)
-            except:
-                # all matches possibly eaten by greedy pippifying below
-                continue
+        print "-------------\n" #,ref['matches']
+        print [(x[0],x[1],d.tokens[x[0]:x[0]+x[1]]) for x in ref['matches']]
+        for (start,length, tokens) in set([(x[0],x[1],tuple(d.tokens[x[0]:x[0]+x[1]])) for x in ref['matches']]):
+            regex=re.compile('('+re.escape(tokens[0])+headRe(tokens[1:])+')', re.I|re.M)
+            #try:
+            node=meat.find(text=regex)
+            #except:
+            #    # all matches possibly eaten by greedy pippifying below
+            #    continue
+            print 'pattern',regex.pattern
+            print 'tokens', tokens
+            print '1st match', re.findall(regex,node.string)
             while node:
-                nodeidx=node.parent.contents.index(node)
-                pippies=pippify(node,ref['refs'],soup,cutoff,regex)
-                for pippi in reversed(pippies):
-                    node.parent.insert(nodeidx,pippi)
-                n=node
-                node=node.findNextSibling(text=regex)
-                n.extract()
-    #for match in meat.findAll(text=re.compile("^[Aa]rticle [0-9.,]*$")):
-    #    # TODO better article naming
-    #    parent=match.parent
-    #    if not parent.string: continue
-    #    a=Tag(soup,'a',[('name',urllib.quote(unicode(match)))])
-    #    a.insert(0,parent.string)
-    #    parent.insert(0,a)
+                node=pippify(node,ref['refs'],soup,cutoff,regex,stem,tokens)
+                node=node.findNext(text=regex)
+                print 'next node',node
+    #try:
+    aregex=re.compile('^\s*Article\s+[0-9][0-9.,]*', re.I)
+    nsoup = BeautifulSoup(str(meat))
+    node=nsoup.find(text=aregex)
+    while node:
+        nodeidx=node.parent.contents.index(node)
+        name=str(re.match(aregex,node).group()).replace(' ','_')
+        a=Tag(nsoup,'a',[('name',name)])
+        node.parent.insert(nodeidx,a)
+        node=node.findNext(text=aregex)
     # TODO add header with all relevant documents
     # TODO add header tagcloud fo this document
     #result+='<div><ul class="right">'
@@ -114,6 +194,6 @@ def viewPippiDoc(request,doc=None,cutoff=7,db=None):
     #                    if len(x)>cutoff])
     #result+="</ul></div>"
     result+='<div class="doc">'
-    result+=str(meat)
+    result+=str(nsoup)
     result+='</div>'
     return HttpResponse('%s\n%s' % (CSSHEADER,unicode(result,'utf8')))

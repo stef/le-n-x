@@ -21,6 +21,7 @@ import cache as Cache
 CACHE=Cache.Cache('cache');
 from fsdb import FilesystemDB
 FSDB=FilesystemDB('db')
+import lcs
 
 import platform
 import difflib
@@ -141,7 +142,8 @@ class MatchDb:
         else:  raise AttributeError, name
 
     def getMatches(self,doc1,doc2):
-        return difflib.SequenceMatcher(None,doc1.stems,doc2.stems).get_matching_blocks()
+        return lcs.getfrags(doc1.stems,doc2.stems)
+        #return difflib.SequenceMatcher(None,doc1.stems,doc2.stems).get_matching_blocks()
 
     def storeMatch(self,doc1,doc2,match):
         if not match[2] or doc1.id==doc2.id: return (doc1,doc2)

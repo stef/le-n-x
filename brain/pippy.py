@@ -17,6 +17,7 @@
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 import document, sys, cache
+from operator import itemgetter
 CACHE=cache.Cache('cache');
 from fsdb import FilesystemDB
 FSDB=FilesystemDB('db')
@@ -33,8 +34,9 @@ def printLongFrags(self):
 db=document.MatchDb()
 d1=document.Doc(sys.argv[1].strip('\t\n'),cache=CACHE,storage=FSDB)
 d2=document.Doc(sys.argv[2].strip('\t\n'),cache=CACHE,storage=FSDB)
-db.analyze(d1,d2)
-db.docs[d1.id]=d1
-db.docs[d2.id]=d2
+#db.analyze(d1,d2)
+#db.docs[d1.id]=d1
+#db.docs[d2.id]=d2
 #db.save(storage=FSDB)
 #print printLongFrags(db)
+print "\n".join(map(lambda x: str(x)+"\n"+" ".join(d1.tokens[x[0]:x[0]+x[2]])+"\n"+" ".join(d2.tokens[x[1]:x[1]+x[2]]), sorted(db.getMatches(d1,d2), reverse=True, key=itemgetter(2)))).encode('utf8')
