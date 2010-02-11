@@ -22,15 +22,10 @@ CACHE=Cache.Cache('cache');
 from fsdb import FilesystemDB
 FSDB=FilesystemDB('db')
 
-import platform
 import difflib
 import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
-
-if(platform.machine()=='i686'):
-    import psyco
-    psyco.full()
 
 LANG='en_US'
 DICT=DICTDIR+LANG
