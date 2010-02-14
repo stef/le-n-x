@@ -24,6 +24,7 @@ from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
 import stopwords
 import nltk.tokenize # get this from http://www.nltk.org/
+from lenx.view.models import Doc, Frag, Location
 
 CSSHEADER="""<head>
 <script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"></script>
@@ -36,8 +37,19 @@ CSSHEADER="""<head>
 
 #CSSHEADER='<head><link href="http://www.ctrlc.hu/~stef/pippi.css" media="screen" rel="stylesheet" title="" type="text/css"  /></head>'
 
-class pippiForm(forms.Form):
+class PippiForm(forms.Form):
+    doc1 = forms.CharField(required=True)
+    doc2 = forms.CharField(required=True)
+
+class XpippiForm(forms.Form):
     doc = forms.CharField(required=True)
+
+class viewForm(forms.Form):
+    doc = forms.CharField(required=True)
+
+""" template to format a pippi (doc, match_pos, text) """
+def htmlPippi(doc,matches,frag):
+    return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag.decode('utf8'))
 
 def getNote(docs,soup,cutoff):
     note = Tag(soup, "span", [("class","right")])
@@ -143,10 +155,8 @@ def headRe(tokens):
 def tailRe(tokens):
     return r'(^\s*'+reduce(lambda x,y: r'(?:'+x+re.escape(y)+r')?\s*',tokens[:-1])+re.escape(tokens[-1])+')'
 
-def viewPippiDoc(request,doc=None,cutoff=7,db=None):
-    if not db:
-        return HttpResponse('Error: db none')
-    form = pippiForm(request.GET)
+def viewPippiDoc(request,doc=None,cutoff=7):
+    form = viewForm(request.GET)
     if not doc and form.is_valid():
         doc=form.cleaned_data['doc'].strip('\t\n')
     if not doc in db.docs.keys() or not int(cutoff):
@@ -197,3 +207,56 @@ def viewPippiDoc(request,doc=None,cutoff=7,db=None):
     result+=str(nsoup)
     result+='</div>'
     return HttpResponse('%s\n%s' % (CSSHEADER,unicode(result,'utf8')))
+
+def diffFrag(frag1,frag2):
+    match=True
+    i=0
+    while i<len(frag2):
+        if frag1[i].lower()!=frag2[i].lower() and match:
+            frag2[i]=u'<span class="diff">'+frag2[i]
+            match=False
+        elif frag1[i].lower()==frag2[i].lower() and not match:
+            frag2[i-1]=frag2[i-1]+u'</span>'
+            match=True
+        elif i==len(frag2)-1 and not match:
+            frag2[i-1]=frag2[i-1]+u'</span>'
+        i=i+1
+    return frag2
+
+def htmlRefs(d):
+    res=[]
+    D=Doc.objects.select_related().get(eurlexid=d)
+    for frag in list(Frag.objects.select_related().filter(docs__doc=D).order_by('-l')):
+        if frag.l < 5: break
+        columns=(int(100)/(frag.docs.exclude(doc=D).count()+1))
+        etalon=frag.docs.filter(doc=D).values()[0]
+        start=etalon['idx']
+        origfrag=eval(etalon['txt'])
+        res.append(u'<table class="frag" width="100%"><tr>')
+        res.append(u'<td style="width:%d%%;">' % columns)
+        res.append(htmlPippi(d,
+                             # BUG display all idx, not just the first
+                             # in the reference document
+                             unicode(etalon['idx']),
+                             " ".join(origfrag)))
+        res.append(u'</td>')
+        for loc in list(frag.docs.select_related().exclude(doc=D)):
+            res.append(u'<td style="width:%d%%;">' % columns)
+            f=eval(loc.txt)
+            f=" ".join(diffFrag(origfrag,f)).encode("utf8")
+            res.append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
+            res.append(u'</td>')
+        res.append(u'</tr></table><hr />')
+    return '\n'.join(res).encode('utf8')
+
+def xpippi(request):
+    form = XpippiForm(request.GET)
+    if form.is_valid():
+        doc=unicode(form.cleaned_data['doc'].strip('\t\n'))
+        import cProfile
+        #result=cProfile.runctx('htmlRefs(doc)',globals(),locals(),'/tmp/htmlrefs.prof')
+        result=htmlRefs(doc)
+        return HttpResponse('%s\n%s' % (CSSHEADER,unicode(str(result),'utf8')))
+    else:
+        return render_to_response('xpippi.html', { 'form': form, })
+
