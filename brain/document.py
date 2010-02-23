@@ -137,7 +137,7 @@ class MatchDb:
         else:  raise AttributeError, name
 
     def getMatches(self,doc1,doc2):
-        return lcs.getfrags(doc1.stems,doc2.stems)
+        return lcs.pippi(doc1.stems,doc2.stems)
         #return difflib.SequenceMatcher(None,doc1.stems,doc2.stems).get_matching_blocks()
 
     def storeMatch(self,doc1,doc2,match):
@@ -159,11 +159,13 @@ class MatchDb:
             doc1,doc2=self.storeMatch(doc1,doc2,match)
         return (doc1,doc2)
 
+    # TODO: delete
     def save(self,storage=FSDB):
         for doc in self.docs.values():
             doc.save(storage=storage)
         storage.storeVal("matches",self.db)
 
+    # TODO: delete
     def load(self,storage=FSDB,cache=CACHE):
         try:
             self.db=storage.loadVal("matches") or {}

@@ -22,7 +22,6 @@ CACHE=Cache.Cache('cache');
 
 from django.db import models
 import platform
-import difflib
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?

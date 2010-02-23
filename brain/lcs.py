@@ -18,7 +18,7 @@
 
 # src: http://chipsndips.livejournal.com/425.html
 import sys
-import random
+from view.models import Doc, Frag, Location
 
 # kludge: infinity is a very large number
 inf = 100000000
@@ -36,7 +36,6 @@ class SuffixNode(dict):
             else:
                 print "%s%s" % (ws, str[k:p+1])
                 s.Print(str,ws+"|"*(p-k+1))
-        
 
 class LCS:
     def __init__(self,str1,str2):
@@ -128,38 +127,91 @@ def find(sub,target):
         c=c+len(sub)
     return res
 
-def getfrags(d1,d2):
-    res=[]
-    d1=[x or ('!1@3#@@%4%$#^7*(',) for x in d1]
-    doc1=d1+['zAq!2WsX']
-    d2=[x or ('!1@3#@@%4%$#^7*(',) for x in d2]
-    doc2=d2+['XsW@!qAz']
-    frag=LCS(doc1,doc2).LongestCommonSubstring()
-    while frag:
-        print 'asdf',frag
-        d1pos=find(frag,d1)
-        d2pos=find(frag,d2)
-        pippi=(d1pos,d2pos,len(frag))
-        res.append( pippi )
-        print "pippi",pippi
-        dels=reversed(find(frag,doc1))
-        for pos in dels:
-            print pos,doc1[pos:pos+len(frag)]
-            del doc1[pos:pos+len(frag)]
-        dels=reversed(find(frag,doc2))
-        for pos in dels:
-            print pos,doc2[pos:pos+len(frag)]
-            del doc2[pos:pos+len(frag)]
-        frag=LCS(doc1,doc2).LongestCommonSubstring()
-    return [() if x==('!1@3#@@%4%$#^7*(',) else x for x in res]
+
+def getACS(str,st,d):
+    for n in st:
+        i,j,s = st[n]
+        if(j<inf) and s:
+            d=getACS(str,s,d)
+            l=j+1-i
+            if not d.has_key(j) or l>d[j]['l']:
+                d[j]={
+                    'l':l,
+                    'pos':[x[0]-l for x in s.values()],
+                    'frag':str[i:j+1],
+                    }
+    return d
+
+def getDoc(doc):
+    d, created = Doc.objects.get_or_create(eurlexid=doc)
+    if created:
+        #print d
+        d.save()
+    return d
+
+def getLoc(d,pos,l):
+    txt=unicode(d.gettokens()[0][pos:pos+l])
+    loc, created = Location.objects.get_or_create(doc=d,idx=pos,txt=txt)
+    if created:
+        #print loc
+        loc.save()
+    return loc
+
+def getFrag(stem):
+    frag, created = Frag.objects.get_or_create(frag=unicode(stem),l=len(stem))
+    if created:
+        #print frag
+        frag.save()
+    return frag
+
+def pippi(d1,d2,store=True):
+    doc1=[x or ('!1@3#@@%4%$#^7*(',) for x in d1]+['zAq!2WsX']
+    doc2=[x or ('!1@3#@@%4%$#^7*(',) for x in d2]+['XsW@!qAz']
+    D1=getDoc(sys.argv[1])
+    D2=getDoc(sys.argv[2])
+
+    frag=LCS(doc1,doc2)
+    res={}
+    for m in getACS(frag.str,frag.root,{}).values():
+        a=[]
+        b=[]
+        for p in m['pos']:
+            if p<len(doc1):
+                a.append(p)
+            else:
+                b.append(p-len(doc1))
+        if a and b:
+            stem=tuple([() if x==('!1@3#@@%4%$#^7*(',) else x for x in m['frag']])
+            res[stem]=(a,b)
+            l=len(stem)
+            if store and l>1:
+                frag=getFrag(stem)
+                for p in a:
+                    loc=getLoc(D1,p,l)
+                    frag.docs.add(loc)
+                for p in b:
+                    loc=getLoc(D2,p,l)
+                    frag.docs.add(loc)
+                frag.save()
+    return res
 
 if __name__ == "__main__":
-    import document, sys, cache
+    import document, cache
+    import pprint
+
     CACHE=cache.Cache('../cache');
+    d1=document.Doc(sys.argv[1].strip('\t\n'),cache=CACHE)
+    d2=document.Doc(sys.argv[2].strip('\t\n'),cache=CACHE)
+    #CACHE=cache.Cache('../tmp');
+    #d1=document.Doc('test1.html'.strip('\t\n'),cache=CACHE)
+    #d2=document.Doc('test2.html'.strip('\t\n'),cache=CACHE)
 
-    #d1=document.Doc(sys.argv[1].strip('\t\n'),cache=CACHE)
-    #d2=document.Doc(sys.argv[2].strip('\t\n'),cache=CACHE)
-    d1=document.Doc('test1.html'.strip('\t\n'),cache=CACHE)
-    d2=document.Doc('test2.html'.strip('\t\n'),cache=CACHE)
+    from operator import itemgetter
+    topfrags=[ x for x in sorted( pippi(d1.stems,d2.stems,store=False).items(),
+                                 reverse=True,
+                                 cmp=lambda x,y: cmp(len(x[0]),len(y[0])))
+                if len(x[0])>0 ]
+    print pprint.pprint(topfrags)
 
-    print getfrags(d1.tokens,d2.tokens)
+    #print pprint.pprint(frag.root)+"\n"+frag.LongestCommonSubstring()
+    #print getfrags(d1.tokens,d2.tokens)
