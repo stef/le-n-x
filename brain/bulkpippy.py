@@ -4,8 +4,6 @@ from lenx import settings
 from lenx.brain import lcs
 setup_environ(settings)
 import sys, os
-import lenx.brain.cache as Cache
-CACHE=Cache.Cache('../cache');
 
 docs={}
 
