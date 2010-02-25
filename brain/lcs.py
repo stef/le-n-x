@@ -17,7 +17,6 @@
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 # src: http://chipsndips.livejournal.com/425.html
-import sys
 from lenx.view.models import Doc, Frag, Location
 
 # kludge: infinity is a very large number
@@ -165,10 +164,10 @@ def getFrag(stem):
     return frag
 
 def pippi(d1,d2,store=True):
-    doc1=[x or ('!1@3#@@%4%$#^7*(',) for x in d1]+['zAq!2WsX']
-    doc2=[x or ('!1@3#@@%4%$#^7*(',) for x in d2]+['XsW@!qAz']
-    D1=getDoc(sys.argv[1])
-    D2=getDoc(sys.argv[2])
+    D1=getDoc(d1)
+    D2=getDoc(d2)
+    doc1=[x or ('!1@3#@@%4%$#^7*(',) for x in D1.getstems()[0]]+['zAq!2WsX']
+    doc2=[x or ('!1@3#@@%4%$#^7*(',) for x in D2.getstems()[0]]+['XsW@!qAz']
 
     frag=LCS(doc1,doc2)
     res={}
@@ -196,22 +195,12 @@ def pippi(d1,d2,store=True):
     return res
 
 if __name__ == "__main__":
-    import document, cache
     import pprint
-
-    CACHE=cache.Cache('../cache');
-    d1=document.Doc(sys.argv[1].strip('\t\n'),cache=CACHE)
-    d2=document.Doc(sys.argv[2].strip('\t\n'),cache=CACHE)
-    #CACHE=cache.Cache('../tmp');
-    #d1=document.Doc('test1.html'.strip('\t\n'),cache=CACHE)
-    #d2=document.Doc('test2.html'.strip('\t\n'),cache=CACHE)
-
-    from operator import itemgetter
-    topfrags=[ x for x in sorted( pippi(d1.stems,d2.stems,store=False).items(),
+    import sys
+    d1 =sys.argv[1].strip('\t\n')
+    d2=sys.argv[2].strip('\t\n')
+    topfrags=[ x for x in sorted( pippi(d1,d2,store=False).items(),
                                  reverse=True,
                                  cmp=lambda x,y: cmp(len(x[0]),len(y[0])))
                 if len(x[0])>0 ]
     print pprint.pprint(topfrags)
-
-    #print pprint.pprint(frag.root)+"\n"+frag.LongestCommonSubstring()
-    #print getfrags(d1.tokens,d2.tokens)

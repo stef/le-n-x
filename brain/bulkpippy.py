@@ -3,7 +3,7 @@ from django.core.management import setup_environ
 from lenx import settings
 from brain import lcs
 setup_environ(settings)
-import document, sys, os
+import sys, os
 import cache as Cache
 CACHE=Cache.Cache('../cache');
 

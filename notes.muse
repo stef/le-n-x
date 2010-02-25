@@ -1,0 +1,65 @@
+** pippies
+ - if the Korea document is in the corpus, as well as Candad, xpippi should find IPRED1art8 in both 
+   http://euwiki.org/2004/48/EC#Article_8 in http://euwiki.org/FTA/Korea#ARTICLE_10.45
+   check out the diff at "line 59" here: http://euwiki.org/index.php?title=FTA%2FKorea%2FEU_Directives&diff=2950&oldid=2949
+   > Korea contains:
+   >
+   >   ARTICLE 10.45
+   >
+   >   RIGHT OF INFORMATION
+   >
+   >   1. Each Party shall ensure that, during civil proceedings concerning
+   >   an infringement of an intellectual property right and in response to a
+   >   justified and proportionate request of the claimant, the competent
+   >   judicial authorities may order the infringer and/or any other person
+   >   which is party to a litigation or a witness therein to provide
+   >   information on the origin and distribution networks of the goods or
+   >   services which infringe an intellectual property right.
+   >
+   >
+   >
+   > IPRED1 contains (CELEX:32004L0048R(01):EN:HTML)
+   >
+   >    Article 8
+   >
+   >    Right of information
+   >
+   >    1.Member States shall ensure that, in the context of proceedings
+   >    concerning an infringement of an intellectual property right and in
+   >    response to a justified and proportionate request of the claimant,
+   >    the competent judicial authorities may order that information on the
+   >    origin and distribution networks of the goods or services which
+   >    infringe an intellectual property right be provided by the infringer
+   >    and/or any other person who:
+   >
+   >
+   > pippi should find the longstrings here
+
+** Stemmers
+ - http://snowball.tartarus.org/: this also has an excellent collection of stopwords for most european languages: http://snowball.tartarus.org/algorithms/
+
+** nlp
+ - document classification with nltk: http://nltk.googlecode.com/svn/trunk/doc/book/ch06.html#document-classification
+ - nltk module documentation: http://docs.huihoo.com/nltk/0.9.5/api/module-tree.html
+ - abstract clusterer: http://presbrey.mit.edu:1234/nltk.cluster.util.html#VectorSpace
+ - another one: http://dev.cs.uni-magdeburg.de/misc/nltk/api/nltk.cluster.gaac.GroupAverageAgglomerative-class.html
+ - a very inspiring scientific publication on datamining texts: http://findarticles.com/p/articles/mi_m1387/is_1_48/ai_57046531/
+ - some php based pippifier: http://sourceforge.net/projects/phplsa/
+ - Random Indexing (from 2nd pippi irc meeting): http://www.sics.se/~mange/random_indexing.html
+ - Text Retrieval Conference (from 2nd pippi irc meeting): http://trec.nist.gov/
+
+** things to parse
+ - parlamentiary questions: http://www.europarl.europa.eu/QP-WEB/home.jsp?&language=EN
+ - oeil: http://www.europarl.europa.eu/oeil/
+ - this can be a good source for clustering documents: http://eur-lex.europa.eu/AccordView.do?ihmlang=en&rep=11 this example shows all tradeagreements.
+ - ecj case law: http://eur-lex.europa.eu/JURISIndex.do?ihmlang=en
+ - that's all the international agreements classified: http://eur-lex.europa.eu/RECH_accord.do?ihmlang=en&mode=rep
+
+** storage backend
+ - http://docs.python.org/library/shelve.html
+
+** LCS
+ - python difflib is buggy: http://bugs.python.org/issue2986, http://bugs.python.org/issue4622, http://bugs.python.org/issue1528074, http://bytes.com/topic/python/answers/802008-bug-difflib-module-find_longest_match, 
+
+ - wtf suffix tree: http://en.wikipedia.org/wiki/Suffix_tree
+ - http://wordaligned.org/articles/longest-common-subsequence
