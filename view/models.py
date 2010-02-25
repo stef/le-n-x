@@ -18,7 +18,7 @@
 
 DICTDIR='/usr/share/hunspell/'
 from lenx.brain import cache as Cache
-CACHE=Cache.Cache('cache');
+CACHE=Cache.Cache('../cache');
 
 from django.db import models
 import platform

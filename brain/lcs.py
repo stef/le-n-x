@@ -163,9 +163,7 @@ def getFrag(stem):
         frag.save()
     return frag
 
-def pippi(d1,d2,store=True):
-    D1=getDoc(d1)
-    D2=getDoc(d2)
+def pippi(D1,D2,store=True):
     doc1=[x or ('!1@3#@@%4%$#^7*(',) for x in D1.getstems()[0]]+['zAq!2WsX']
     doc2=[x or ('!1@3#@@%4%$#^7*(',) for x in D2.getstems()[0]]+['XsW@!qAz']
 
@@ -197,7 +195,7 @@ def pippi(d1,d2,store=True):
 if __name__ == "__main__":
     import pprint
     import sys
-    d1 =sys.argv[1].strip('\t\n')
+    d1=sys.argv[1].strip('\t\n')
     d2=sys.argv[2].strip('\t\n')
     topfrags=[ x for x in sorted( pippi(d1,d2,store=False).items(),
                                  reverse=True,
