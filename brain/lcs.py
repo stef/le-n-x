@@ -18,7 +18,7 @@
 
 # src: http://chipsndips.livejournal.com/425.html
 import sys
-from view.models import Doc, Frag, Location
+from lenx.view.models import Doc, Frag, Location
 
 # kludge: infinity is a very large number
 inf = 100000000
