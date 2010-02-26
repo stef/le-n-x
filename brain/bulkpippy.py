@@ -14,19 +14,18 @@ def getDoc(doc):
         docs[doc].save()
     return docs[doc]
 
+fraglen=len(Frag.objects.all())
+doclen=len(Doc.objects.all())
+loclen=len(Location.objects.all())
 for line in sys.stdin:
-    fraglen=len(Frag.objects.all())
-    doclen=len(Doc.objects.all())
-    loclen=len(Location.objects.all())
-
     print line
     (doc1,doc2)=eval(line)
     d1=getDoc(doc1)
     d2=getDoc(doc2)
     lcs.pippi(d1,d2)
 
-    print 'added frags',len(Frag.objects.all())-fraglen
-    print 'added docs',len(Doc.objects.all())-doclen
-    print 'added locations', len(Location.objects.all())-loclen
-    #print Doc.objects.all()
+print 'added frags',len(Frag.objects.all())-fraglen
+print 'added docs',len(Doc.objects.all())-doclen
+print 'added locations', len(Location.objects.all())-loclen
+#print Doc.objects.all()
 
