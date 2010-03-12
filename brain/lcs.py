@@ -141,28 +141,6 @@ def getACS(str,st,d):
                     }
     return d
 
-def getDoc(doc):
-    d, created = Doc.objects.get_or_create(eurlexid=doc)
-    if created:
-        #print d
-        d.save()
-    return d
-
-def getLoc(d,pos,l):
-    txt=unicode(d.gettokens()[0][pos:pos+l])
-    loc, created = Location.objects.get_or_create(doc=d,idx=pos,txt=txt)
-    if created:
-        #print loc
-        loc.save()
-    return loc
-
-def getFrag(stem):
-    frag, created = Frag.objects.get_or_create(frag=unicode(stem),l=len(stem))
-    if created:
-        #print frag
-        frag.save()
-    return frag
-
 def pippi(D1,D2,store=True):
     doc1=[x or ('!1@3#@@%4%$#^7*(',) for x in D1.getstems()[0]]+['zAq!2WsX']
     doc2=[x or ('!1@3#@@%4%$#^7*(',) for x in D2.getstems()[0]]+['XsW@!qAz']
@@ -182,12 +160,12 @@ def pippi(D1,D2,store=True):
             res[stem]=(a,b)
             l=len(stem)
             if store and l>1:
-                frag=getFrag(stem)
+                frag=Frag.getFrag(stem)
                 for p in a:
-                    loc=getLoc(D1,p,l)
+                    loc=Location.getLoc(D1,p,l)
                     frag.docs.add(loc)
                 for p in b:
-                    loc=getLoc(D2,p,l)
+                    loc=Location.getLoc(D2,p,l)
                     frag.docs.add(loc)
                 frag.save()
     return res
@@ -195,8 +173,8 @@ def pippi(D1,D2,store=True):
 if __name__ == "__main__":
     import pprint
     import sys
-    d1=sys.argv[1].strip('\t\n')
-    d2=sys.argv[2].strip('\t\n')
+    d1=Doc.getDoc(sys.argv[1].strip('\t\n'))
+    d2=Doc.getDoc(sys.argv[2].strip('\t\n'))
     topfrags=[ x for x in sorted( pippi(d1,d2,store=False).items(),
                                  reverse=True,
                                  cmp=lambda x,y: cmp(len(x[0]),len(y[0])))

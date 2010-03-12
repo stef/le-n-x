@@ -1,6 +1,8 @@
-<link href="http://www.ctrlc.hu/~stef/pippi.css" media="screen" rel="stylesheet" title="" type="text/css"  />
+{% extends "base.html" %}
+{% block main %}
 <h1>Get overall pippies</h1>
-<form action="/xpippi/" method="get">
+<form action="/xpippi" method="post">
   {{ form.as_p }}
 <input type="submit" value="getit" />
 </form>
+{% endblock %}

@@ -16,15 +16,15 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django import forms
 from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
-import stopwords
+from brain import stopwords
 import nltk.tokenize # get this from http://www.nltk.org/
-from lenx.view.models import Doc, Frag, Location
+from models import Doc, Frag, Location
 
 CSSHEADER="""<head>
 <script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"></script>
@@ -49,7 +49,7 @@ class viewForm(forms.Form):
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
-    return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag.decode('utf8'))
+    return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag)
 
 def getNote(docs,soup,cutoff):
     note = Tag(soup, "span", [("class","right")])
@@ -243,20 +243,22 @@ def htmlRefs(d):
         for loc in list(frag.docs.select_related().exclude(doc=D)):
             res.append(u'<td style="width:%d%%;">' % columns)
             f=eval(loc.txt)
-            f=" ".join(diffFrag(origfrag,f)).encode("utf8")
+            f=" ".join(diffFrag(origfrag,f))
             res.append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
             res.append(u'</td>')
         res.append(u'</tr></table><hr />')
     return '\n'.join(res).encode('utf8')
 
-def xpippi(request):
-    form = XpippiForm(request.GET)
-    if form.is_valid():
-        doc=unicode(form.cleaned_data['doc'].strip('\t\n'))
-        import cProfile
-        #result=cProfile.runctx('htmlRefs(doc)',globals(),locals(),'/tmp/htmlrefs.prof')
-        result=htmlRefs(doc)
-        return HttpResponse('%s\n%s' % (CSSHEADER,unicode(str(result),'utf8')))
-    else:
-        return render_to_response('xpippi.html', { 'form': form, })
+def xpippiFormView(request):
+     if request.method == 'POST':
+         form = XpippiForm(request.POST)
+         if form.is_valid():
+             return HttpResponseRedirect("/xpippi/%s" % form.cleaned_data['doc'])
+     else:
+        form = XpippiForm()
+     return render_to_response('xpippi.html', { 'form': form, })
+
+def xpippi(request, doc):
+    result=htmlRefs(doc)
+    return HttpResponse('%s\n%s' % (CSSHEADER,unicode(str(result),'utf8')))
 
