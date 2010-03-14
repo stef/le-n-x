@@ -19,12 +19,12 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response
-from django import forms
 from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
 from brain import stopwords
 import nltk.tokenize # get this from http://www.nltk.org/
-from models import Doc, Frag, Location
+from view.models import Doc, Frag, Location
+from view.forms import XpippiForm, viewForm
 
 CSSHEADER="""<head>
 <script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"></script>
@@ -37,15 +37,6 @@ CSSHEADER="""<head>
 
 #CSSHEADER='<head><link href="http://www.ctrlc.hu/~stef/pippi.css" media="screen" rel="stylesheet" title="" type="text/css"  /></head>'
 
-class PippiForm(forms.Form):
-    doc1 = forms.CharField(required=True)
-    doc2 = forms.CharField(required=True)
-
-class XpippiForm(forms.Form):
-    doc = forms.CharField(required=True)
-
-class viewForm(forms.Form):
-    doc = forms.CharField(required=True)
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
