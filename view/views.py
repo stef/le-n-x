@@ -253,3 +253,8 @@ def xpippi(request, doc):
     result=htmlRefs(doc)
     return HttpResponse('%s\n%s' % (CSSHEADER,unicode(str(result),'utf8')))
 
+def listDocs(request):
+    docs=[]
+    for doc in Doc.objects.all():
+        docs.append(doc.eurlexid)
+    return render_to_response('corpus.html', { 'docs': docs, })
