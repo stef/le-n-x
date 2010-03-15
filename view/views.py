@@ -22,7 +22,7 @@ from django.shortcuts import render_to_response
 from django import forms
 from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
-import stopwords
+from brain import stopwords
 import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.view.models import Doc, Frag, Location
 
