@@ -1,0 +1,13 @@
+*{vertical-align:baseline;font-family:inherit;font-size:100%;border:0 none;outline:0;padding:0;margin:0;color:#000;text-decoration:none;}
+/*body{background-color:#ffffee;font:normal 1em/1.71em 'Courier New',Courier, monospace;}*/
+body{background-color:#ffffee;font:normal 1em/1.71em Georgia,"Trebuchet MS",Verdana,Arial,Helvetica,sans-serif;}
+li {margin-right:1em;font-size:90%;}
+.diff { color: red;}
+.doc { margin-left: 4%; margin-right: 350px; }
+.doc p {margin-bottom:.71em; text-align: justify;}
+.pippi { background-color: #ddddaa;}
+.right{cursor: pointer;float:right;clear:both;margin-right:-260px;width:180px;text-align:left;color:#666;padding-left:20px;font-size:90%;}
+
+#menu ul li { list-style-type: none; }
+#menu ul li a { text-decoration: none; background-color: red; color: white; }
+#menu ul li a:after { content: " |" }
