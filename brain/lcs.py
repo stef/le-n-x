@@ -17,7 +17,7 @@
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 # src: http://chipsndips.livejournal.com/425.html
-from lenx.view.models import Doc, Frag, Location
+from view.models import Doc, Frag, Location
 
 # kludge: infinity is a very large number
 inf = 100000000
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     import sys
     d1=Doc.getDoc(sys.argv[1].strip('\t\n'))
     d2=Doc.getDoc(sys.argv[2].strip('\t\n'))
-    topfrags=[ x for x in sorted( pippi(d1,d2,store=False).items(),
+    topfrags=[ x for x in sorted( pippi(d1,d2,store=True).items(),
                                  reverse=True,
                                  cmp=lambda x,y: cmp(len(x[0]),len(y[0])))
                 if len(x[0])>0 ]

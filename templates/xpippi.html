@@ -1,8 +1,14 @@
 {% extends "base.html" %}
+{% load lenx %}
 {% block main %}
-<h1>Get overall pippies</h1>
-<form action="/xpippi" method="post">
-  {{ form.as_p }}
-<input type="submit" value="getit" />
-</form>
+
+<div>
+{% for frag in frags %}
+<div class="frag">
+    {% for doc_frag in frag %}
+     <div class="frag_item">{{ doc_frag|safe }}</div>
+    {% endfor %}
+</div>
+{% endfor %}
+</div>
 {% endblock %}

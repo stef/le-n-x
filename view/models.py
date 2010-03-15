@@ -27,7 +27,7 @@ import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 
 LANG='en_US'
-DICT=DICTDIR+LANG
+DICT=DICTDIR+'/'+LANG
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
 class LockingManager(models.Manager):
