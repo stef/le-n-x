@@ -22,57 +22,25 @@ CACHE=Cache.Cache('/var/pippi0/lenx/cache');
 
 from django.db import models, connection
 import platform
-from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
+from brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 
 LANG='en_US'
-DICT=DICTDIR+LANG
+DICT=DICTDIR+'/'+LANG
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
 class LockingManager(models.Manager):
-    """ Add lock/unlock functionality to manager.
-    
-    Example::
-    
-        class Job(models.Model):
-        
-            manager = LockingManager()
-    
-            counter = models.IntegerField(null=True, default=0)
-    
-            manager = LockingManager()
-            @staticmethod
-            def do_atomic_update(job_id)
-                ''' Updates job integer, keeping it below 5 '''
-                try:
-                    # Ensure only one HTTP request can do this update at once.
-                    Job.objects.lock()
-                    
-                    job = Job.object.get(id=job_id)
-                    # If we don't lock the tables two simultanous
-                    # requests might both increase the counter
-                    # going over 5
-                    if job.counter < 5:
-                        job.counter += 1                                        
-                        job.save()
-                
-                finally:
-                    Job.objects.unlock()
-     
-    
-    """    
-
     def lock(self):
-        """ Lock table. 
-        
+        """ Lock table.
+
         Locks the object model table so that atomic update is possible.
         Simulatenous database access request pend until the lock is unlock()'ed.
-        
+
         Note: If you need to lock multiple tables, you need to do lock them
         all in one SQL clause and this function is not enough. To avoid
         dead lock, all tables must be locked in the same order.
-        
+
         See http://dev.mysql.com/doc/refman/5.0/en/lock-tables.html
         """
         cursor = connection.cursor()
@@ -81,7 +49,7 @@ class LockingManager(models.Manager):
         cursor.execute("LOCK TABLES %s WRITE" % table)
         row = cursor.fetchone()
         return row
-        
+
     def unlock(self):
         """ Unlock the table. """
         cursor = connection.cursor()
@@ -89,7 +57,6 @@ class LockingManager(models.Manager):
         cursor.execute("UNLOCK TABLES")
         row = cursor.fetchone()
         return row       
-
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc(models.Model):
@@ -100,6 +67,8 @@ class Doc(models.Model):
     stems=None
     spos=None
     wpos=None
+    title=None
+    subject=None
     objects = LockingManager()
 
     @staticmethod
@@ -123,6 +92,14 @@ class Doc(models.Model):
             # TexteOnly is the id used on eur-lex pages containing distinct docs
             self.text=[unicode(x) for x in soup.find(id='TexteOnly').findAll(text=True)]
         return self.text
+
+    def getMetaHTMLMetaData(self, attr, cache=CACHE):
+        if not self.raw:
+            self.raw = unicode(cache.fetchUrl(EURLEXURL+self.eurlexid),'utf-8')
+        soup = BeautifulSoup(self.raw.encode('utf-8'))
+        soup.findAll('meta',attrs={'name' :attr})
+        res=map(lambda x: (x and x.has_key('content') and x['content']) or "",soup.findAll('meta',attrs={'name':attr}))
+        return res
 
     def gettokens(self):
         if not self.tokens:
@@ -157,6 +134,16 @@ class Doc(models.Model):
 
     def getFrag(self,start,len):
         return " ".join(self.gettokens()[0][start:start+len]).encode('utf8')
+
+    def gettitle(self, cache=CACHE):
+        if not self.title:
+            self.title=self.getMetaHTMLMetaData('DC.description')
+        return self.title
+
+    def getsubj(self, cache=CACHE):
+        if not self.subject:
+            self.subject=self.getMetaHTMLMetaData('DC.subject')
+        return self.title
 
 class Location(models.Model):
     doc = models.ForeignKey(Doc)

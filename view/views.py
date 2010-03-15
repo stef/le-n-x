@@ -16,15 +16,16 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response
-from django import forms
+from django.conf import settings
 from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
 from brain import stopwords
 import nltk.tokenize # get this from http://www.nltk.org/
-from lenx.view.models import Doc, Frag, Location
+from view.models import Doc, Frag, Location
+from view.forms import XpippiForm, viewForm
 
 CSSHEADER="""<head>
 <script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"></script>
@@ -37,19 +38,10 @@ CSSHEADER="""<head>
 
 #CSSHEADER='<head><link href="http://www.ctrlc.hu/~stef/pippi.css" media="screen" rel="stylesheet" title="" type="text/css"  /></head>'
 
-class PippiForm(forms.Form):
-    doc1 = forms.CharField(required=True)
-    doc2 = forms.CharField(required=True)
-
-class XpippiForm(forms.Form):
-    doc = forms.CharField(required=True)
-
-class viewForm(forms.Form):
-    doc = forms.CharField(required=True)
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
-    return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag.decode('utf8'))
+    return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag)
 
 def getNote(docs,soup,cutoff):
     note = Tag(soup, "span", [("class","right")])
@@ -226,37 +218,46 @@ def diffFrag(frag1,frag2):
 def htmlRefs(d):
     res=[]
     D=Doc.objects.select_related().get(eurlexid=d)
+    i=0
+
     for frag in list(Frag.objects.select_related().filter(docs__doc=D).order_by('-l')):
-        if frag.l < 5: break
+        if frag.l < 3: break
         columns=(int(100)/(frag.docs.exclude(doc=D).count()+1))
         etalon=frag.docs.filter(doc=D).values()[0]
         start=etalon['idx']
         origfrag=eval(etalon['txt'])
-        res.append(u'<table class="frag" width="100%"><tr>')
-        res.append(u'<td style="width:%d%%;">' % columns)
-        res.append(htmlPippi(d,
+        res.append([])
+        res[i].append(htmlPippi(d,
                              # BUG display all idx, not just the first
                              # in the reference document
                              unicode(etalon['idx']),
                              " ".join(origfrag)))
-        res.append(u'</td>')
         for loc in list(frag.docs.select_related().exclude(doc=D)):
-            res.append(u'<td style="width:%d%%;">' % columns)
             f=eval(loc.txt)
-            f=" ".join(diffFrag(origfrag,f)).encode("utf8")
-            res.append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
-            res.append(u'</td>')
-        res.append(u'</tr></table><hr />')
-    return '\n'.join(res).encode('utf8')
+            f=" ".join(diffFrag(origfrag,f))
+            res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
+        i+=1
+    return res
 
-def xpippi(request):
-    form = XpippiForm(request.GET)
-    if form.is_valid():
-        doc=unicode(form.cleaned_data['doc'].strip('\t\n'))
-        import cProfile
-        #result=cProfile.runctx('htmlRefs(doc)',globals(),locals(),'/tmp/htmlrefs.prof')
+def xpippiFormView(request):
+     if request.method == 'POST':
+         form = XpippiForm(request.POST)
+         if form.is_valid():
+             return HttpResponseRedirect(settings.ROOT_URL+"/xpippi/%s" % form.cleaned_data['doc'])
+     else:
+        form = XpippiForm()
+     return render_to_response('xpippiForm.html', { 'form': form, })
+
+def xpippi(request, doc):
+    try:
         result=htmlRefs(doc)
-        return HttpResponse('%s\n%s' % (CSSHEADER,unicode(str(result),'utf8')))
-    else:
-        return render_to_response('xpippi.html', { 'form': form, })
+    except:
+        return render_to_response('error.html', {'error': '%s does not exist!' % doc})
+    return render_to_response('xpippi.html', { 'frags': result })
 
+def listDocs(request):
+    docs=[]
+    for doc in Doc.objects.all():
+        t=doc.gettitle()
+        docs.append({'id': doc.eurlexid, 'title': (t and t[0]) or doc.eurlexid, 'subject': doc.getsubj() or ""})
+    return render_to_response('corpus.html', { 'docs': docs, })
