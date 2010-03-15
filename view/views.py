@@ -218,6 +218,7 @@ def diffFrag(frag1,frag2):
 def htmlRefs(d):
     res=[]
     D=Doc.objects.select_related().get(eurlexid=d)
+    i=0
 
     for frag in list(Frag.objects.select_related().filter(docs__doc=D).order_by('-l')):
         if frag.l < 3: break
@@ -225,22 +226,18 @@ def htmlRefs(d):
         etalon=frag.docs.filter(doc=D).values()[0]
         start=etalon['idx']
         origfrag=eval(etalon['txt'])
-        res.append(u'<table class="frag" width="100%"><tr>')
-        res.append(u'<td style="width:%d%%;">' % columns)
-        res.append(htmlPippi(d,
+        res.append([])
+        res[i].append(htmlPippi(d,
                              # BUG display all idx, not just the first
                              # in the reference document
                              unicode(etalon['idx']),
                              " ".join(origfrag)))
-        res.append(u'</td>')
         for loc in list(frag.docs.select_related().exclude(doc=D)):
-            res.append(u'<td style="width:%d%%;">' % columns)
             f=eval(loc.txt)
             f=" ".join(diffFrag(origfrag,f))
-            res.append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
-            res.append(u'</td>')
-        res.append(u'</tr></table><hr />')
-    return '\n'.join(res).encode('utf8')
+            res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
+        i+=1
+    return res
 
 def xpippiFormView(request):
      if request.method == 'POST':
@@ -249,12 +246,12 @@ def xpippiFormView(request):
              return HttpResponseRedirect(settings.ROOT_URL+"/xpippi/%s" % form.cleaned_data['doc'])
      else:
         form = XpippiForm()
-     return render_to_response('xpippi.html', { 'form': form, })
+     return render_to_response('xpippiForm.html', { 'form': form, })
 
 def xpippi(request, doc):
     try:
         result=htmlRefs(doc)
     except:
         return render_to_response('error.html', {'error': '%s does not exist!' % doc})
-    return HttpResponse('%s\n%s' % (CSSHEADER,unicode(str(result),'utf8')))
+    return render_to_response('xpippi.html', { 'frags': result })
 

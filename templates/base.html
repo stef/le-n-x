@@ -16,10 +16,14 @@
 <body>
     <div id="wrapper">
      <div id="header">
-    </div>
-    <div id="menu">
-        {% block left %}
-        {% endblock %}
+      {% block header %}
+       <h1>Pippi Longstrings</h1>
+       <div id="menu">
+        <ul>
+         <li><a href="{% root_url %}/xpippi">Xpippi</a></li>
+        </ul>
+       </div>
+      {% endblock %}
     </div>
     <div id="main">
         {% block main %}
