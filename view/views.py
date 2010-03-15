@@ -220,7 +220,7 @@ def htmlRefs(d):
     D=Doc.objects.select_related().get(eurlexid=d)
 
     for frag in list(Frag.objects.select_related().filter(docs__doc=D).order_by('-l')):
-        if frag.l < 5: break
+        if frag.l < 3: break
         columns=(int(100)/(frag.docs.exclude(doc=D).count()+1))
         etalon=frag.docs.filter(doc=D).values()[0]
         start=etalon['idx']
