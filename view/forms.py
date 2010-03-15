@@ -1,5 +1,4 @@
 from django import forms
-from models import Posts, Comments, Tags
 from datetime import datetime
 from django.conf import settings
 

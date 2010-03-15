@@ -19,6 +19,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response
+from django.conf import settings
 from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
 from brain import stopwords
@@ -217,6 +218,7 @@ def diffFrag(frag1,frag2):
 def htmlRefs(d):
     res=[]
     D=Doc.objects.select_related().get(eurlexid=d)
+
     for frag in list(Frag.objects.select_related().filter(docs__doc=D).order_by('-l')):
         if frag.l < 5: break
         columns=(int(100)/(frag.docs.exclude(doc=D).count()+1))
@@ -244,12 +246,15 @@ def xpippiFormView(request):
      if request.method == 'POST':
          form = XpippiForm(request.POST)
          if form.is_valid():
-             return HttpResponseRedirect("/xpippi/%s" % form.cleaned_data['doc'])
+             return HttpResponseRedirect(settings.ROOT_URL+"/xpippi/%s" % form.cleaned_data['doc'])
      else:
         form = XpippiForm()
      return render_to_response('xpippi.html', { 'form': form, })
 
 def xpippi(request, doc):
-    result=htmlRefs(doc)
+    try:
+        result=htmlRefs(doc)
+    except:
+        return render_to_response('error.html', {'error': '%s does not exist!' % doc})
     return HttpResponse('%s\n%s' % (CSSHEADER,unicode(str(result),'utf8')))
 
