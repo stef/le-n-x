@@ -255,3 +255,8 @@ def xpippi(request, doc):
         return render_to_response('error.html', {'error': '%s does not exist!' % doc})
     return render_to_response('xpippi.html', { 'frags': result })
 
+def listDocs(request):
+    docs=[]
+    for doc in Doc.objects.all():
+        docs.append(doc.eurlexid)
+    return render_to_response('corpus.html', { 'docs': docs, })

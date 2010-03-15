@@ -16,9 +16,9 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-DICTDIR='/usr/local/home/stef/lenx/dict/'
+DICTDIR='/usr/share/myspell/dicts'
 from brain import cache as Cache
-CACHE=Cache.Cache('/var/pippi0/lenx/cache');
+CACHE=Cache.Cache('./cache');
 
 from django.db import models, connection
 import platform
@@ -27,7 +27,7 @@ import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 
 LANG='en_US'
-DICT=DICTDIR+LANG
+DICT=DICTDIR+'/'+LANG
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
 class LockingManager(models.Manager):
