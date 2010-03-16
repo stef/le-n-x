@@ -22,10 +22,10 @@ from django.shortcuts import render_to_response
 from django.conf import settings
 from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
-from brain import stopwords
+from lenx.brain import stopwords
 import nltk.tokenize # get this from http://www.nltk.org/
-from view.models import Doc, Frag, Location
-from view.forms import XpippiForm, viewForm
+from lenx.view.models import Doc, Frag, Location
+from lenx.view.forms import XpippiForm, viewForm
 
 CSSHEADER="""<head>
 <script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"></script>

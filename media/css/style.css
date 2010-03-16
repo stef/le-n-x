@@ -1,6 +1,6 @@
 body { border: 0; padding: 0; }
 img { border: 0; }
-div#wrapper { margin: 0; position: relative; background: #FFFFFF; border: 8px solid #0088DD; -moz-border-radius: 1em;  }
+div#wrapper { margin: 0; position: relative; background: #FFFFFF; border: 8px solid #0088DD; -moz-border-radius: 1em; -webkit-border-radius: 1em;  }
 div#header { height: 80px; padding: 0; margin: 0; background: transparent; background-color: #0088DD; }
 div#header h1 { padding: 0; color: #FFFFFF; margin: 0; }
 div#menu ul { float: right; margin: 0; padding: 0; }
