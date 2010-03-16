@@ -217,12 +217,11 @@ def diffFrag(frag1,frag2):
 
 def htmlRefs(d):
     res=[]
-    D=Doc.objects.select_related().get(eurlexid=d)
     i=0
 
-    for frag in list(Frag.objects.select_related().filter(docs__doc=D).distinct().order_by('-l')):
+    for frag in list(Frag.objects.select_related().filter(docs__doc=d).distinct().order_by('-l')):
         if frag.l < 3: break
-        etalon=frag.docs.filter(doc=D).values()[0]
+        etalon=frag.docs.filter(doc=d).values()[0]
         start=etalon['idx']
         origfrag=eval(etalon['txt'])
         res.append([])
@@ -231,7 +230,7 @@ def htmlRefs(d):
                              # in the reference document
                              unicode(etalon['idx']),
                              " ".join(origfrag)))
-        for loc in list(frag.docs.select_related().exclude(doc=D)):
+        for loc in list(frag.docs.select_related().exclude(doc=d)):
             f=eval(loc.txt)
             f=" ".join(diffFrag(origfrag,f))
             res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
@@ -249,10 +248,11 @@ def xpippiFormView(request):
 
 def xpippi(request, doc):
     try: 
-        result=htmlRefs(doc)
+        d=Doc.objects.select_related().get(eurlexid=doc)
     except:
         return render_to_response('error.html', {'error': '%s does not exist!' % doc})
-    return render_to_response('xpippi.html', { 'frags': result, 'doc_title': doc })
+    result=htmlRefs(d)
+    return render_to_response('xpippi.html', { 'frags': result, 'doc': d })
 
 def listDocs(request):
     docs=[]
