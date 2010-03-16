@@ -220,9 +220,8 @@ def htmlRefs(d):
     D=Doc.objects.select_related().get(eurlexid=d)
     i=0
 
-    for frag in list(Frag.objects.select_related().filter(docs__doc=D).order_by('-l')):
+    for frag in list(Frag.objects.select_related().filter(docs__doc=D).distinct().order_by('-l')):
         if frag.l < 3: break
-        columns=(int(100)/(frag.docs.exclude(doc=D).count()+1))
         etalon=frag.docs.filter(doc=D).values()[0]
         start=etalon['idx']
         origfrag=eval(etalon['txt'])
@@ -249,11 +248,11 @@ def xpippiFormView(request):
      return render_to_response('xpippiForm.html', { 'form': form, })
 
 def xpippi(request, doc):
-    try:
+    try: 
         result=htmlRefs(doc)
     except:
         return render_to_response('error.html', {'error': '%s does not exist!' % doc})
-    return render_to_response('xpippi.html', { 'frags': result })
+    return render_to_response('xpippi.html', { 'frags': result, 'doc_title': doc })
 
 def listDocs(request):
     docs=[]
