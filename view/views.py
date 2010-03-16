@@ -259,5 +259,5 @@ def listDocs(request):
     docs=[]
     for doc in Doc.objects.all():
         t=doc.gettitle()
-        docs.append({'id': doc.eurlexid, 'title': (t and t[0]) or doc.eurlexid, 'subject': doc.getsubj() or ""})
+        docs.append({'id': doc.eurlexid, 'title': t or doc.eurlexid, 'subject': doc.getsubj() or ""})
     return render_to_response('corpus.html', { 'docs': docs, })
