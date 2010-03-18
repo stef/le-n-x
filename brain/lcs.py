@@ -162,12 +162,9 @@ def pippi(D1,D2,store=True):
             if store and l>1:
                 frag=Frag.getFrag(stem)
                 for p in a:
-                    loc=Location.getLoc(D1,p,l)
-                    frag.docs.add(loc)
+                    loc=Location.getLoc(D1,p,l,frag)
                 for p in b:
-                    loc=Location.getLoc(D2,p,l)
-                    frag.docs.add(loc)
-                frag.save()
+                    loc=Location.getLoc(D2,p,l,frag)
     return res
 
 if __name__ == "__main__":

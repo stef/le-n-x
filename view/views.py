@@ -147,6 +147,22 @@ def headRe(tokens):
 def tailRe(tokens):
     return r'(^\s*'+reduce(lambda x,y: r'(?:'+x+re.escape(y)+r')?\s*',tokens[:-1])+re.escape(tokens[-1])+')'
 
+def docView(request,doc=None,cutoff=7):
+    if not doc or not int(cutoff):
+        return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
+    try:
+        d = Doc.objects.get(eurlexid=doc)
+    except:
+        return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
+    soup = BeautifulSoup(d.raw)
+    c=soup.find(id='TexteOnly')
+    # TODO
+    #relDocs = []
+    #for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid=d).distinct().order_by('-l')):
+    #    relDocs.append(frag.doc_set.exclude(eurlexid=doc))
+    return render_to_response('docView.html', {'doc': d, 'content': c})
+    
+
 def viewPippiDoc(request,doc=None,cutoff=7):
     form = viewForm(request.GET)
     if not doc and form.is_valid():
@@ -154,7 +170,7 @@ def viewPippiDoc(request,doc=None,cutoff=7):
     if not doc in db.docs.keys() or not int(cutoff):
         return render_to_response('viewPippiDoc.html', { 'form': form, })
     result=""
-    d=db.docs[doc]
+    d=Doc.objects.get(eurlexid=doc)
     soup = BeautifulSoup(d.raw)
     # TexteOnly is the id used on eur-lex pages containing distinct docs
     meat=soup.find(id='TexteOnly')
@@ -218,22 +234,22 @@ def diffFrag(frag1,frag2):
 def htmlRefs(d):
     res=[]
     i=0
-
-    for frag in list(Frag.objects.select_related().filter(docs__doc=d).distinct().order_by('-l')):
+    # buggy ordering
+    for frag in list(Doc.objects.get(eurlexid=d).frags.distinct().order_by('location.pos')):
         if frag.l < 3: break
-        etalon=frag.docs.filter(doc=d).values()[0]
-        start=etalon['idx']
-        origfrag=eval(etalon['txt'])
+        etalon=frag.location_set.all()[0]
+        start=etalon.pos
+        origfrag=eval(etalon.txt)
         res.append([])
         res[i].append(htmlPippi(d,
                              # BUG display all idx, not just the first
                              # in the reference document
-                             unicode(etalon['idx']),
+                             unicode(etalon.pos),
                              " ".join(origfrag)))
-        for loc in list(frag.docs.select_related().exclude(doc=d)):
+        for loc in list(frag.location_set.exclude(doc__eurlexid=d)):
             f=eval(loc.txt)
             f=" ".join(diffFrag(origfrag,f))
-            res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
+            res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.pos), f))
         i+=1
     return res
 

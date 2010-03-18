@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load lenx %}
+{% block main %}
+
+<h2>docView for {{ doc.title }} ({{ doc.eurlexid }})</h2>
+
+{{ content|safe }}
+
+
+{% endblock %}

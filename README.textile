@@ -1,6 +1,6 @@
 le-n-x is a set of tools for navigating legislation.
 
-(C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
+(C) 2009-2010 by Stefan Marsiske <stefan.marsiske@gmail.com>, Adam Tauber <asciimoo@gmail.com>
 Licensed under the GNU Affero General Public License v3
 
  * arach: artful shell script to scrape eur-lex legislative texts.

@@ -205,6 +205,28 @@ class LockingManager(models.Manager):
         row = cursor.fetchone()
         return row
 
+class Frag(models.Model):
+    frag = models.TextField()
+    l = models.IntegerField()
+    objects = LockingManager()
+    @staticmethod
+    def getFrag(stem):
+      try:
+         Frag.objects.lock()
+         res, created = Frag.objects.get_or_create(frag=unicode(stem),l=len(stem))
+         if created:
+           res.save()
+      finally:
+         Frag.objects.unlock()
+      return res
+
+    def getStr(self):
+        return " ".join(eval(self.frag)).encode('utf8')
+
+    def __unicode__(self):
+        return unicode(self.frag)+":"+unicode(self.l)+"\n"+unicode(self.doc_set.all())
+
+
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc(models.Model):
     eurlexid = models.CharField(unique=True,max_length=128)
@@ -216,6 +238,7 @@ class Doc(models.Model):
     wpos=PickledObjectField(default=None,null=True)
     title=models.TextField(default=None,max_length=512,null=True)
     subject=models.CharField(default=None,max_length=512,null=True)
+    frags = models.ManyToManyField(Frag, through='Location')
     objects = LockingManager()
 
     @staticmethod
@@ -298,42 +321,22 @@ class Doc(models.Model):
 
 class Location(models.Model):
     doc = models.ForeignKey(Doc)
-    idx = models.IntegerField()
+    frag = models.ForeignKey(Frag)
+    pos = models.IntegerField()
     txt = models.TextField()
     objects = LockingManager()
+
     @staticmethod
-    def getLoc(doc,idx,l):
-      txt=unicode(doc.gettokens()[0][idx:idx+l])
+    def getLoc(doc,pos,l,frag):
+      txt=unicode(doc.gettokens()[0][pos:pos+l])
       try:
          Location.objects.lock()
-         res, created = Location.objects.get_or_create(doc=doc,idx=idx,txt=txt)
+         res, created = Location.objects.get_or_create(doc=doc,pos=pos,txt=txt,frag=frag)
          if created:
            res.save()
       finally:
          Location.objects.unlock()
       return res
     def __unicode__(self):
-        return unicode(self.doc)+"@"+str(self.idx)+"\n"+self.txt
-
-class Frag(models.Model):
-    frag = models.TextField()
-    l = models.IntegerField()
-    docs = models.ManyToManyField(Location)
-    objects = LockingManager()
-    @staticmethod
-    def getFrag(stem):
-      try:
-         Frag.objects.lock()
-         res, created = Frag.objects.get_or_create(frag=unicode(stem),l=len(stem))
-         if created:
-           res.save()
-      finally:
-         Frag.objects.unlock()
-      return res
-
-    def getStr(self):
-        return " ".join(eval(self.frag)).encode('utf8')
-
-    def __unicode__(self):
-        return unicode(self.frag)+":"+unicode(self.l)+"\n"+unicode(self.docs.all())
+        return unicode(self.doc)+"@"+str(self.pos)+"\n"+self.txt
 

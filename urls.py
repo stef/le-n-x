@@ -10,4 +10,5 @@ urlpatterns = patterns('',
     (r'^view$', view.viewPippiDoc),
     (r'^view/(?P<cutoff>\d+)/(?P<doc>.+)/$', view.viewPippiDoc),
     (r'^view/(?P<doc>.+)/$', view.viewPippiDoc),
+    (r'^doc/(?P<doc>.+)$', view.docView),
 )
