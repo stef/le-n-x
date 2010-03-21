@@ -4,6 +4,15 @@
 
 <h2>docView for {{ doc.title }} ({{ doc.eurlexid }})</h2>
 
+<fieldset class="rel"><legend>Related Docs</legend>
+    <ul>
+    {% for dd in related %}
+        <li>{{ dd.eurlexid }}</li>
+    {% endfor %}
+    </ul>
+</fieldset>
+
+
 {{ content|safe }}
 
 
