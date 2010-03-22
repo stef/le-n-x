@@ -15,7 +15,7 @@ fieldset.rel { float: right; }
 .frag:hover  { background: #CCCCFF; }
 .diff { color: red;}
 .doc p { margin-bottom:.71em; text-align: justify;}
-.txt { width: 500px; padding-left: 10px; }
+.txt { width: 500px; padding-left: 10px; white-space: normal; }
 .pippi { background-color: #ddddaa;}
 a { text-decoration: none; color: #444444; }
 a:hover { text-decoration: underline; }
