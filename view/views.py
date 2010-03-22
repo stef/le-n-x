@@ -147,7 +147,24 @@ def headRe(tokens):
 def tailRe(tokens):
     return r'(^\s*'+reduce(lambda x,y: r'(?:'+x+re.escape(y)+r')?\s*',tokens[:-1])+re.escape(tokens[-1])+')'
 
-def docView(request,doc=None,cutoff=7):
+def getRelatedDocs(d, cutoff=3):
+    df = d.frags.filter(l__gte=cutoff).distinct()
+    pk=[]
+    for frag in df:
+        pk.append(frag.pk)
+    return Doc.objects.filter(frags__pk__in=pk).distinct().exclude(eurlexid=d.eurlexid)
+
+def getDocFrags(eid, cutoff=3):
+    # buggy ordering
+    return Doc.objects.get(eurlexid=eid).frags.filter(l__gte=cutoff).distinct().order_by('location.pos')
+
+def getFragDocs(f):
+    return Frag.objects.get(frag=f).doc_set.distinct().order_by('location.pos')
+
+def docView(request,doc=None,cutoff=4):
+    if request.method == 'GET':
+        if request.GET['cutoff']:
+            cutoff = request.GET['cutoff']
     if not doc or not int(cutoff):
         return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
     try:
@@ -156,11 +173,25 @@ def docView(request,doc=None,cutoff=7):
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
     soup = BeautifulSoup(d.raw)
     c=soup.find(id='TexteOnly')
-    # TODO
-    #relDocs = []
-    #for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid=d).distinct().order_by('-l')):
+    relDocs = getRelatedDocs(d, cutoff)
+    #origfrags = d.getstems()
+    for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid__in=[x for x in relDocs]).distinct().order_by('-l')):
+        tokens = []
+        for t in eval(frag.frag):
+            if t:
+                tokens.append(t[0])
+            else:
+                tokens.append('')
+        tokenr = "\s*".join( map(lambda x: re.escape(x), tokens))
+        regex=re.compile(tokenr, re.I | re.M)
+        #regex = re.compile('*'.join(tokens), re.I|re.M)
+        rr = c.find(text=regex)
+        while rr:
+            print tokenr
+            print rr
+            rr = rr.findNext(text=regex)
     #    relDocs.append(frag.doc_set.exclude(eurlexid=doc))
-    return render_to_response('docView.html', {'doc': d, 'content': c})
+    return render_to_response('docView.html', {'doc': d, 'content': c, 'related': relDocs})
     
 
 def viewPippiDoc(request,doc=None,cutoff=7):
@@ -231,12 +262,12 @@ def diffFrag(frag1,frag2):
         i=i+1
     return frag2
 
-def htmlRefs(d):
+def htmlRefs(d, cutoff=5):
     res=[]
+    f=[]
     i=0
-    # buggy ordering
-    for frag in list(Doc.objects.get(eurlexid=d).frags.distinct().order_by('location.pos')):
-        if frag.l < 3: break
+    #for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid=d).distinct().order_by('-l')):
+    for frag in getDocFrags(d, cutoff):
         etalon=frag.location_set.all()[0]
         start=etalon.pos
         origfrag=eval(etalon.txt)
