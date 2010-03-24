@@ -22,10 +22,10 @@ from django.shortcuts import render_to_response
 from django.conf import settings
 from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
-from brain import stopwords
+from lenx.brain import stopwords
 import nltk.tokenize # get this from http://www.nltk.org/
-from view.models import Doc, Frag, Location
-from view.forms import XpippiForm, viewForm
+from lenx.view.models import Doc, Frag, Location
+from lenx.view.forms import XpippiForm, viewForm
 
 CSSHEADER="""<head>
 <script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"></script>
@@ -147,6 +147,53 @@ def headRe(tokens):
 def tailRe(tokens):
     return r'(^\s*'+reduce(lambda x,y: r'(?:'+x+re.escape(y)+r')?\s*',tokens[:-1])+re.escape(tokens[-1])+')'
 
+def getRelatedDocs(d, cutoff=3):
+    df = d.frags.filter(l__gte=cutoff).distinct()
+    pk=[]
+    for frag in df:
+        pk.append(frag.pk)
+    return Doc.objects.filter(frags__pk__in=pk).distinct().exclude(eurlexid=d.eurlexid)
+
+def getDocFrags(eid, cutoff=3):
+    # buggy ordering
+    return Doc.objects.get(eurlexid=eid).frags.filter(l__gte=cutoff).distinct().order_by('location.pos')
+
+def getFragDocs(f):
+    return Frag.objects.get(frag=f).doc_set.distinct().order_by('location.pos')
+
+def docView(request,doc=None,cutoff=4):
+    if request.method == 'GET':
+        if request.GET['cutoff']:
+            cutoff = request.GET['cutoff']
+    if not doc or not int(cutoff):
+        return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
+    try:
+        d = Doc.objects.get(eurlexid=doc)
+    except:
+        return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
+    soup = BeautifulSoup(d.raw)
+    c=soup.find(id='TexteOnly')
+    relDocs = getRelatedDocs(d, cutoff)
+    #origfrags = d.getstems()
+    for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid__in=[x for x in relDocs]).distinct().order_by('-l')):
+        tokens = []
+        for t in eval(frag.frag):
+            if t:
+                tokens.append(t[0])
+            else:
+                tokens.append('')
+        tokenr = "\s*".join( map(lambda x: re.escape(x), tokens))
+        regex=re.compile(tokenr, re.I | re.M)
+        #regex = re.compile('*'.join(tokens), re.I|re.M)
+        rr = c.find(text=regex)
+        while rr:
+            print tokenr
+            print rr
+            rr = rr.findNext(text=regex)
+    #    relDocs.append(frag.doc_set.exclude(eurlexid=doc))
+    return render_to_response('docView.html', {'doc': d, 'content': c, 'related': relDocs})
+    
+
 def viewPippiDoc(request,doc=None,cutoff=7):
     form = viewForm(request.GET)
     if not doc and form.is_valid():
@@ -154,7 +201,7 @@ def viewPippiDoc(request,doc=None,cutoff=7):
     if not doc in db.docs.keys() or not int(cutoff):
         return render_to_response('viewPippiDoc.html', { 'form': form, })
     result=""
-    d=db.docs[doc]
+    d=Doc.objects.get(eurlexid=doc)
     soup = BeautifulSoup(d.raw)
     # TexteOnly is the id used on eur-lex pages containing distinct docs
     meat=soup.find(id='TexteOnly')
@@ -215,27 +262,25 @@ def diffFrag(frag1,frag2):
         i=i+1
     return frag2
 
-def htmlRefs(d):
+def htmlRefs(d, cutoff=5):
     res=[]
-    D=Doc.objects.select_related().get(eurlexid=d)
+    f=[]
     i=0
-
-    for frag in list(Frag.objects.select_related().filter(docs__doc=D).order_by('-l')):
-        if frag.l < 3: break
-        columns=(int(100)/(frag.docs.exclude(doc=D).count()+1))
-        etalon=frag.docs.filter(doc=D).values()[0]
-        start=etalon['idx']
-        origfrag=eval(etalon['txt'])
+    #for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid=d).distinct().order_by('-l')):
+    for frag in getDocFrags(d, cutoff):
+        etalon=frag.location_set.all()[0]
+        start=etalon.pos
+        origfrag=eval(etalon.txt)
         res.append([])
         res[i].append(htmlPippi(d,
                              # BUG display all idx, not just the first
                              # in the reference document
-                             unicode(etalon['idx']),
+                             unicode(etalon.pos),
                              " ".join(origfrag)))
-        for loc in list(frag.docs.select_related().exclude(doc=D)):
+        for loc in list(frag.location_set.exclude(doc__eurlexid=d)):
             f=eval(loc.txt)
             f=" ".join(diffFrag(origfrag,f))
-            res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.idx), f))
+            res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.pos), f))
         i+=1
     return res
 
@@ -249,15 +294,16 @@ def xpippiFormView(request):
      return render_to_response('xpippiForm.html', { 'form': form, })
 
 def xpippi(request, doc):
-    try:
-        result=htmlRefs(doc)
+    try: 
+        d=Doc.objects.select_related().get(eurlexid=doc)
     except:
         return render_to_response('error.html', {'error': '%s does not exist!' % doc})
-    return render_to_response('xpippi.html', { 'frags': result })
+    result=htmlRefs(d)
+    return render_to_response('xpippi.html', { 'frags': result, 'doc': d })
 
 def listDocs(request):
     docs=[]
     for doc in Doc.objects.all():
         t=doc.gettitle()
-        docs.append({'id': doc.eurlexid, 'title': (t and t[0]) or doc.eurlexid, 'subject': doc.getsubj() or ""})
+        docs.append({'id': doc.eurlexid, 'title': t or doc.eurlexid, 'subject': doc.getsubj() or ""})
     return render_to_response('corpus.html', { 'docs': docs, })

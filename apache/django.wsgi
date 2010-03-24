@@ -1,16 +1,13 @@
 import os, sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-sys.path = [os.path.dirname(os.path.dirname(__file__))] + sys.path # add pythonpath to
+
+apache_configuration= os.path.dirname(__file__)
+project = os.path.dirname(apache_configuration)
+workspace = os.path.dirname(project)
+sys.path.append(workspace) 
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'lenx.settings'
 import django.core.handlers.wsgi
-_application = django.core.handlers.wsgi.WSGIHandler()
-from django.conf import settings
-
-def application(environ, start_response):
-    if settings.ROOT_URL != '/':
-        environ['SCRIPT_NAME'] = settings.ROOT_URL[:-1]
-        # environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']
-    return _application(environ, start_response)
-
+application = django.core.handlers.wsgi.WSGIHandler()
 
 # Apache sites-enabled config:
 #

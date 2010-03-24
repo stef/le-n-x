@@ -10,4 +10,10 @@ urlpatterns = patterns('',
     (r'^view$', view.viewPippiDoc),
     (r'^view/(?P<cutoff>\d+)/(?P<doc>.+)/$', view.viewPippiDoc),
     (r'^view/(?P<doc>.+)/$', view.viewPippiDoc),
+    (r'^doc/(?P<doc>.+)$', view.docView),
 )
+
+if settings.DEV_SERVER:
+    urlpatterns += patterns('',
+        (r'^site_media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_PATH}),
+    )

@@ -2,7 +2,7 @@
 {% load lenx %}
 {% block main %}
 
-<div>
+<h2>Xpippi for {{ doc.title }} ({{ doc.eurlexid }})</h2>
 {% for frag in frags %}
 <div class="frag">
     {% for doc_frag in frag %}
@@ -10,5 +10,4 @@
     {% endfor %}
 </div>
 {% endfor %}
-</div>
 {% endblock %}
