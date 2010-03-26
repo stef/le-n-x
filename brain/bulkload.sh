@@ -1,7 +1,7 @@
 #!/usr/bin/env ksh
 
 batchsize=32
-JOBMAX=16
+JOBMAX=20
 tmpdir=/var/pippi0/lenx/tmp
 
 # clear batches
@@ -17,8 +17,11 @@ totaljobs=$(find ${tmpdir} -name 'job*' |  wc -l)
 i=0
 find ${tmpdir} -name 'job*' | while read batch; do
    (echo "starting batch: ${batch##${tmpdir}/job}"
-    PYTHONPATH=/usr/local/home/stef/ DJANGO_SETTINGS_MODULE="lenx.settings" python bulkpippy.py <"${batch}"
-    echo "done $i/${totaljobs} ${batch##${tmpdir}/}" ) &
+    if PYTHONPATH=/usr/local/home/stef/ DJANGO_SETTINGS_MODULE="lenx.settings" python bulkpippy.py <"${batch}"; then
+        echo "done $i/${totaljobs} ${batch##${tmpdir}/}" 
+    else
+        echo "abort $i/${totaljobs} ${batch##${tmpdir}/}"
+    fi ) &
    i=$((i+1))
-   [[ -r ./bulkpippies ]] && JOBMAX=$(cat ./bulkpippis)
+   [[ -r ./bulkpippies ]] && JOBMAX=$(cat ./bulkpippies)
 done
