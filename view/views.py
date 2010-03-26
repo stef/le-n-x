@@ -307,3 +307,10 @@ def listDocs(request):
         t=doc.gettitle()
         docs.append({'id': doc.eurlexid, 'title': t or doc.eurlexid, 'subject': doc.getsubj() or ""})
     return render_to_response('corpus.html', { 'docs': docs, })
+
+def stats(request):
+    stats=[]
+    stats.append({'title': 'Total documents', 'value': Doc.objects.all().count()})
+    stats.append({'title': 'Total frags', 'value': Frag.objects.all().count()})
+    stats.append({'title': 'Total pippies', 'value': Location.objects.all().count()})
+    return render_to_response('stats.html', { 'stats': stats, })

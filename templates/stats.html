@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load lenx %}
+{% block main %}
+<h1>Stats on current Corpus</h1>
+<ul>
+{% for stat in stats %}
+<li>{{stat.title}}: {{stat.value}}</li>
+{% endfor %}
+</ul>
+{% endblock %}
