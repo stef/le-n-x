@@ -33,7 +33,18 @@ def getDoc(doc):
 for line in sys.stdin:
     (doc1,doc2)=eval(line)
     print "[%d] %s, %s" % (os.getpid(),doc1,doc2)
-    d1=getDoc(doc1)
-    d2=getDoc(doc2)
-    lcs.pippi(d1,d2)
-
+    try:
+        d1=getDoc(doc1)
+    except:
+       print "!!!!PIPPI ERROR: load doc",doc1
+       raise
+    try:
+        d2=getDoc(doc2)
+    except:
+       print "!!!!PIPPI ERROR: load doc",doc2
+       raise
+    try:
+        lcs.pippi(d1,d2)
+    except:
+       print "!!!!PIPPI ERROR: lcs",doc1,doc2
+       raise
