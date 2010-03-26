@@ -303,7 +303,7 @@ def xpippi(request, doc):
 
 def listDocs(request):
     docs=[]
-    for doc in Doc.objects.all():
+    for doc in Doc.objects.defer('eurlexid','subject','title').all():
         t=doc.gettitle()
         docs.append({'id': doc.eurlexid, 'title': t or doc.eurlexid, 'subject': doc.getsubj() or ""})
     return render_to_response('corpus.html', { 'docs': docs, })
