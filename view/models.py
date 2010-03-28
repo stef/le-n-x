@@ -16,10 +16,10 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-DICTDIR='/usr/local/home/stef/lenx/dict/'
-from lenx.brain import cache as Cache
 from django.conf import settings
-CACHE=Cache.Cache(settings.BASE_PATH+'/cache');
+DICTDIR=settings.DICT_PATH
+from lenx.brain import cache as Cache
+CACHE=Cache.Cache(settings.CACHE_PATH);
 
 from django.db import models, connection
 import platform
@@ -243,19 +243,21 @@ class Doc(models.Model):
 
     @staticmethod
     def getDoc(doc):
-        try:
-            Doc.objects.lock()
-            res, created = Doc.objects.get_or_create(eurlexid=doc)
-            if created:
-                res.gettext()
-                res.gettokens()
-                res.getstems()
-                res.gettitle()
-                res.getsubj()
-                res.save()
-        finally:
-            Doc.objects.unlock()
-        return res
+       try:
+          Doc.objects.lock()
+          res = Doc.objects.get(eurlexid=doc)
+       except Doc.DoesNotExist:
+          res = Doc.objects.create(eurlexid=doc)
+          res.save()
+       finally:
+          Doc.objects.unlock()
+       res.gettext()
+       res.gettokens()
+       res.getstems()
+       res.gettitle()
+       res.getsubj()
+       res.save()
+       return res
 
     def __unicode__(self):
         return self.eurlexid
@@ -324,7 +326,18 @@ class Location(models.Model):
     frag = models.ForeignKey(Frag)
     pos = models.IntegerField()
     txt = models.TextField()
-    other = models.ForeignKey(Doc, related_name="view_location_otherdoc")
     def __unicode__(self):
         return unicode(self.doc)+"@"+str(self.pos)+"\n"+self.txt
+    @staticmethod
+    def getLoc(doc,frag,pos,txt):
+       try:
+              Location.objects.lock()
+              res = Location.objects.get(doc=doc,frag=frag,pos=pos,txt=txt)
+       except Doc.DoesNotExist:
+           try:
+               res = Location.objects.create(doc=doc,frag=frag,pos=pos,txt=txt)
+               res.save()
+           finally:
+               Location.objects.unlock()
+       return res
 
