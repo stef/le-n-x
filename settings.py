@@ -2,8 +2,8 @@
 import os.path
 
 BASE_PATH = os.path.dirname(__file__)
-CACHE_PATH = BASE_PATH+'/cache'
-DICT_PATH = '/usr/share/hunspell'
+CACHE_PATH = '/var/pippi0/lenx/cache/'
+DICT_PATH = '/usr/local/home/stef/lenx/dict/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -17,10 +17,12 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = ''           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = ''             # Or path to database file if using sqlite3.
-DATABASE_USER = ''             # Not used with sqlite3.
-DATABASE_PASSWORD = ''         # Not used with sqlite3.
+#DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+#DATABASE_NAME = '/home/stef/tasks/lenx/pippi.db'             # Or path to database file if using sqlite3.
+DATABASE_ENGINE = 'mysql'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+DATABASE_NAME = 'pippi'             # Or path to database file if using sqlite3.
+DATABASE_USER = 'pippi'             # Not used with sqlite3.
+DATABASE_PASSWORD = '8ovFarEin'         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
@@ -43,7 +45,7 @@ USE_I18N = True
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = BASE_PATH+'/media/'
+MEDIA_ROOT = '/usr/local/home/stef/lenx/media/'
 
 ROOT_URL = ''
 
