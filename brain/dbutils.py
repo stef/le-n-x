@@ -1,3 +1,5 @@
+from django.db import models, connection
+
 # django_bulk_save.py - defer saving of django models to bulk SQL commits.
 # -------------------------------------------------------------------------
 # Version: 1.0
