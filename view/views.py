@@ -156,7 +156,7 @@ def getRelatedDocs(d, cutoff=3):
 
 def getDocFrags(eid, cutoff=3):
     # buggy ordering
-    return Doc.objects.get(eurlexid=eid).frags.filter(l__gte=cutoff).distinct().order_by('location.pos')
+    return Doc.objects.only('frags').get(eurlexid=eid).frags.filter(l__gte=cutoff).distinct().order_by('location.pos')
 
 def getFragDocs(f):
     return Frag.objects.get(frag=f).doc_set.distinct().order_by('location.pos')
@@ -267,7 +267,7 @@ def htmlRefs(d, cutoff=5):
     f=[]
     i=0
     #for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid=d).distinct().order_by('-l')):
-    for frag in getDocFrags(d, cutoff):
+    for frag in getDocFrags(d, cutoff).iterator():
         etalon=frag.location_set.all()[0]
         start=etalon.pos
         origfrag=eval(etalon.txt)
@@ -277,7 +277,7 @@ def htmlRefs(d, cutoff=5):
                              # in the reference document
                              unicode(etalon.pos),
                              " ".join(origfrag)))
-        for loc in list(frag.location_set.exclude(doc__eurlexid=d)):
+        for loc in frag.location_set.exclude(doc__eurlexid=d).iterator():
             f=eval(loc.txt)
             f=" ".join(diffFrag(origfrag,f))
             res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.pos), f))
@@ -295,7 +295,7 @@ def xpippiFormView(request):
 
 def xpippi(request, doc):
     try: 
-        d=Doc.objects.select_related().get(eurlexid=doc)
+        d=Doc.objects.select_related().defer('raw','text','tokens','stems','spos','wpos','subject').get(eurlexid=doc)
     except:
         return render_to_response('error.html', {'error': '%s does not exist!' % doc})
     result=htmlRefs(d)
@@ -303,7 +303,7 @@ def xpippi(request, doc):
 
 def listDocs(request):
     docs=[]
-    for doc in Doc.objects.defer('eurlexid','subject','title').all():
+    for doc in Doc.objects.only('eurlexid','subject','title').all().iterator():
         t=doc.gettitle()
         docs.append({'id': doc.eurlexid, 'title': t or doc.eurlexid, 'subject': doc.getsubj() or ""})
     return render_to_response('corpus.html', { 'docs': docs, })
