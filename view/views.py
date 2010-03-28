@@ -22,7 +22,7 @@ from django.shortcuts import render_to_response
 from django.conf import settings
 from BeautifulSoup import BeautifulSoup, Tag
 import re, urllib, itertools
-from lenx.brain import stopwords
+from lenx.brain import stopwords, tagcloud
 import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.view.models import Doc, Frag, Location
 from lenx.view.forms import XpippiForm, viewForm
@@ -302,10 +302,11 @@ def xpippi(request, doc):
     return render_to_response('xpippi.html', { 'frags': result, 'doc': d })
 
 def listDocs(request):
-    docs=[]
-    for doc in Doc.objects.only('eurlexid','subject','title').all().iterator():
-        t=doc.gettitle()
-        docs.append({'id': doc.eurlexid, 'title': t or doc.eurlexid, 'subject': doc.getsubj() or ""})
+    docs=[{'id': doc.eurlexid,
+           'title': doc.gettitle() or doc.eurlexid,
+           'subject': doc.getsubj() or "",
+           'tags': tagcloud.logTags(doc.getstems()[0],l=25)}
+           for doc in Doc.objects.only('eurlexid','subject','title','stems').all().iterator()]
     return render_to_response('corpus.html', { 'docs': docs, })
 
 def stats(request):

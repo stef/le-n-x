@@ -4,7 +4,15 @@
 <h1>Complete Corpus of pippi longstrings</h1>
 <ul>
 {% for doc in docs %}
-<li><a href="{% root_url %}/xpippi/{{doc.id}}">{{doc.title}}</a></li>
+    <li>
+       <a href="{% root_url %}/xpippi/{{doc.id}}">{{doc.title}}</a>
+       <div class="tagcloud">
+            {% for tag in doc.tags %}
+            <span class="size{{tag.weight}}">{{tag.tag}}</span>
+            {% endfor %}
+       </div>
+       <br style="clear: both;" />
+    </li>
 {% endfor %}
 </ul>
 {% endblock %}

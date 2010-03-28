@@ -20,3 +20,14 @@ fieldset.rel { float: right; }
 a { text-decoration: none; color: #444444; }
 a:hover { text-decoration: underline; }
 div#footer p { text-align: center; margin: 4px; font-weight: bold;  }
+.tagcloud { float: right; width: 400px; border: 1px dotted blue; }
+.size0 { font-size: .4em; }
+.size1 { font-size: .5em }
+.size2 { font-size: .6em }
+.size3 { font-size: .7em }
+.size4 { font-size: .8em }
+.size5 { font-size: .9em }
+.size6 { font-size: 1em }
+.size7 { font-size: 1.1em }
+.size8 { font-size: 1.2em }
+.size9 { font-size: 1.3em }

@@ -21,6 +21,10 @@ import nltk.tokenize
 from BeautifulSoup import BeautifulSoup
 from operator import itemgetter
 import math
+from django.conf import settings
+DICTDIR=settings.DICT_PATH
+LANG='en_US'
+DICT=DICTDIR+'/'+LANG
 
 # german stopwords: http://feya.solariz.de/wp-content/uploads/stopwords.txt
 # other languages (also hungarian) can be found here: http://snowball.tartarus.org/algorithms/
@@ -63,7 +67,8 @@ stopwords=['a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 'aga
            'wherever', 'whether', 'which', 'while', 'whither', 'who', 'whoever', 'whole',
            'whom', 'whose', 'why', 'will', 'with', 'within', 'without', 'would', 'yet',
            'you', 'your', 'yours', 'yourself', 'yourselves',
-           'shall', "Europa", "European", "states", "quot", "gt"]
+           'shall', "Europa", "European", "states", "quot", "gt", "directive",
+           "member", "article" ]
 # remove single digits
 stopwords+=[str(x) for x in range(0,10)]
 # remove single chars
@@ -72,35 +77,25 @@ stopwords+=[chr(x) for x in range(ord('a'),ord('z'))+range(ord('A'),ord('Z'))]
 """calculates log weight over a list"""
 def log2lin(a, pmax, classes): return int(round((classes-1)*((math.exp(a))/pmax)))
 
-""" renders a tagcloud using <span> tags """
-def renderspan(tags,len=None,classes=9):
-    tags=sorted(tags[0:len])
-    pmax=max(tags,key=itemgetter(1))[1]
-    # recalculate logarithmic weights
-    tags=map(lambda x: (x[0],log2lin(x[1],pmax,classes)),  map(lambda x: (x[0],math.log(x[1])), tags))
-    return ' '.join([('<span class="size%d">%s</span>'%
-                      (min(1+p*9/max(map(itemgetter(1), tags)), 9), x)) for (x, p) in tags])
-
-"""
-returns a hunspell object
-param: language code """
-def init(lang='en_US'):
-    return hunspell.HunSpell('/usr/share/hunspell/'+lang+'.dic', '/usr/share/hunspell/'+lang+'.aff')
-
-""" returns the text-only version of the main content (identified by id="TexteOnly") """
-def scrapeContent(file):
-    soup = BeautifulSoup(file)
-    try:
-        txt=soup.find(id='TexteOnly').findAll(text=True)
-    except:
-        return None
-    return txt
-
-""" converts a text into a list of weighted words """
-def gentags(text):
+def stemFreq(stems):
     tags={}
     # start tokenizing
-    engine = init()
+    for stem in stems:
+       if not stem:
+          continue
+       stop=False
+       for s in stem:
+          if s in stopwords:
+             stop=True
+             break
+       if not stop:
+          tags[stem[0]]=1+tags.get(stem[0],0)
+    return tags
+
+def wordFreq(text):
+    tags={}
+    # start tokenizing
+    engine = engine = hunspell.HunSpell(DICT+'.dic', DICT+'.aff')
     for frag in text:
         tokens = nltk.tokenize.wordpunct_tokenize(frag)
         for word in tokens:
@@ -114,13 +109,44 @@ def gentags(text):
     # remove stopwords
     for stopword in stopwords:
         if tags.has_key(stopword): del tags[stopword]
+    return tags
 
+""" converts a text into a list of weighted words """
+def gentags(text):
+    tags=wordFreq(text)
     # transform dict into desc sorted list of (tag,value) tuples.
     return sorted([x for x in tags.items()],reverse=True,key=itemgetter(1))
 
+def logTags(stems,l=None,classes=9):
+    tags=stemFreq(stems)
+    pmax=max(tags.values())
+
+    tags=sorted(
+          [(word, log2lin(math.log(weight),pmax,classes)) for (word,weight) in tags.items()],
+          reverse=True,
+          key=itemgetter(1))[0:l]
+
+    return [{'weight': min(1+p*9/max(map(itemgetter(1), tags)), 9),
+             'tag':  x}
+             for (x, p) in tags]
+
+""" renders a tagcloud using <span> tags """
+def renderspan(tags,l=None,classes=9):
+    tags=sorted(tags[0:l])
+    pmax=max(tags,key=itemgetter(1))[1]
+    # recalculate logarithmic weights
+    tags=map(lambda x: (x[0],log2lin(x[1],pmax,classes)),  map(lambda x: (x[0],math.log(x[1])), tags))
+    return ' '.join([('<span class="size%d">%s</span>'%
+                      (min(1+p*9/max(map(itemgetter(1), tags)), 9), x)) for (x, p) in tags])
+
+""" returns the text-only version of the main content (identified by id="TexteOnly") """
+def scrapeContent(file):
+    soup = BeautifulSoup(file)
+    try:
+        txt=soup.find(id='TexteOnly').findAll(text=True)
+    except:
+        return None
+    return txt
+
 def tagcloud(file,limit=None):
     return renderspan(gentags(scrapeContent(file)),limit)
-
-if __name__ == "__main__":
-    f=open('/home/stef/data/eu/01 General, financial and institutional matters/0140 Provisions governing the institutions/32003D0174/EN', 'r')
-    print tagcloud(f)
