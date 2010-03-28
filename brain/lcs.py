@@ -18,6 +18,7 @@
 
 # src: http://chipsndips.livejournal.com/425.html
 from lenx.view.models import Doc, Frag, Location
+from dbutils import DeferredBucket
 
 # kludge: infinity is a very large number
 inf = 100000000
@@ -147,6 +148,7 @@ def pippi(D1,D2,store=True):
 
     frag=LCS(doc1,doc2)
     res={}
+    deferred = DeferredBucket()
     for m in getACS(frag.str,frag.root,{}).values():
         a=[]
         b=[]
@@ -163,13 +165,14 @@ def pippi(D1,D2,store=True):
                 frag=Frag.getFrag(stem)
                 for p in a:
                     txt=unicode(D1.gettokens()[0][p:p+l])
-                    loc=Location.objects.create(doc=D1,idx=p,txt=txt,other=D2)
-                    frag.docs.add(loc)
+                    loc=Location.objects.create(doc=D1,pos=p,txt=txt,frag=frag)
+                    deferred.append(loc)
                 for p in b:
                     txt=unicode(D2.gettokens()[0][p:p+l])
-                    loc=Location.objects.create(doc=D2,idx=p,txt=txt,other=D1)
-                    frag.docs.add(loc)
+                    loc=Location.objects.create(doc=D2,pos=p,txt=txt,frag=frag)
+                    deferred.append(loc)
                 frag.save()
+    deferred.bulk_save()
     return res
 
 if __name__ == "__main__":
