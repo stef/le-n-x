@@ -2,6 +2,11 @@
 {% load lenx %}
 {% block main %}
 <h1>Complete Corpus of pippi longstrings</h1>
+Stats: <ul id="stats">
+{% for stat in stats %}
+<li>{{stat.title}}: {{stat.value}} |</li>
+{% endfor %}
+</ul>
 <ul>
 {% for doc in docs %}
     <li>

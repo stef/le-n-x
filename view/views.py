@@ -301,17 +301,20 @@ def xpippi(request, doc):
     result=htmlRefs(d)
     return render_to_response('xpippi.html', { 'frags': result, 'doc': d })
 
+def getOverview():
+    stats=[]
+    stats.append({'title': 'Total documents', 'value': Doc.objects.all().count()})
+    stats.append({'title': 'Total frags', 'value': Frag.objects.all().count()})
+    stats.append({'title': 'Total pippies', 'value': Location.objects.all().count()})
+    return stats
+
 def listDocs(request):
     docs=[{'id': doc.eurlexid,
            'title': doc.gettitle() or doc.eurlexid,
            'subject': doc.getsubj() or "",
            'tags': tagcloud.logTags(doc.getstems()[0],l=25)}
            for doc in Doc.objects.only('eurlexid','subject','title','stems').all().iterator()]
-    return render_to_response('corpus.html', { 'docs': docs, })
+    return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
 def stats(request):
-    stats=[]
-    stats.append({'title': 'Total documents', 'value': Doc.objects.all().count()})
-    stats.append({'title': 'Total frags', 'value': Frag.objects.all().count()})
-    stats.append({'title': 'Total pippies', 'value': Location.objects.all().count()})
-    return render_to_response('stats.html', { 'stats': stats, })
+    return render_to_response('stats.html', { 'stats': getOverview(), })
