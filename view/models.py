@@ -19,7 +19,7 @@
 from django.conf import settings
 DICTDIR=settings.DICT_PATH
 from lenx.brain import cache as Cache
-CACHE=Cache.Cache(settings.CACHE_PATH);
+CACHE=Cache.Cache(settings.CACHE_PATH)
 
 from django.db import models, connection
 import platform
