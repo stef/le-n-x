@@ -16,6 +16,8 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
+DICTDIR='/usr/share/hunspell/'
+from lenx.brain import cache as Cache
 from django.conf import settings
 DICTDIR=settings.DICT_PATH
 from lenx.brain import cache as Cache
