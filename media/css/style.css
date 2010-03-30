@@ -20,6 +20,7 @@ fieldset.rel { float: right; }
 .txt { width: 500px; padding-left: 10px; white-space: normal; }
 .pippi { background-color: #ddddaa;}
 .highlight { background: rgba(0, 120, 240, 0.2); }
+input { border: 1px solid #0088DD; background: #FFFFFF; }
 a { text-decoration: none; color: #444444; }
 a:hover { text-decoration: underline; }
 div#footer p { text-align: center; margin: 4px; font-weight: bold;  }
