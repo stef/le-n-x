@@ -63,7 +63,7 @@ class Doc(models.Model):
     stems=PickledObjectField(default=None,null=True)
     spos=PickledObjectField(default=None,null=True)
     wpos=PickledObjectField(default=None,null=True)
-    title=models.TextField(default=None,max_length=512,null=True)
+    title=models.TextField(default=None,max_length=8192,null=True)
     subject=models.CharField(default=None,max_length=512,null=True)
     frags = models.ManyToManyField(Frag, through='Location')
     objects = LockingManager()
@@ -152,7 +152,7 @@ class Location(models.Model):
     doc = models.ForeignKey(Doc)
     frag = models.ForeignKey(Frag)
     pos = models.IntegerField()
-    txt = models.TextField()
+    txt = PickledObjectField()
     def __unicode__(self):
         return unicode(self.doc)+"@"+str(self.pos)+"\n"+self.txt
     @staticmethod
