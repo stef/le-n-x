@@ -27,18 +27,6 @@ import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.view.models import Doc, Frag, Location
 from lenx.view.forms import XpippiForm, viewForm
 
-CSSHEADER="""<head>
-<script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"></script>
-<link href="http://www.ctrlc.hu/~stef/pippi.css" media="screen" rel="stylesheet" title="" type="text/css"  />
-<script type="text/javascript">
-         $(document).ready(function() {
-               $('.right .header').click(function() { $(this).siblings().toggle('slow'); return false; }).siblings().hide();
-               });
-      </script></head>"""
-
-#CSSHEADER='<head><link href="http://www.ctrlc.hu/~stef/pippi.css" media="screen" rel="stylesheet" title="" type="text/css"  /></head>'
-
-
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
     return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag)
@@ -162,36 +150,40 @@ def getFragDocs(f):
     return Frag.objects.get(frag=f).doc_set.distinct().order_by('location.pos')
 
 def docView(request,doc=None,cutoff=4):
-    if request.method == 'GET':
-        if request.GET['cutoff']:
-            cutoff = request.GET['cutoff']
+    if request.GET.get('cutoff', 0):
+        cutoff = request.GET['cutoff']
     if not doc or not int(cutoff):
         return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
     try:
         d = Doc.objects.get(eurlexid=doc)
     except:
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
-    soup = BeautifulSoup(d.raw)
-    c=soup.find(id='TexteOnly')
+    cont = str(BeautifulSoup(d.raw).find(id='TexteOnly'))
     relDocs = getRelatedDocs(d, cutoff)
     #origfrags = d.getstems()
-    for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid__in=[x for x in relDocs]).distinct().order_by('-l')):
-        tokens = []
-        for t in eval(frag.frag):
-            if t:
-                tokens.append(t[0])
-            else:
-                tokens.append('')
-        tokenr = "\s*".join( map(lambda x: re.escape(x), tokens))
-        regex=re.compile(tokenr, re.I | re.M)
-        #regex = re.compile('*'.join(tokens), re.I|re.M)
-        rr = c.find(text=regex)
-        while rr:
-            print tokenr
-            print rr
-            rr = rr.findNext(text=regex)
-    #    relDocs.append(frag.doc_set.exclude(eurlexid=doc))
-    return render_to_response('docView.html', {'doc': d, 'content': c, 'related': relDocs})
+    locSet = []
+    ls = []
+    for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff):
+        # for unique locset
+        #if l.txt in ls:
+        #    continue
+        #ls.append(l.txt)
+        t = eval(l.txt)
+        locSet.append((l.pos, '\W'+'\s*(<[^>]*>)*\s*'.join([re.escape(x) for x in t])+'\W'))
+    #TODO too slow.. need some optimalization
+    for lr in locSet:
+        regex=re.compile(lr[1], re.I | re.M)
+        #print lr[1]
+        i=0
+        span = ('<span class="highlight">', '</span>')
+        for r in regex.finditer(cont):
+           #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
+            start = r.start()+i*len(span[0])+i*len(span[1])+1
+            end = r.end()+i*len(span[0])+i*len(span[1])-1
+            match, n = re.compile(r'\s*(<[^>]*>)\s*').subn(r'%s\1%s' % (span[1], span[0]), cont[start:end])
+            cont = cont[:start]+span[0]+match+span[1]+cont[end:]
+            i += 1+n
+    return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(locSet)})
     
 
 def viewPippiDoc(request,doc=None,cutoff=7):
