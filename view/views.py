@@ -153,9 +153,8 @@ def getFragDocs(f):
     return Frag.objects.get(frag=f).doc_set.distinct().order_by('location.pos')
 
 def docView(request,doc=None,cutoff=4):
-    if request.method == 'GET':
-        if request.GET['cutoff']:
-            cutoff = request.GET['cutoff']
+    if request.GET.get('cutoff', 0):
+        cutoff = request.GET['cutoff']
     if not doc or not int(cutoff):
         return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
     try:
