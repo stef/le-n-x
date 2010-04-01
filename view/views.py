@@ -171,8 +171,8 @@ def docView(request,doc=None,cutoff=7):
         #if l.txt in ls:
         #    continue
         #ls.append(l.txt)
-        t = eval(l.txt)
-        locSet.append((l.pos, '\W'+'\s*(<[^>]*>)*\s*'.join([re.escape(x) for x in t])+'\W'))
+        t = l.txt
+        locSet.append((l.pos, '\W'+'\s*(?:<[^>]*>)*\s*'.join([re.escape(x) for x in t])+'\W'))
     #TODO too slow.. need some optimalization
     for lr in locSet:
         regex=re.compile(lr[1], re.I | re.M)
@@ -183,7 +183,9 @@ def docView(request,doc=None,cutoff=7):
            #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
             start = r.start()+i*len(span[0])+i*len(span[1])+1
             end = r.end()+i*len(span[0])+i*len(span[1])-1
-            match, n = re.compile(r'\s*(<[^>]*>)\s*').subn(r'%s\1%s' % (span[1], span[0]), cont[start:end])
+            match, n = re.compile(r'(<[^>highlight]*>)').subn(r'%s\1%s' % (span[1], span[0]), cont[start:end])
+            if n:
+                print cont[start:end]
             cont = cont[:start]+span[0]+match+span[1]+cont[end:]
             i += 1+n
     return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(locSet)})
@@ -265,7 +267,7 @@ def htmlRefs(d, cutoff=7):
     for frag in getDocFrags(d, cutoff).iterator():
         etalon=frag.location_set.all()[0]
         start=etalon.pos
-        origfrag=eval(etalon.txt)
+        origfrag=etalon.txt
         res.append([])
         res[i].append(htmlPippi(d,
                              # BUG display all idx, not just the first
@@ -273,7 +275,7 @@ def htmlRefs(d, cutoff=7):
                              unicode(etalon.pos),
                              " ".join(origfrag)))
         for loc in frag.location_set.exclude(doc__eurlexid=d).iterator():
-            f=eval(loc.txt)
+            f=loc.txt
             f=" ".join(diffFrag(origfrag,f))
             res[i].append(htmlPippi(loc.doc.eurlexid, unicode(loc.pos), f))
         i+=1
