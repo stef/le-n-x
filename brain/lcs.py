@@ -164,11 +164,11 @@ def pippi(D1,D2,store=True):
             if store and l>1:
                 frag=Frag.getFrag(stem)
                 for p in a:
-                    txt=unicode(D1.gettokens()[0][p:p+l])
+                    txt=D1.gettokens()[0][p:p+l]
                     loc=Location.objects.create(doc=D1,pos=p,txt=txt,frag=frag)
                     deferred.append(loc)
                 for p in b:
-                    txt=unicode(D2.gettokens()[0][p:p+l])
+                    txt=D2.gettokens()[0][p:p+l]
                     loc=Location.objects.create(doc=D2,pos=p,txt=txt,frag=frag)
                     deferred.append(loc)
                 frag.save()

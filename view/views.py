@@ -138,21 +138,21 @@ def headRe(tokens):
 def tailRe(tokens):
     return r'(^\s*'+reduce(lambda x,y: r'(?:'+x+re.escape(y)+r')?\s*',tokens[:-1])+re.escape(tokens[-1])+')'
 
-def getRelatedDocs(d, cutoff=3):
+def getRelatedDocs(d, cutoff=7):
     df = d.frags.filter(l__gte=cutoff).distinct()
     pk=[]
     for frag in df:
         pk.append(frag.pk)
     return Doc.objects.filter(frags__pk__in=pk).distinct().exclude(eurlexid=d.eurlexid)
 
-def getDocFrags(eid, cutoff=3):
+def getDocFrags(eid, cutoff=7):
     # buggy ordering
     return Doc.objects.only('frags').get(eurlexid=eid).frags.filter(l__gte=cutoff).distinct().order_by('location.pos')
 
 def getFragDocs(f):
     return Frag.objects.get(frag=f).doc_set.distinct().order_by('location.pos')
 
-def docView(request,doc=None,cutoff=4):
+def docView(request,doc=None,cutoff=7):
     if request.GET.get('cutoff', 0):
         cutoff = request.GET['cutoff']
     if not doc or not int(cutoff):
@@ -257,7 +257,7 @@ def diffFrag(frag1,frag2):
         i=i+1
     return frag2
 
-def htmlRefs(d, cutoff=5):
+def htmlRefs(d, cutoff=7):
     res=[]
     f=[]
     i=0

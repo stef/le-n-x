@@ -16,7 +16,6 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-DICTDIR='/usr/share/hunspell/'
 from lenx.brain import cache as Cache
 from django.conf import settings
 DICTDIR=settings.DICT_PATH
@@ -65,7 +64,7 @@ class Doc(models.Model):
     stems=PickledObjectField(default=None,null=True)
     spos=PickledObjectField(default=None,null=True)
     wpos=PickledObjectField(default=None,null=True)
-    title=models.TextField(default=None,max_length=512,null=True)
+    title=models.TextField(default=None,max_length=8192,null=True)
     subject=models.CharField(default=None,max_length=512,null=True)
     frags = models.ManyToManyField(Frag, through='Location')
     objects = LockingManager()
@@ -154,7 +153,7 @@ class Location(models.Model):
     doc = models.ForeignKey(Doc)
     frag = models.ForeignKey(Frag)
     pos = models.IntegerField()
-    txt = models.TextField()
+    txt = PickledObjectField()
     def __unicode__(self):
         return unicode(self.doc)+"@"+str(self.pos)+"\n"+self.txt
     @staticmethod
