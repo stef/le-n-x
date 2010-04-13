@@ -17,11 +17,11 @@
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.conf import settings
 from BeautifulSoup import BeautifulSoup, Tag
-import re, urllib, itertools
+import re
+import itertools
 from lenx.brain import stopwords, tagcloud
 import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.view.models import Doc, Frag, Location
@@ -164,31 +164,39 @@ def docView(request,doc=None,cutoff=7):
     cont = str(BeautifulSoup(d.raw).find(id='TexteOnly'))
     relDocs = getRelatedDocs(d, cutoff)
     #origfrags = d.getstems()
-    locSet = []
     ls = []
+    matches = 0
     for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff):
-        # for unique locset
-        #if l.txt in ls:
-        #    continue
-        #ls.append(l.txt)
+        # for unique locset - optimalization?!
+        if l.txt in ls:
+            continue
+        ls.append(l.txt)
         t = l.txt
-        locSet.append((l.pos, '\W'+'\s*(?:<[^>]*>)*\s*'.join([re.escape(x) for x in t])+'\W'))
-    #TODO too slow.. need some optimalization
-    for lr in locSet:
-        regex=re.compile(lr[1], re.I | re.M)
-        #print lr[1]
+        # for valid matches
+        btxt = ''
+        etxt = ''
+        if t[0][0].isalnum(): 
+            btxt = '\W'
+        if t[-1][-1].isalnum():
+            etxt = '\W'
+        regex=re.compile(btxt+'\s*(?:<[^>]*>)*\s*'.join([re.escape(x) for x in t])+etxt, re.I | re.M)
         i=0
-        span = ('<span class="highlight">', '</span>')
+        offset = 0
         for r in regex.finditer(cont):
-           #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
-            start = r.start()+i*len(span[0])+i*len(span[1])+1
-            end = r.end()+i*len(span[0])+i*len(span[1])-1
+            span = ('<span class="highlight %s">' % l.pk, '</span>')
+            #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
+            start = r.start()+offset
+            if btxt:
+                start += 1
+            end = r.end()+offset
+            if etxt:
+                end -= 1
             match, n = re.compile(r'(<[^>highlight]*>)').subn(r'%s\1%s' % (span[1], span[0]), cont[start:end])
-            if n:
-                print cont[start:end]
+            #TODO too slow.. need some optimalization
             cont = cont[:start]+span[0]+match+span[1]+cont[end:]
-            i += 1+n
-    return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(locSet)})
+            offset += (n+1)*(len(span[0])+len(span[1]))
+            matches += 1
+    return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
     
 
 def viewPippiDoc(request,doc=None,cutoff=7):

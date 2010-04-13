@@ -58,15 +58,20 @@
 
 <h2>docView for {{ doc.title }} ({{ doc.eurlexid }})</h2>
 
-<fieldset class="rel"><legend>Stats and related docs</legend>
-    <h4>Cutoff: {{ cutoff }}</h4>
-    <h4>Pippies: {{ len }}</h4>
-    <ul>
-    {% for dd in related %}
-        <li>{{ dd.eurlexid }}</li>
-    {% endfor %}
-    </ul>
-</fieldset>
+<div class="rel">
+    <fieldset><legend>Statistics</legend>
+        <h4>Cutoff: {{ cutoff }}</h4>
+        <h4>Pippies: {{ len }}</h4>
+        <h4>Highlights in text: {{ matches }}</h4>
+    </fieldset>
+    <fieldset><legend>Related docs</legend>
+        <ul>
+        {% for dd in related %}
+            <li>{{ dd.eurlexid }}</li>
+        {% endfor %}
+        </ul>
+    </fieldset>
+</div>
 
 
 {{ content|safe }}
