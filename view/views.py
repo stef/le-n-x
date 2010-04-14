@@ -161,12 +161,13 @@ def docView(request,doc=None,cutoff=7):
         d = Doc.objects.get(eurlexid=doc)
     except:
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
-    cont = str(BeautifulSoup(d.raw).find(id='TexteOnly'))
+    cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
     relDocs = getRelatedDocs(d, cutoff)
     #origfrags = d.getstems()
     ls = []
     matches = 0
-    for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff):
+    c = 0
+    for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff).order_by('-frag__l'):
         # for unique locset - optimalization?!
         if l.txt in ls:
             continue
@@ -179,12 +180,14 @@ def docView(request,doc=None,cutoff=7):
             btxt = '\W'
         if t[-1][-1].isalnum():
             etxt = '\W'
-        regex=re.compile(btxt+'\s*(?:<[^>]*>)*\s*'.join([re.escape(x) for x in t])+etxt, re.I | re.M)
+        rtxt = btxt+'\s*(?:<[^>]*>\s*)*\s*'.join([re.escape(x) for x in t])+etxt
+        regex=re.compile(rtxt, re.I | re.M)
         i=0
         offset = 0
+        print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l.pos, rtxt)
         for r in regex.finditer(cont):
+            print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
             span = ('<span class="highlight %s">' % l.pk, '</span>')
-            #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
             start = r.start()+offset
             if btxt:
                 start += 1
@@ -196,9 +199,9 @@ def docView(request,doc=None,cutoff=7):
             cont = cont[:start]+span[0]+match+span[1]+cont[end:]
             offset += (n+1)*(len(span[0])+len(span[1]))
             matches += 1
+        print '-'*120
     return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
     
-
 def viewPippiDoc(request,doc=None,cutoff=7):
     form = viewForm(request.GET)
     if not doc and form.is_valid():
