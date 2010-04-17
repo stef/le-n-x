@@ -152,7 +152,7 @@ def getDocFrags(eid, cutoff=7):
 def getFragDocs(f):
     return Frag.objects.get(frag=f).doc_set.distinct().order_by('location.pos')
 
-def docView(request,doc=None,cutoff=7):
+def docView(request,doc=None,cutoff=20):
     if request.GET.get('cutoff', 0):
         cutoff = request.GET['cutoff']
     if not doc or not int(cutoff):
@@ -161,12 +161,12 @@ def docView(request,doc=None,cutoff=7):
         d = Doc.objects.get(eurlexid=doc)
     except:
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
-    cont = str(BeautifulSoup(d.raw).find(id='TexteOnly'))
+    cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
     relDocs = getRelatedDocs(d, cutoff)
     #origfrags = d.getstems()
     ls = []
     matches = 0
-    for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff):
+    for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff).order_by('-frag__l'):
         # for unique locset - optimalization?!
         if l.txt in ls:
             continue
@@ -179,12 +179,14 @@ def docView(request,doc=None,cutoff=7):
             btxt = '\W'
         if t[-1][-1].isalnum():
             etxt = '\W'
-        regex=re.compile(btxt+'\s*(?:<[^>]*>)*\s*'.join([re.escape(x) for x in t])+etxt, re.I | re.M)
+        rtxt = btxt+'\s*(?:<[^>]*>\s*)*'.join([re.escape(x) for x in t])+etxt
+        regex=re.compile(rtxt, re.I | re.M | re.U)
         i=0
         offset = 0
+        print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l.pos, rtxt)
         for r in regex.finditer(cont):
+            print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
             span = ('<span class="highlight %s">' % l.pk, '</span>')
-            #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
             start = r.start()+offset
             if btxt:
                 start += 1
@@ -192,13 +194,14 @@ def docView(request,doc=None,cutoff=7):
             if etxt:
                 end -= 1
             match, n = re.compile(r'(<[^>highlight]*>)').subn(r'%s\1%s' % (span[1], span[0]), cont[start:end])
-            #TODO too slow.. need some optimalization
             cont = cont[:start]+span[0]+match+span[1]+cont[end:]
             offset += (n+1)*(len(span[0])+len(span[1]))
             matches += 1
+            print '_'*60
+        print '-'*120
+    print "[!] Rendering\n\tContent length: %d" % len(cont)
     return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
     
-
 def viewPippiDoc(request,doc=None,cutoff=7):
     form = viewForm(request.GET)
     if not doc and form.is_valid():
