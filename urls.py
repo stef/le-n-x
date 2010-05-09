@@ -3,6 +3,7 @@ from django.conf import settings
 import view.views as view
 
 urlpatterns = patterns('',
+    (r'^$', view.index),
     (r'^tagcloud$', 'lenx.tagcloud.views.handler'),
     (r'^xpippi$', view.xpippiFormView),
     (r'^xpippi/(?P<doc>.+)', view.xpippi),
