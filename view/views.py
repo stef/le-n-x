@@ -97,59 +97,6 @@ def docView(request,doc=None,cutoff=20):
         print '-'*120
     print "[!] Rendering\n\tContent length: %d" % len(cont)
     return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
-    
-def viewPippiDoc(request,doc=None,cutoff=7):
-    form = viewForm(request.GET)
-    if not doc and form.is_valid():
-        doc=form.cleaned_data['doc'].strip('\t\n')
-    if not doc in db.docs.keys() or not int(cutoff):
-        return render_to_response('viewPippiDoc.html', { 'form': form, })
-    result=""
-    d=Doc.objects.get(eurlexid=doc)
-    soup = BeautifulSoup(d.raw)
-    # TexteOnly is the id used on eur-lex pages containing distinct docs
-    meat=soup.find(id='TexteOnly')
-    for (stem,ref) in sorted(d.refs.items(),
-                             reverse=True,
-                             cmp=lambda x,y: cmp(len(x[0]),len(y[0]))):
-        if stem in stopwords.stopfrags or len(stem)<int(cutoff): continue
-        print "-------------\n" #,ref['matches']
-        print [(x[0],x[1],d.tokens[x[0]:x[0]+x[1]]) for x in ref['matches']]
-        for (start,length, tokens) in set([(x[0],x[1],tuple(d.tokens[x[0]:x[0]+x[1]])) for x in ref['matches']]):
-            regex=re.compile('('+re.escape(tokens[0])+headRe(tokens[1:])+')', re.I|re.M)
-            #try:
-            node=meat.find(text=regex)
-            #except:
-            #    # all matches possibly eaten by greedy pippifying below
-            #    continue
-            print 'pattern',regex.pattern
-            print 'tokens', tokens
-            print '1st match', re.findall(regex,node.string)
-            while node:
-                node=pippify(node,ref['refs'],soup,cutoff,regex,stem,tokens)
-                node=node.findNext(text=regex)
-                print 'next node',node
-    #try:
-    aregex=re.compile('^\s*Article\s+[0-9][0-9.,]*', re.I)
-    nsoup = BeautifulSoup(str(meat))
-    node=nsoup.find(text=aregex)
-    while node:
-        nodeidx=node.parent.contents.index(node)
-        name=str(re.match(aregex,node).group()).replace(' ','_')
-        a=Tag(nsoup,'a',[('name',name)])
-        node.parent.insert(nodeidx,a)
-        node=node.findNext(text=aregex)
-    # TODO add header with all relevant documents
-    # TODO add header tagcloud fo this document
-    #result+='<div><ul class="right">'
-    #result+="".join([ "<li>%s%s</li>" % (len(x),d.refs[x]['refs'])
-    #                    for x in sorted(d.refs.keys(),reverse=True,cmp=lambda x,y: cmp(len(x),len(y)))
-    #                    if len(x)>cutoff])
-    #result+="</ul></div>"
-    result+='<div class="doc">'
-    result+=str(nsoup)
-    result+='</div>'
-    return HttpResponse('%s\n%s' % (CSSHEADER,unicode(result,'utf8')))
 
 def diffFrag(frag1,frag2):
     match=True
