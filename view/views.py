@@ -17,7 +17,6 @@
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.conf import settings
 from BeautifulSoup import BeautifulSoup, Tag
@@ -30,6 +29,9 @@ from operator import itemgetter
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
     return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag)
+
+def index(request):
+    return render_to_response('index.html')
 
 def getRelatedDocs(d, cutoff=7):
     df = d.frags.filter(l__gte=cutoff).distinct()
@@ -46,38 +48,55 @@ def getDocFrags(d, cutoff=7):
                d.pippies),
         key=itemgetter('pos'))
 
-def docView(request,doc=None,cutoff=7):
-    if request.method == 'GET':
-        if request.GET['cutoff']:
-            cutoff = request.GET['cutoff']
+def docView(request,doc=None,cutoff=20):
+    if request.GET.get('cutoff', 0):
+        cutoff = request.GET['cutoff']
     if not doc or not int(cutoff):
         return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
     try:
         d = Doc(doc)
     except:
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
-    soup = BeautifulSoup(d.raw)
-    c=soup.find(id='TexteOnly')
+    cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
     relDocs = getRelatedDocs(d, cutoff)
     #origfrags = d.getstems()
-    # TODO: mongofy
-    for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid__in=[x for x in relDocs]).distinct().order_by('-l')):
-        tokens = []
-        for t in eval(frag.frag):
-            if t:
-                tokens.append(t[0])
-            else:
-                tokens.append('')
-        tokenr = "\s*".join( map(lambda x: re.escape(x), tokens))
-        regex=re.compile(tokenr, re.I | re.M)
-        #regex = re.compile('*'.join(tokens), re.I|re.M)
-        rr = c.find(text=regex)
-        while rr:
-            print tokenr
-            print rr
-            rr = rr.findNext(text=regex)
-    #    relDocs.append(frag.doc_set.exclude(eurlexid=doc))
-    return render_to_response('docView.html', {'doc': d, 'content': c, 'related': relDocs})
+    ls = []
+    matches = 0
+    for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff).order_by('-frag__l'):
+        # for unique locset - optimalization?!
+        if l.txt in ls:
+            continue
+        ls.append(l.txt)
+        t = l.txt
+        # for valid matches
+        btxt = ''
+        etxt = ''
+        if t[0][0].isalnum(): 
+            btxt = '\W'
+        if t[-1][-1].isalnum():
+            etxt = '\W'
+        rtxt = btxt+'\s*(?:<[^>]*>\s*)*'.join([re.escape(x) for x in t])+etxt
+        regex=re.compile(rtxt, re.I | re.M | re.U)
+        i=0
+        offset = 0
+        print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l.pos, rtxt)
+        for r in regex.finditer(cont):
+            print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
+            span = ('<span class="highlight %s">' % l.pk, '</span>')
+            start = r.start()+offset
+            if btxt:
+                start += 1
+            end = r.end()+offset
+            if etxt:
+                end -= 1
+            match, n = re.compile(r'(<[^>highlight]*>)').subn(r'%s\1%s' % (span[1], span[0]), cont[start:end])
+            cont = cont[:start]+span[0]+match+span[1]+cont[end:]
+            offset += (n+1)*(len(span[0])+len(span[1]))
+            matches += 1
+            print '_'*60
+        print '-'*120
+    print "[!] Rendering\n\tContent length: %d" % len(cont)
+    return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
 
 def diffFrag(frag1,frag2):
     match=True
