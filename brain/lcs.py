@@ -17,8 +17,7 @@
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 # src: http://chipsndips.livejournal.com/425.html
-from lenx.view.models import Doc, Frag, Location
-from dbutils import DeferredBucket
+from lenx.view.models import Doc, Pippi
 
 # kludge: infinity is a very large number
 inf = 100000000
@@ -143,12 +142,11 @@ def getACS(str,st,d):
     return d
 
 def pippi(D1,D2,store=True):
-    doc1=[x or ('!1@3#@@%4%$#^7*(',) for x in D1.getstems()[0]]+['zAq!2WsX']
-    doc2=[x or ('!1@3#@@%4%$#^7*(',) for x in D2.getstems()[0]]+['XsW@!qAz']
+    doc1=tuple([x or ('!1@3#@@%4%$#^7*(',) for x in D1.stems]+['zAq!2WsX'])
+    doc2=tuple([x or ('!1@3#@@%4%$#^7*(',) for x in D2.stems]+['XsW@!qAz'])
 
     frag=LCS(doc1,doc2)
     res={}
-    deferred = DeferredBucket()
     for m in getACS(frag.str,frag.root,{}).values():
         a=[]
         b=[]
@@ -158,28 +156,38 @@ def pippi(D1,D2,store=True):
             else:
                 b.append(p-len(doc1))
         if a and b:
-            stem=tuple([() if x==('!1@3#@@%4%$#^7*(',) else x for x in m['frag']])
+            stem=tuple([('',) if x==('!1@3#@@%4%$#^7*(',) else tuple(x) for x in m['frag']])
             res[stem]=(a,b)
             l=len(stem)
+            # we only store pippies longer that 1 token. it might make sense for tf-idf calcs though to store them as well.
             if store and l>1:
-                frag=Frag.getFrag(stem)
+                frag=Pippi(stem)
                 for p in a:
-                    txt=D1.gettokens()[0][p:p+l]
-                    loc=Location.objects.create(doc=D1,pos=p,txt=txt,frag=frag)
-                    deferred.append(loc)
+                    txt=D1.tokens[p:p+l]
+                    loc={'pos':p,'txt':txt,'l':l,'frag':frag._id}
+                    if not loc in D1.pippies:
+                        D1.pippies.append(loc)
+                    loc={'pos':p,'txt':txt,'l':l,'doc':D1._id}
+                    if not loc in frag.docs:
+                        frag.docs.append(loc)
                 for p in b:
-                    txt=D2.gettokens()[0][p:p+l]
-                    loc=Location.objects.create(doc=D2,pos=p,txt=txt,frag=frag)
-                    deferred.append(loc)
+                    txt=D2.tokens[p:p+l]
+                    loc={'pos':p,'txt':txt,'l':l,'frag':frag._id}
+                    if not loc in D2.pippies:
+                        D2.pippies.append(loc)
+                    loc={'pos':p,'txt':txt,'l':l,'doc':D2._id}
+                    if not loc in frag.docs:
+                        frag.docs.append(loc)
                 frag.save()
-    deferred.bulk_save()
+    D1.save()
+    D2.save()
     return res
 
 if __name__ == "__main__":
     import pprint
     import sys
-    d1=Doc.getDoc(sys.argv[1].strip('\t\n'))
-    d2=Doc.getDoc(sys.argv[2].strip('\t\n'))
+    d1=Doc(sys.argv[1].strip('\t\n'))
+    d2=Doc(sys.argv[2].strip('\t\n'))
     topfrags=[ x for x in sorted( pippi(d1,d2,store=True).items(),
                                  reverse=True,
                                  cmp=lambda x,y: cmp(len(x[0]),len(y[0])))

@@ -25,7 +25,7 @@ import sys, os
 
 for doc in sys.stdin:
     try:
-        Doc.getDoc(doc)
+        Doc(doc)
     except:
        print "!!!!PIPPI ERROR: load doc",doc
        raise

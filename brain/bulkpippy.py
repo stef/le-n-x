@@ -16,7 +16,7 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Frag, Location
+from lenx.view.models import Doc, Pippi
 from django.core.management import setup_environ
 from lenx import settings
 from lenx.brain import lcs
@@ -27,7 +27,7 @@ docs={}
 
 def getDoc(doc):
     if docs.has_key(doc): return docs[doc]
-    docs[doc] = Doc.getDoc(doc)
+    docs[doc] = Doc(doc)
     return docs[doc]
 
 for line in sys.stdin:
