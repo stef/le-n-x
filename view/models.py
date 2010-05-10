@@ -25,6 +25,7 @@ from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 from pymongo import Connection
+from operator import itemgetter
 
 LANG='en_US'
 DICT=DICTDIR+'/'+LANG
@@ -193,3 +194,23 @@ class Doc():
 
     def getFrag(self,start,len):
         return " ".join(self.tokens[start:start+len]).encode('utf8')
+
+    def getRelatedDocs(self, cutoff=7):
+        return [Doc('',oid=oid)
+                for oid in set([doc['doc']
+                                for frag in Pippies.find({'docs.doc' : self._id,
+                                                          'len' : { '$gte' : int(cutoff) }},
+                                                         ['docs.doc'])
+                                for doc in frag['docs']
+                                if doc['doc'] != self._id])]
+
+    def getDocFrags(self, cutoff=7):
+        # returns the doc, with only the frags which are filtered by the cutoff and disctinct ordered by their location.
+        return sorted(
+            # either this code
+            #filter(lambda x: x['l']>cutoff,
+            #       self.pippies),
+            # or this newer code
+            [x for x in self.pippies if x['l']>cutoff],
+            key=itemgetter('pos'))
+

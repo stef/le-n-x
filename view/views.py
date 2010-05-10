@@ -24,7 +24,6 @@ import re
 from lenx.brain import stopwords, tagcloud
 from lenx.view.models import Doc, Pippi, Docs, Pippies
 from lenx.view.forms import XpippiForm, viewForm
-from operator import itemgetter
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -32,21 +31,6 @@ def htmlPippi(doc,matches,frag):
 
 def index(request):
     return render_to_response('index.html')
-
-def getRelatedDocs(d, cutoff=7):
-    df = d.frags.filter(l__gte=cutoff).distinct()
-    pk=[]
-    for frag in df:
-        pk.append(frag.pk)
-    # TODO: mongofy
-    return Doc.objects.filter(frags__pk__in=pk).distinct().exclude(eurlexid=d.eurlexid)
-
-def getDocFrags(d, cutoff=7):
-    # returns the doc, with only the frags which are filtered by the cutoff and disctinct ordered by their location.
-    return sorted(
-        filter(lambda x: x['l']>cutoff,
-               d.pippies),
-        key=itemgetter('pos'))
 
 def docView(request,doc=None,cutoff=20):
     if request.GET.get('cutoff', 0):
@@ -58,7 +42,7 @@ def docView(request,doc=None,cutoff=20):
     except:
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
     cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
-    relDocs = getRelatedDocs(d, cutoff)
+    relDocs = d.getRelatedDocs(cutoff=cutoff)
     #origfrags = d.getstems()
     ls = []
     matches = 0
@@ -117,8 +101,7 @@ def htmlRefs(d, cutoff=7):
     res=[]
     f=[]
     i=0
-    #for frag in list(Frag.objects.filter(l__gte=cutoff).filter(doc__eurlexid=d).distinct().order_by('-l')):
-    for frag in getDocFrags(d, cutoff):
+    for frag in d.getDocFrags(cutoff=cutoff):
         start=frag['pos']
         origfrag=frag['txt']
         res.append([])
