@@ -24,6 +24,7 @@ import re
 from lenx.brain import stopwords, tagcloud
 from lenx.view.models import Doc, Pippi, Docs, Pippies
 from lenx.view.forms import XpippiForm, viewForm
+from operator import itemgetter
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -34,8 +35,8 @@ def index(request):
 
 def docView(request,doc=None,cutoff=20):
     if request.GET.get('cutoff', 0):
-        cutoff = request.GET['cutoff']
-    if not doc or not int(cutoff):
+        cutoff = int(request.GET['cutoff'])
+    if not doc or not cutoff:
         return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
     try:
         d = Doc(doc)
@@ -46,16 +47,18 @@ def docView(request,doc=None,cutoff=20):
     #origfrags = d.getstems()
     ls = []
     matches = 0
-    for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff).order_by('-frag__l'):
+    #for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff).order_by('-frag__l'):
+    for l in sorted(d.pippies,reverse=True,key=itemgetter('l')):
+        if( l['l'] < cutoff): break
         # for unique locset - optimalization?!
-        if l.txt in ls:
+        if l['txt'] in ls:
             continue
-        ls.append(l.txt)
-        t = l.txt
+        ls.append(l['txt'])
+        t = l['txt']
         # for valid matches
         btxt = ''
         etxt = ''
-        if t[0][0].isalnum(): 
+        if t[0][0].isalnum():
             btxt = '\W'
         if t[-1][-1].isalnum():
             etxt = '\W'
@@ -63,10 +66,10 @@ def docView(request,doc=None,cutoff=20):
         regex=re.compile(rtxt, re.I | re.M | re.U)
         i=0
         offset = 0
-        print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l.pos, rtxt)
+        #print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l['pos'], rtxt)
         for r in regex.finditer(cont):
-            print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
-            span = ('<span class="highlight %s">' % l.pk, '</span>')
+            #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
+            span = ('<span class="highlight %s">' % l['frag'], '</span>')
             start = r.start()+offset
             if btxt:
                 start += 1
@@ -77,9 +80,9 @@ def docView(request,doc=None,cutoff=20):
             cont = cont[:start]+span[0]+match+span[1]+cont[end:]
             offset += (n+1)*(len(span[0])+len(span[1]))
             matches += 1
-            print '_'*60
-        print '-'*120
-    print "[!] Rendering\n\tContent length: %d" % len(cont)
+            #print '_'*60
+        #print '-'*120
+    #print "[!] Rendering\n\tContent length: %d" % len(cont)
     return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
 
 def diffFrag(frag1,frag2):
