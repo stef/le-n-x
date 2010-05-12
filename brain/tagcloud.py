@@ -29,7 +29,7 @@ DICT=DICTDIR+'/'+LANG
 # german stopwords: http://feya.solariz.de/wp-content/uploads/stopwords.txt
 # other languages (also hungarian) can be found here: http://snowball.tartarus.org/algorithms/
 # src: http://armandbrahaj.blog.al/2009/04/14/list-of-english-stop-words/
-stopwords=['a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 'again',
+stopwords=['', 'a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 'again',
            'against', 'all', 'almost', 'alone', 'along', 'already',
            'also','although','always','am','among', 'amongst', 'amoungst', 'amount',
            'an', 'and', 'another', 'any','anyhow','anyone','anything','anyway',
