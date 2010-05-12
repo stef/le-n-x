@@ -19,7 +19,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.conf import settings
-from BeautifulSoup import BeautifulSoup, Tag
+from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 import re
 from lenx.brain import stopwords, tagcloud
 from lenx.view.models import Doc, Pippi, Docs, Pippies
@@ -32,6 +32,32 @@ def htmlPippi(doc,matches,frag):
 
 def index(request):
     return render_to_response('index.html')
+
+def anchorArticles(txt):
+    # find all textnodes starting with Article, wrapping this in a named <a> and prepending a hoverable link to this anchor
+    aregex=re.compile('^\s*Article\s+[0-9][0-9.,]*', re.I)
+    nsoup = BeautifulSoup(unicode(txt))
+    node=nsoup.find(text=aregex)
+    while node:
+        nodeidx=node.parent.contents.index(node)
+        match=str(re.match(aregex,node).group())
+        # create named <a>
+        name=match.replace(' ','_')
+        a=Tag(nsoup,'a',[('name',name)])
+        a.insert(0,match)
+        # create a link that is displayed if the <a> is hovered
+        link=Tag(nsoup,'a', [('class',"anchorLink"), ('href',name)])
+        link.insert(0,"#")
+        # create a container for the a and the link
+        hover=Tag(nsoup,'span',[('class','hover')])
+        hover.insert(0,a)
+        hover.insert(0,link)
+        node.parent.insert(nodeidx,hover)
+        # cut the newly wrapped from the original node.
+        newNode=NavigableString(node[len(match):])
+        node.replaceWith(newNode)
+        node=newNode.findNext(text=aregex)
+    return unicode(str(nsoup),'utf8')
 
 def docView(request,doc=None,cutoff=20):
     if request.GET.get('cutoff', 0):
@@ -82,6 +108,7 @@ def docView(request,doc=None,cutoff=20):
             matches += 1
             #print '_'*60
         #print '-'*120
+    cont=anchorArticles(cont)
     #print "[!] Rendering\n\tContent length: %d" % len(cont)
     return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
 

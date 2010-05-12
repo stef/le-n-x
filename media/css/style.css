@@ -5,7 +5,7 @@ input { border: 1px solid #0088DD; background: #FFFFFF; }
 fieldset { font-size: 0.8em; margin-bottom: 14px; }
 a { text-decoration: none; color: #444444; }
 li { list-style: none; }
-a:hover { text-decoration: underline; }
+a[href]:hover { text-decoration: underline; }
 div#footer p { text-align: center; margin: 4px; font-weight: bold;  }
 div#wrapper { margin: 0; position: relative; background: #FFFFFF; border: 8px solid #0088DD; -moz-border-radius: 1em; -webkit-border-radius: 1em;  }
 div#header { height: 80px; padding: 0; margin: 0; background: transparent; background-color: #0088DD; }
@@ -38,3 +38,6 @@ div.rel { float: right; max-width: 350px; }
 .size7 { font-size: 1.1em }
 .size8 { font-size: 1.2em }
 .size9 { font-size: 1.3em }
+.hover { width: auto; }
+.anchorLink { color: white; }
+.hover:hover .anchorLink { color: blue; }
