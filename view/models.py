@@ -96,6 +96,8 @@ class Doc():
             self.__dict__={}
             self.__dict__['eurlexid'] = eurlexid
             self.__dict__['pippies'] = [] # should a be a list of {'pos':p,'txt':txt,'l':l,'frag':frag._id}
+            self.__dict__['pippiDocs'] = [] # should a be a list of docs this doc has been compared to
+            self.__dict__['pippiDocsLen'] = 0 # should a be a list of docs this doc has been compared to
             self.save()
         else:
             raise KeyError('empty eurlexid')
@@ -214,3 +216,6 @@ class Doc():
             [x for x in self.pippies if x['l']>cutoff],
             key=itemgetter('pos'))
 
+    def addDoc(self,d):
+        self.pippiDocs.append(d._id)
+        self.pippiDocsLen=self.pippiDocsLen+1

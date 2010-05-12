@@ -142,11 +142,13 @@ def getOverview():
     return stats
 
 def listDocs(request):
+    docslen=Docs.count()
     docs=[{'id': doc.eurlexid,
+           'indexed': doc.pippiDocsLen,
            'title': doc.title or doc.eurlexid,
            'subject': doc.subject or "",
            'tags': tagcloud.logTags(doc.stems,l=25)}
-           for doc in [Doc('',d=data) for data in Docs.find()]]
+          for doc in [Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }})]]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
 def stats(request):

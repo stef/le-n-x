@@ -179,6 +179,8 @@ def pippi(D1,D2,store=True):
                     if not loc in frag.docs:
                         frag.docs.append(loc)
                 frag.save()
+    D1.addDoc(D2)
+    D2.addDoc(D1)
     D1.save()
     D2.save()
     return res
