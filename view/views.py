@@ -46,7 +46,7 @@ def anchorArticles(txt):
         a=Tag(nsoup,'a',[('name',name)])
         a.insert(0,match)
         # create a link that is displayed if the <a> is hovered
-        link=Tag(nsoup,'a', [('class',"anchorLink"), ('href',name)])
+        link=Tag(nsoup,'a', [('class',"anchorLink"), ('href','#'+name)])
         link.insert(0,"#")
         # create a container for the a and the link
         hover=Tag(nsoup,'span',[('class','hover')])
