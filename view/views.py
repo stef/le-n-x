@@ -59,6 +59,24 @@ def anchorArticles(txt):
         node=newNode.findNext(text=aregex)
     return unicode(str(nsoup),'utf8')
 
+def getPippiRelateddocs(d,pippi):
+    return [Doc('',oid=doc['doc'])
+            for doc
+            in Pippi('',oid=pippi['frag']).docs
+            if doc['doc']!=d._id]
+
+def annotatePippi(d,pippi,cutoff=7):
+    itemtpl='<li><a href="/doc/%s?cutoff=%d">%s</a><hr /></li>'
+    docs=getPippiRelateddocs(d,pippi)
+    return '\n'.join([
+        '<div class="pippiNote">',
+        '<b>also appears in</b>',
+        '<ul>',
+        '\n'.join([(itemtpl % (doc.eurlexid, cutoff, doc.title)) for doc in docs]),
+        '</ul>',
+        '</div>',
+        ])
+
 def docView(request,doc=None,cutoff=20):
     if request.GET.get('cutoff', 0):
         cutoff = int(request.GET['cutoff'])
@@ -95,7 +113,7 @@ def docView(request,doc=None,cutoff=20):
         #print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l['pos'], rtxt)
         for r in regex.finditer(cont):
             #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
-            span = ('<span class="highlight %s">' % l['frag'], '</span>')
+            span = (('<span class="highlight %s">') % l['frag'], '</span>'+annotatePippi(d,l,cutoff))
             start = r.start()+offset
             if btxt:
                 start += 1
