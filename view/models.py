@@ -26,6 +26,7 @@ import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 from pymongo import Connection
 from operator import itemgetter
+import itertools
 
 LANG='en_US'
 DICT=DICTDIR+'/'+LANG
@@ -75,7 +76,6 @@ class Pippi():
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc():
-    #computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'spos', 'wpos', 'title', 'subject']
     computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'title', 'subject']
 
     def __init__(self,eurlexid,oid=None,d=None):
@@ -88,7 +88,7 @@ class Doc():
         if d:
             # load the values
             self.__dict__=d
-            if d.has_key('stems'):
+            if 'stems' in d:
                 # convert stems back to tuples - mongo only does lists
                 self.__dict__['stems'] = tuple([tuple(x) for x in d['stems']])
         elif eurlexid:
@@ -97,7 +97,7 @@ class Doc():
             self.__dict__['eurlexid'] = eurlexid
             self.__dict__['pippies'] = [] # should a be a list of {'pos':p,'txt':txt,'l':l,'frag':frag._id}
             self.__dict__['pippiDocs'] = [] # should a be a list of docs this doc has been compared to
-            self.__dict__['pippiDocsLen'] = 0 # should a be a list of docs this doc has been compared to
+            self.__dict__['pippiDocsLen'] = 0
             self.save()
         else:
             raise KeyError('empty eurlexid')
@@ -111,12 +111,8 @@ class Doc():
                 self.raw=self._getraw()
             if name == 'text':
                 self.text=self._gettext()
-            #if name in ['tokens', 'wpos']:
-            #    self.tokens,self.wpos=self._gettokens()
             if name == 'tokens':
                 self.tokens=self._gettokens()
-            #if name in ['stems', 'spos']:
-            #    self.stems,self.spos=self._getstems()
             if name == 'stems':
                 self.stems=self._getstems()
             if name == 'title':
@@ -124,7 +120,6 @@ class Doc():
             if name == 'subject':
                 self.subject=self._getsubj()
         if name in self.__dict__.keys():
-            # we calculated some value so we should store it.
             if dirty: self.save()
             return self.__dict__[name]
         else:
@@ -139,6 +134,19 @@ class Doc():
         return self.eurlexid
 
     def save(self):
+        def uniq(seq, idfun=None):
+            seen = {}
+            result = []
+            if not idfun:
+                def idfun(x):
+                    return (str(x['txt']),x['pos'])
+            for item in seq:
+                marker = idfun(item)
+                if marker in seen: continue
+                seen[marker] = 1
+                result+=[item]
+            return result
+        self.pippies=uniq(self.pippies)
         self.__dict__['_id']=Docs.save(self.__dict__)
 
     def _getraw(self, cache=CACHE):
@@ -150,20 +158,7 @@ class Doc():
         return [unicode(x) for x in soup.find(id='TexteOnly').findAll(text=True)]
 
     def _gettokens(self):
-        # start tokenizing
-        tokens=[]
-        #wpos={}
-        #i=0
-        for frag in self.text:
-            if not frag: continue
-            words=nltk.tokenize.wordpunct_tokenize(unicode(frag))
-            tokens+=words
-            # store positions of words
-            #for word in words:
-            #    wpos[word]=wpos.get(word,[])+[i]
-            #    i+=1
-        #return (tokens,wpos)
-        return tokens
+        return [token for frag in self.text if frag for token in nltk.tokenize.wordpunct_tokenize(unicode(frag))]
 
     def _getstems(self):
         # start stemming
@@ -178,9 +173,6 @@ class Doc():
                 stems.append((stem[0],))
             else:
                 stems.append(('',))
-            #spos[stem]=spos.get(stem,[])+[i]
-            #i+=1
-        #return (stems,spos)
         return tuple(stems)
 
     def _getHTMLMetaData(self, attr):
@@ -208,14 +200,10 @@ class Doc():
 
     def getDocFrags(self, cutoff=7):
         # returns the doc, with only the frags which are filtered by the cutoff and disctinct ordered by their location.
-        return sorted(
-            # either this code
-            #filter(lambda x: x['l']>cutoff,
-            #       self.pippies),
-            # or this newer code
-            [x for x in self.pippies if x['l']>cutoff],
-            key=itemgetter('pos'))
+        return sorted([x for x in self.pippies if x['l']>cutoff],
+                      key=itemgetter('pos'))
 
     def addDoc(self,d):
-        self.pippiDocs.append(d._id)
-        self.pippiDocsLen=self.pippiDocsLen+1
+        if not d._id in self.pippiDocs:
+            self.pippiDocs.append(d._id)
+            self.pippiDocsLen=len(self.pippiDocs)

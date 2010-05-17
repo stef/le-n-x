@@ -24,27 +24,38 @@ setup_environ(settings)
 import sys, os
 
 docs={}
-
 def getDoc(doc):
-    if docs.has_key(doc): return docs[doc]
-    docs[doc] = Doc(doc)
-    return docs[doc]
+    if doc in docs: return docs[doc]
+    d=Doc(doc)
+    if not 'stems' in d.__dict__:
+        # let's calculate and cache the results
+        d.stems
+        d.save()
+    docs[doc] = d
+    return d
 
-for line in sys.stdin:
-    (doc1,doc2)=eval(line)
-    print "[%d] %s, %s" % (os.getpid(),doc1,doc2)
-    try:
-        d1=getDoc(doc1)
-    except:
-       print "!!!!PIPPI ERROR: load doc",doc1
-       raise
-    try:
-        d2=getDoc(doc2)
-    except:
-       print "!!!!PIPPI ERROR: load doc",doc2
-       raise
-    try:
-        lcs.pippi(d1,d2)
-    except:
-       print "!!!!PIPPI ERROR: lcs",doc1,doc2
-       raise
+def main():
+    for line in sys.stdin:
+        (doc1,doc2)=eval(line)
+        print "[%d] %s, %s" % (os.getpid(),doc1,doc2)
+        try:
+            d1=getDoc(doc1)
+        except:
+           print "!!!!PIPPI ERROR: load doc",doc1
+           raise
+        try:
+            d2=getDoc(doc2)
+        except:
+           print "!!!!PIPPI ERROR: load doc",doc2
+           raise
+        try:
+            lcs.pippi(d1,d2)
+        except:
+           print "!!!!PIPPI ERROR: lcs",doc1,doc2
+           raise
+
+if __name__ == "__main__":
+    #import os
+    #import cProfile
+    #cProfile.run('main()', '/tmp/bp-%d.prof' % (os.getpid()))
+    main()
