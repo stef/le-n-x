@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 #    This file is part of le(n)x.
 
 #    le(n)x is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 # src: http://chipsndips.livejournal.com/425.html
-from lenx.view.models import Doc, Frag, Location
-from dbutils import DeferredBucket
+from lenx.view.models import Doc, Pippi
+from lenx.brain import bulksaver
 
 # kludge: infinity is a very large number
 inf = 100000000
@@ -81,7 +81,7 @@ class LCS:
                        sp.depth = r.depth + pp - j + 1
                        if j<len(str1)<i and r.depth>self.deepest[0]:
                            self.deepest = r.depth,j-1
-                elif s.has_key(t):
+                elif t in s:
                     break
                 else:
                     r = s
@@ -134,7 +134,7 @@ def getACS(str,st,d):
         if(j<inf) and s:
             d=getACS(str,s,d)
             l=j+1-i
-            if not d.has_key(j) or l>d[j]['l']:
+            if not j in d or l>d[j]['l']:
                 d[j]={
                     'l':l,
                     'pos':[x[0]-l for x in s.values()],
@@ -142,13 +142,14 @@ def getACS(str,st,d):
                     }
     return d
 
-def pippi(D1,D2,store=True):
-    doc1=[x or ('!1@3#@@%4%$#^7*(',) for x in D1.getstems()[0]]+['zAq!2WsX']
-    doc2=[x or ('!1@3#@@%4%$#^7*(',) for x in D2.getstems()[0]]+['XsW@!qAz']
+def pippi(D1,D2,saver=None):
+    doc1=tuple([x or ('!1@3#@@%4%$#^7*(',) for x in D1.stems]+['zAq!2WsX'])
+    doc2=tuple([x or ('!1@3#@@%4%$#^7*(',) for x in D2.stems]+['XsW@!qAz'])
+    if not saver:
+        saver=bulksaver.Saver()
 
     frag=LCS(doc1,doc2)
     res={}
-    deferred = DeferredBucket()
     for m in getACS(frag.str,frag.root,{}).values():
         a=[]
         b=[]
@@ -158,29 +159,21 @@ def pippi(D1,D2,store=True):
             else:
                 b.append(p-len(doc1))
         if a and b:
-            stem=tuple([() if x==('!1@3#@@%4%$#^7*(',) else x for x in m['frag']])
+            stem=tuple([('',) if x==('!1@3#@@%4%$#^7*(',) else tuple(x) for x in m['frag']])
             res[stem]=(a,b)
             l=len(stem)
-            if store and l>1:
-                frag=Frag.getFrag(stem)
-                for p in a:
-                    txt=D1.gettokens()[0][p:p+l]
-                    loc=Location.objects.create(doc=D1,pos=p,txt=txt,frag=frag)
-                    deferred.append(loc)
-                for p in b:
-                    txt=D2.gettokens()[0][p:p+l]
-                    loc=Location.objects.create(doc=D2,pos=p,txt=txt,frag=frag)
-                    deferred.append(loc)
-                frag.save()
-    deferred.bulk_save()
+            if saver:
+                saver.write(bulksaver.lcsPkt(a,b,l,stem,D1,D2))
+    if saver:
+        saver.flush(D1,D2)
     return res
 
 if __name__ == "__main__":
     import pprint
     import sys
-    d1=Doc.getDoc(sys.argv[1].strip('\t\n'))
-    d2=Doc.getDoc(sys.argv[2].strip('\t\n'))
-    topfrags=[ x for x in sorted( pippi(d1,d2,store=True).items(),
+    d1=Doc(sys.argv[1].strip('\t\n'))
+    d2=Doc(sys.argv[2].strip('\t\n'))
+    topfrags=[ x for x in sorted( pippi(d1,d2).items(),
                                  reverse=True,
                                  cmp=lambda x,y: cmp(len(x[0]),len(y[0])))
                 if len(x[0])>0 ]

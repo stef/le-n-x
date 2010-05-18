@@ -2,7 +2,8 @@
 {% load lenx %}
 
 {% block scripts %}
-<script type="text/javascript" src="{% media_url %}/js/jquery.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script src="http://cdn.jquerytools.org/1.2.1/jquery.tools.min.js"></script>
 
 <script type="text/javascript">
 
@@ -38,6 +39,7 @@
     var locSet = [];
 
     $(document).ready(function() {
+        $('.highlight').tooltip({effect: 'fade'});
         if(1) return;
         var match;
         $('#loading').show();
@@ -64,10 +66,10 @@
         <h4>Pippies: {{ len }}</h4>
         <h4>Highlights in text: {{ matches }}</h4>
     </fieldset>
-    <fieldset><legend>Related docs</legend>
+    <fieldset <legend>Related docs</legend>
         <ul>
         {% for dd in related %}
-            <li>{{ dd.eurlexid }}</li>
+            <li><a href="/doc/{{ dd.eurlexid }}?cutoff={{cutoff}}">{{dd.title}}</a><hr /></li>
         {% endfor %}
         </ul>
     </fieldset>

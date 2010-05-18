@@ -16,6 +16,7 @@ Stats: <ul id="stats">
             {% endfor %}
        </div>
        <a href="{% root_url %}/xpippi/{{doc.id}}">{{doc.title}}</a>
+       <small>({{doc.indexed}})</small>
        <br style="clear: both;" />
     </li>
 {% endfor %}
