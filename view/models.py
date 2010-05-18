@@ -64,7 +64,7 @@ class Doc(models.Model):
     stems=PickledObjectField(default=None,null=True)
     spos=PickledObjectField(default=None,null=True)
     wpos=PickledObjectField(default=None,null=True)
-    title=models.TextField(default=None,max_length=8192,null=True)
+    title=models.TextField(default=None,max_length=8193,null=True)
     subject=models.CharField(default=None,max_length=512,null=True)
     frags = models.ManyToManyField(Frag, through='Location')
     objects = LockingManager()
@@ -95,7 +95,7 @@ class Doc(models.Model):
             self.raw = cache.fetchUrl(EURLEXURL+self.eurlexid)
             soup = BeautifulSoup(self.raw)
             # TexteOnly is the id used on eur-lex pages containing distinct docs
-            self.text=[unicode(x) for x in soup.find(id='TexteOnly').findAll(text=True)]
+            self.text=unicode(''.join(soup.find(id='TexteOnly').findAll(text=True)))
         return self.text
 
     def gettokens(self):

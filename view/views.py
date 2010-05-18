@@ -183,7 +183,7 @@ def docView(request,doc=None,cutoff=20):
         regex=re.compile(rtxt, re.I | re.M | re.U)
         i=0
         offset = 0
-        print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l.pos, rtxt)
+        #print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l.pos, rtxt)
         for r in regex.finditer(cont):
             print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
             span = ('<span class="highlight %s">' % l.pk, '</span>')
