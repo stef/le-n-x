@@ -16,7 +16,7 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Pippi
+from lenx.view.models import Doc, Pippi, TfIdf
 from django.core.management import setup_environ
 from lenx import settings
 from lenx.brain import lcs
@@ -24,12 +24,13 @@ setup_environ(settings)
 import sys, os
 
 docs={}
+tfidf=TfIdf()
 def getDoc(doc):
     if doc in docs: return docs[doc]
     d=Doc(doc)
     if not 'stems' in d.__dict__:
         # let's calculate and cache the results
-        d.stems
+        tfidf.add_input_document(d.termcnt.keys())
         d.save()
     docs[doc] = d
     return d
@@ -53,6 +54,7 @@ def main():
         except:
            print "!!!!PIPPI ERROR: lcs",doc1,doc2
            raise
+    tfidf.save()
 
 if __name__ == "__main__":
     #import os
