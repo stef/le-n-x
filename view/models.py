@@ -16,10 +16,9 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from django.conf import settings
-DICTDIR=settings.DICT_PATH
+from lenx.settings import DICT, CACHE_PATH
 from lenx.brain import cache as Cache
-CACHE=Cache.Cache(settings.CACHE_PATH)
+CACHE=Cache.Cache(CACHE_PATH)
 
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
@@ -28,8 +27,6 @@ from pymongo import Connection
 from operator import itemgetter
 import itertools, math
 
-LANG='en_US'
-DICT=DICTDIR+'/'+LANG
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
 conn = Connection()
@@ -166,8 +163,6 @@ class Doc():
         engine = hunspell.HunSpell(DICT+'.dic', DICT+'.aff')
         stems=[]
         termcnt={}
-        #spos={}
-        #i=0
         for word in self.tokens:
             # stem each word and count the results
             stem=engine.stem(word.encode('utf8'))

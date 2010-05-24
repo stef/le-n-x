@@ -21,10 +21,7 @@ import nltk.tokenize
 from BeautifulSoup import BeautifulSoup
 from operator import itemgetter
 import math
-from django.conf import settings
-DICTDIR=settings.DICT_PATH
-LANG='en_US'
-DICT=DICTDIR+'/'+LANG
+from lenx.settings import DICT
 
 # german stopwords: http://feya.solariz.de/wp-content/uploads/stopwords.txt
 # other languages (also hungarian) can be found here: http://snowball.tartarus.org/algorithms/

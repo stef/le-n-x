@@ -28,7 +28,7 @@ tfidf=TfIdf()
 def getDoc(doc):
     if doc in docs: return docs[doc]
     d=Doc(doc)
-    if not 'stems' in d.__dict__:
+    if not 'stems' in d.__dict__ or not d.stems:
         # let's calculate and cache the results
         tfidf.add_input_document(d.termcnt.keys())
         d.save()

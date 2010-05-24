@@ -3,7 +3,9 @@ import os.path
 
 BASE_PATH = os.path.dirname(__file__)
 CACHE_PATH = BASE_PATH+'/cache/'
+LANG='en_US'
 DICT_PATH = '/usr/share/hunspell'
+DICT=DICT_PATH+'/'+LANG
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -94,3 +96,8 @@ INSTALLED_APPS = (
     'lenx.brain',
     'lenx.utils',
 )
+
+try:
+    from lenx.local_settings import *
+except:
+    pass

@@ -16,11 +16,11 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
+import re
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
-from django.conf import settings
+from lenx import settings
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
-import re
 from lenx.brain import stopwords, tagcloud
 from lenx.view.models import Doc, Pippi, Docs, Pippies
 from lenx.view.forms import XpippiForm, viewForm
