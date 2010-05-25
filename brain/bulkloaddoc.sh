@@ -9,7 +9,7 @@ tmpdir=/home/stef/tmp/ptmp
 find ${tmpdir}/ -name 'job*' | xargs rm 
 
 # sed consumes stdin! oblig!
-sed "/$1/d; s/^\(.*\)$/(\'$1\', \'\1\')/;" | split -d -a 8 -l ${batchsize} - ${tmpdir}/job
+sed "/$1/d; s/^\(.*\)$/$1	\1/;" | split -d -a 8 -l ${batchsize} - ${tmpdir}/job
 
 # count all jobs
 totaljobs=$(find ${tmpdir} -name 'job*' |  wc -l)
