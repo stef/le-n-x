@@ -16,9 +16,11 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.settings import DICT, CACHE_PATH
+from django.core.management import setup_environ
+from lenx import settings
+setup_environ(settings)
 from lenx.brain import cache as Cache
-CACHE=Cache.Cache(CACHE_PATH)
+CACHE=Cache.Cache(settings.CACHE_PATH)
 
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
@@ -36,12 +38,12 @@ Pippies=db.pippies
 MiscDb=db.miscdb
 
 class Pippi():
-    def __init__(self, pippi, oid=None):
+    def __init__(self, pippi, oid=None, frag=None):
         f=None
         if oid:
             # get by mongo oid
             frag=Pippies.find_one({"_id": oid})
-        else:
+        elif pippi:
             # get by pippi
             frag=Pippies.find_one({"pippi": pippi})
         if(frag):
@@ -57,14 +59,25 @@ class Pippi():
         self.__dict__['_id']=Pippies.save(self.__dict__)
 
     def __getattr__(self, name):
-        if name in self.__dict__.keys():
+        # handle and cache calculated properties
+        #dirty=False
+        #if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
+        #    dirty=True
+        #    if name == 'tfidf':
+        #        self.tfidf=self._gettfidf()
+        if name in self.__dict__:
+        #    if dirty: self.save()
             return self.__dict__[name]
-        else: raise AttributeError, name
+        else:
+            raise AttributeError, name
 
     def __setattr__(self, name, value):
         if name in self.__dict__.keys():
             self.__dict__[name]=value
         else: raise AttributeError, name
+
+    #def _gettfidf(self):
+    #    return tfidf.get_doc_keywords(set(self.pippi),len(self.pippi))
 
     def getStr(self):
         return " ".join(eval(self.frag)).encode('utf8')
@@ -74,7 +87,7 @@ class Pippi():
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc():
-    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject']
+    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject', 'tfidf']
 
     def __init__(self,eurlexid,oid=None,d=None):
         if oid:
@@ -103,7 +116,7 @@ class Doc():
     def __getattr__(self, name):
         # handle and cache calculated properties
         dirty=False
-        if name in self.computed_attrs and name not in self.__dict__.keys():
+        if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
             dirty=True
             if name == 'raw':
                 self.raw=self._getraw()
@@ -117,6 +130,8 @@ class Doc():
                 self.title=self._gettitle()
             if name == 'subject':
                 self.subject=self._getsubj()
+            if name == 'tfidf':
+                self.tfidf=self._gettfidf()
         if name in self.__dict__.keys():
             if dirty: self.save()
             return self.__dict__[name]
@@ -160,7 +175,7 @@ class Doc():
 
     def _getstems(self):
         # start stemming
-        engine = hunspell.HunSpell(DICT+'.dic', DICT+'.aff')
+        engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
         stems=[]
         termcnt={}
         for word in self.tokens:
@@ -183,6 +198,9 @@ class Doc():
 
     def _getsubj(self):
         return self._getHTMLMetaData('DC.subject')
+
+    def _gettfidf(self):
+        return tfidf.get_doc_keywords(self)
 
     def getFrag(self,start,len):
         return " ".join(self.tokens[start:start+len]).encode('utf8')
@@ -254,7 +272,7 @@ class TfIdf:
             return 0
         if not term in self.term_num_docs:
             return self.idf_default
-        return math.log(float(1 + self.get_num_docs()) /
+        return math.log(float(1 + self.num_docs) /
                         (1 + self.term_num_docs[term]))
 
     def get_doc_keywords(self, doc):
@@ -262,15 +280,17 @@ class TfIdf:
         The returned terms are ordered by decreasing tf-idf.
         """
         tfidf = {}
-        doclen = len(doc.stems)
-        for word in doc.termcnt.keys():
+        doclen=len(doc.stems)
+        for word in doc.termcnt:
             # The definition of TF specifies the denominator as the count of terms
             # within the document, but for short documents, I've found heuristically
             # that sometimes len(tokens_set) yields more intuitive results.
             mytf = float(doc.termcnt[word]) / doclen
             myidf = self.get_idf(word)
             tfidf[word] = mytf * myidf
-        return sorted(tfidf.items(), key=itemgetter(1), reverse=True)
+        return tfidf
 
     def save(self):
         self.__dict__['_id']=MiscDb.save(self.__dict__)
+
+tfidf=TfIdf()

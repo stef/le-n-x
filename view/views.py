@@ -19,9 +19,11 @@
 import re
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
+from django.core.management import setup_environ
 from lenx import settings
+setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
-from lenx.brain import stopwords, tagcloud
+from lenx.brain import tagcloud
 from lenx.view.models import Doc, Pippi, Docs, Pippies
 from lenx.view.forms import XpippiForm, viewForm
 from operator import itemgetter
@@ -192,8 +194,9 @@ def listDocs(request):
            'indexed': doc.pippiDocsLen,
            'title': doc.title or doc.eurlexid,
            'subject': doc.subject or "",
-           'tags': tagcloud.logTags(doc.stems,l=25)}
-          for doc in [Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }})]]
+           #'tags': tagcloud.logTags(doc.stems,l=25)}
+           'tags': tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in doc.tfidf.items() if t not in tagcloud.stopwords]),l=25)}
+          for doc in (Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
 def stats(request):
