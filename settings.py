@@ -94,3 +94,9 @@ INSTALLED_APPS = (
     'lenx.brain',
     'lenx.utils',
 )
+
+
+try:
+    from lenx.local_settings import *
+except:
+    pass

@@ -101,7 +101,7 @@ class DocPool():
 
     def flush(self):
         for doc in self.docs.values():
-            print doc
+            #print doc
             doc['doc'].save()
 
 class FragPool():
