@@ -39,7 +39,6 @@ MiscDb=db.miscdb
 
 class Pippi():
     def __init__(self, pippi, oid=None, frag=None):
-        f=None
         if oid:
             # get by mongo oid
             frag=Pippies.find_one({"_id": oid})
@@ -47,16 +46,18 @@ class Pippi():
             # get by pippi
             frag=Pippies.find_one({"pippi": pippi})
         if(frag):
+            frag['docs']=set([PippiFrag(f['pos'],f['txt'],f['l'],f['doc']) for f in frag['docs']])
             self.__dict__=frag
         else:
-            self.__dict__={}
-            self.__dict__['pippi'] = pippi
-            self.__dict__['len'] = len(pippi)
-            self.__dict__['docs'] = [] # should a be a list of {'pos':p,'txt':txt,'l':l,'doc':_id}
+            self.__dict__={'pippi': pippi,
+                           'len': len(pippi),
+                           'docs': set([])} # should a be a set of {'pos':p,'txt':txt,'l':l,'doc':_id}
             self.save()
 
     def save(self):
-        self.__dict__['_id']=Pippies.save(self.__dict__)
+        data=self.__dict__.copy()
+        data['docs']=list(data['docs'])
+        self.__dict__['_id']=Pippies.save(data)
 
     def __getattr__(self, name):
         # handle and cache calculated properties
@@ -83,7 +84,7 @@ class Pippi():
         return " ".join(eval(self.frag)).encode('utf8')
 
     def __unicode__(self):
-        return unicode(self.frag)+":"+unicode(self.l)+"\n"+unicode(self.doc_set.all())
+        return unicode(self.pippi)
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc():
@@ -152,7 +153,7 @@ class Doc():
             result = []
             if not idfun:
                 def idfun(x):
-                    return (str(x['txt']),x['pos'])
+                    return (str(x['txt']),x['pos'],x['l'])
             for item in seq:
                 marker = idfun(item)
                 if marker in seen: continue
@@ -194,13 +195,19 @@ class Doc():
         return '|'.join(res).encode('utf-8')
 
     def _gettitle(self):
-        return self._getHTMLMetaData('DC.description')
+        return self._getHTMLMetaData('DC.description') or self.eurlexid
 
     def _getsubj(self):
         return self._getHTMLMetaData('DC.subject')
 
     def _gettfidf(self):
         return tfidf.get_doc_keywords(self)
+
+    def __hash__(self):
+        return hash(self._id)
+
+    def __eq__(self,other):
+        return self._id == other._id
 
     def getFrag(self,start,len):
         return " ".join(self.tokens[start:start+len]).encode('utf8')
@@ -294,3 +301,25 @@ class TfIdf:
         self.__dict__['_id']=MiscDb.save(self.__dict__)
 
 tfidf=TfIdf()
+
+class Frag(dict):
+    def __init__(self,pos,txt,lngth):
+        self['pos']=pos
+        self['txt']=txt
+        self['l']=lngth
+        self.hash=None
+    def __hash__(self):
+        return self.hash
+
+class PippiFrag(Frag):
+    def __init__(self,pos,txt,lngth,d):
+        Frag.__init__(self,pos,txt,lngth)
+        self['doc']=d
+        self.hash=hash((lngth,d.binary,pos))
+
+# stub if also needed for docs
+#class DocFrag(Frag):
+#    def __init__(self,pos,txt,lngth,f):
+#        Frag.__init__(self,pos,txt,lngth)
+#        self['frag']=f
+#        self.hash=hash((lngth,f.binary,pos))

@@ -37,7 +37,7 @@ def getDoc(doc):
 
 def main():
     for line in sys.stdin:
-        (doc1,doc2)=line.split('	')
+        (doc1,doc2)=line.strip().split('\t')
         print "[%d] %s, %s" % (os.getpid(),doc1,doc2)
         try:
             d1=getDoc(doc1)
@@ -60,4 +60,8 @@ if __name__ == "__main__":
     #import os
     #import cProfile
     #cProfile.run('main()', '/tmp/bp-%d.prof' % (os.getpid()))
+    import platform
+    if platform.machine() in ['i386', 'i686']:
+        import psyco
+        psyco.full()
     main()
