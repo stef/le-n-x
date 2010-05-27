@@ -54,7 +54,7 @@ combis=combinations(alldocs,2)
 try:
     job=combis.next()
     while job:
-        if (counter.next() % clusters)==idx: print job
+        if (counter.next() % clusters)==idx: print "%s	%s" % (job[0],job[1])
         job=combis.next()
 except StopIteration:
     pass

@@ -19,7 +19,7 @@
 from tempfile import mkstemp
 import msgpack, os, itertools, re
 from datetime import datetime
-from lenx.view.models import Doc, Pippi, Pippies
+from lenx.view.models import Doc, Pippi, Pippies, PippiFrag
 
 resultDir='/tmp/pippibulksaver'
 
@@ -48,43 +48,6 @@ class Saver():
         os.rename(fname,fname+'.batch')
         self.queue=[]
 
-def read(fname):
-    fd=open(fname,'r+b')
-    pkt=msgpack.unpackb(fd.read())
-    fd.close()
-    d1=DOCS.get(pkt['d1'])
-    d2=DOCS.get(pkt['d2'])
-    for pippi in pkt['pippies']:
-        storePippi(pippi,d1,d2)
-    d1.addDoc(d2)
-    d2.addDoc(d1)
-    os.rename(fname,fname+'.stored')
-
-def uniq(seq, idfun=None):
-    if idfun is None:
-        def idfun(x): return ("".join(x['txt']),x['pos'])
-    seen = {}
-    result = []
-    for item in seq:
-        marker = idfun(item)
-        if marker in seen: continue
-        seen[marker] = 1
-        result+=[item]
-    return result
-
-def storePippi(pkt,d1,d2):
-    frag=FRAGS.get(pkt['pippi'])
-
-    d1.pippies.extend([{'pos':p['pos'],'txt':tuple(p['txt']),'l':pkt['l'],'frag':frag._id}
-                for p in pkt['d1ps']])
-    d2.pippies.extend([{'pos':p['pos'],'txt':tuple(p['txt']),'l':pkt['l'],'frag':frag._id}
-                for p in pkt['d2ps']])
-    frag.docs.extend([{'pos':p['pos'],'txt':tuple(p['txt']),'l':pkt['l'],'doc':d}
-                      for (d,p) in
-                      [(d1._id, p) for p in pkt['d1ps']]+
-                      [(d2._id, p) for p in pkt['d2ps']]])
-    FRAGS.add(frag)
-
 class DocPool():
     docs={}
     size=2
@@ -101,13 +64,12 @@ class DocPool():
 
     def flush(self):
         for doc in self.docs.values():
-            #print doc
             doc['doc'].save()
 
 class FragPool():
     frags={}
     dirtyQ=[]
-    fragsBucket=128
+    fragsBucket=64
 
     def get(self,f):
         if len(self.dirtyQ)>self.fragsBucket:
@@ -124,18 +86,35 @@ class FragPool():
             self.dirtyQ.append(key)
 
     def flush(self):
-        batch=[self.frags[frag].__dict__ for frag in self.dirtyQ]
-        def uniquify(x):
-            x['docs']=uniq(x['docs'])
-            return x
-        batch=map(uniquify,batch)
-        # dirty workaround no bulk updates in mongo
-        Pippies.remove({ "_id" : { '$in' : [x['_id'] for x in batch]} })
-        Pippies.insert(batch)
+        for frag in self.dirtyQ:
+            self.frags[frag].save()
         del self.dirtyQ[:]
 
 DOCS=DocPool()
 FRAGS=FragPool()
+
+def read(fname):
+    fd=open(fname,'r+b')
+    pkt=msgpack.unpackb(fd.read())
+    fd.close()
+    d1=DOCS.get(pkt['d1'])
+    d2=DOCS.get(pkt['d2'])
+    for pippi in pkt['pippies']:
+        storePippi(pippi,d1,d2)
+    d1.addDoc(d2)
+    d2.addDoc(d1)
+    os.rename(fname,fname+'.stored')
+
+def storePippi(pkt,d1,d2):
+    frag=FRAGS.get(pkt['pippi'])
+
+    d1.pippies.extend([{'pos':p['pos'],'txt':tuple(p['txt']),'l':pkt['l'],'frag':frag._id}
+                for p in pkt['d1ps']])
+    d2.pippies.extend([{'pos':p['pos'],'txt':tuple(p['txt']),'l':pkt['l'],'frag':frag._id}
+                for p in pkt['d2ps']])
+    frag.docs=frag.docs.union([PippiFrag(p['pos'],p['txt'],pkt['l'],d) for (d,p) in
+                               [(d1._id, p) for p in pkt['d1ps']]+[(d2._id, p) for p in pkt['d2ps']]])
+    FRAGS.add(frag)
 
 def mainloop():
     # flush out what's in the resultDir
@@ -150,6 +129,10 @@ def mainloop():
     FRAGS.flush()
 
 if __name__ == "__main__":
-    #import cProfile
-    #cProfile.run('mainloop()', '/tmp/bs.prof')
-    mainloop()
+    import platform
+    if platform.machine() in ['i386', 'i686']:
+        import psyco
+        psyco.full()
+    import cProfile
+    cProfile.run('mainloop()', '/tmp/bs.prof')
+    #mainloop()

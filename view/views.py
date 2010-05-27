@@ -69,7 +69,7 @@ def getPippiRelateddocs(d,pippi):
 
 def annotatePippi(d,pippi,cutoff=7):
     itemtpl='<li><a href="/doc/%s?cutoff=%d">%s</a><hr /></li>'
-    docs=getPippiRelateddocs(d,pippi)
+    docs=set(getPippiRelateddocs(d,pippi))
     return '\n'.join([
         '<div class="pippiNote">',
         '<b>also appears in</b>',
@@ -90,10 +90,8 @@ def docView(request,doc=None,cutoff=20):
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
     cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
     relDocs = d.getRelatedDocs(cutoff=cutoff)
-    #origfrags = d.getstems()
     ls = []
     matches = 0
-    #for l in Location.objects.filter(doc=d).filter(frag__l__gte=cutoff).order_by('-frag__l'):
     for l in sorted(d.pippies,reverse=True,key=itemgetter('l')):
         if( l['l'] < cutoff): break
         # for unique locset - optimalization?!
