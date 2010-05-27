@@ -16,7 +16,7 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Pippi, TfIdf
+from lenx.view.models import Doc, Pippi, Docs, Pippies
 from django.core.management import setup_environ
 from lenx import settings
 from lenx.brain import lcs
@@ -24,37 +24,12 @@ setup_environ(settings)
 import sys, os
 
 docs={}
-tfidf=TfIdf()
-def getDoc(doc):
-    if doc in docs: return docs[doc]
-    d=Doc(doc)
-    if not 'stems' in d.__dict__ or not d.stems:
-        # let's calculate and cache the results
-        tfidf.add_input_document(d.termcnt.keys())
-        d.save()
-    docs[doc] = d
-    return d
 
 def main():
-    for line in sys.stdin:
-        (doc1,doc2)=eval(line)
-        print "[%d] %s, %s" % (os.getpid(),doc1,doc2)
-        try:
-            d1=getDoc(doc1)
-        except:
-           print "!!!!PIPPI ERROR: load doc",doc1
-           raise
-        try:
-            d2=getDoc(doc2)
-        except:
-           print "!!!!PIPPI ERROR: load doc",doc2
-           raise
-        try:
-            lcs.pippi(d1,d2)
-        except:
-           print "!!!!PIPPI ERROR: lcs",doc1,doc2
-           raise
-    tfidf.save()
+    for doc in Docs.find():
+        d=Doc('',d=doc)
+        print d.title
+        d.tfidf
 
 if __name__ == "__main__":
     #import os

@@ -16,8 +16,9 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from django.conf import settings
-DICTDIR=settings.DICT_PATH
+from django.core.management import setup_environ
+from lenx import settings
+setup_environ(settings)
 from lenx.brain import cache as Cache
 CACHE=Cache.Cache(settings.CACHE_PATH)
 
@@ -26,24 +27,23 @@ import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 from pymongo import Connection
 from operator import itemgetter
-import itertools
+import itertools, math
 
-LANG='en_US'
-DICT=DICTDIR+'/'+LANG
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
 conn = Connection()
 db=conn.pippi
 Docs=db.docs
 Pippies=db.pippies
+MiscDb=db.miscdb
 
 class Pippi():
-    def __init__(self, pippi, oid=None):
+    def __init__(self, pippi, oid=None, frag=None):
         f=None
         if oid:
             # get by mongo oid
             frag=Pippies.find_one({"_id": oid})
-        else:
+        elif pippi:
             # get by pippi
             frag=Pippies.find_one({"pippi": pippi})
         if(frag):
@@ -59,14 +59,25 @@ class Pippi():
         self.__dict__['_id']=Pippies.save(self.__dict__)
 
     def __getattr__(self, name):
-        if name in self.__dict__.keys():
+        # handle and cache calculated properties
+        #dirty=False
+        #if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
+        #    dirty=True
+        #    if name == 'tfidf':
+        #        self.tfidf=self._gettfidf()
+        if name in self.__dict__:
+        #    if dirty: self.save()
             return self.__dict__[name]
-        else: raise AttributeError, name
+        else:
+            raise AttributeError, name
 
     def __setattr__(self, name, value):
         if name in self.__dict__.keys():
             self.__dict__[name]=value
         else: raise AttributeError, name
+
+    #def _gettfidf(self):
+    #    return tfidf.get_doc_keywords(set(self.pippi),len(self.pippi))
 
     def getStr(self):
         return " ".join(eval(self.frag)).encode('utf8')
@@ -76,7 +87,7 @@ class Pippi():
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc():
-    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'title', 'subject']
+    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject', 'tfidf']
 
     def __init__(self,eurlexid,oid=None,d=None):
         if oid:
@@ -105,7 +116,7 @@ class Doc():
     def __getattr__(self, name):
         # handle and cache calculated properties
         dirty=False
-        if name in self.computed_attrs and name not in self.__dict__.keys():
+        if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
             dirty=True
             if name == 'raw':
                 self.raw=self._getraw()
@@ -113,12 +124,14 @@ class Doc():
                 self.text=self._gettext()
             if name == 'tokens':
                 self.tokens=self._gettokens()
-            if name == 'stems':
-                self.stems=self._getstems()
+            if name in ['stems','termcnt']:
+                (self.stems,self.termcnt)=self._getstems()
             if name == 'title':
                 self.title=self._gettitle()
             if name == 'subject':
                 self.subject=self._getsubj()
+            if name == 'tfidf':
+                self.tfidf=self._gettfidf()
         if name in self.__dict__.keys():
             if dirty: self.save()
             return self.__dict__[name]
@@ -162,18 +175,18 @@ class Doc():
 
     def _getstems(self):
         # start stemming
-        engine = hunspell.HunSpell(DICT+'.dic', DICT+'.aff')
+        engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
         stems=[]
-        #spos={}
-        #i=0
+        termcnt={}
         for word in self.tokens:
             # stem each word and count the results
             stem=engine.stem(word.encode('utf8'))
             if stem:
                 stems.append((stem[0],))
+                termcnt[stem[0]]=termcnt.get(stem[0],0)+1
             else:
                 stems.append(('',))
-        return tuple(stems)
+        return (tuple(stems),termcnt)
 
     def _getHTMLMetaData(self, attr):
         soup = BeautifulSoup(self.raw)
@@ -185,6 +198,9 @@ class Doc():
 
     def _getsubj(self):
         return self._getHTMLMetaData('DC.subject')
+
+    def _gettfidf(self):
+        return tfidf.get_doc_keywords(self)
 
     def getFrag(self,start,len):
         return " ".join(self.tokens[start:start+len]).encode('utf8')
@@ -207,3 +223,74 @@ class Doc():
         if not d._id in self.pippiDocs:
             self.pippiDocs.append(d._id)
             self.pippiDocsLen=len(self.pippiDocs)
+
+class TfIdf:
+    def __init__(self, DEFAULT_IDF = 1.5):
+
+        d=MiscDb.find_one({"name": 'tfidf'})
+        if d:
+            # load the values
+            self.__dict__=d
+        else:
+            # create a new document
+            self.__dict__={}
+            self.__dict__['name'] = "tfidf"
+            self.__dict__['num_docs'] = 0
+            self.__dict__['term_num_docs'] = {} # term : num_docs_containing_term
+            self.__dict__['stopwords'] = []
+            self.__dict__['idf_default'] = DEFAULT_IDF
+            self.save()
+
+    def __getattr__(self, name):
+        if name in self.__dict__.keys():
+            return self.__dict__[name]
+        else: raise AttributeError, name
+
+    def __setattr__(self, name, value):
+        if name in self.__dict__.keys() or name == 'name':
+            self.__dict__[name]=value
+        else: raise AttributeError, name
+
+    def save(self):
+        self.__dict__['_id']=Pippies.save(self.__dict__)
+
+    def add_input_document(self, stems):
+        """Add terms in the specified document to the idf dictionary.
+        requires a unique list of stems (usually doc.termcnt.keys())
+        """
+        self.num_docs += 1
+        for stem in stems:
+            self.term_num_docs[stem]=self.term_num_docs.get(stem,0)+1
+
+    def get_idf(self, term):
+        """Retrieve the IDF for the specified term.
+        This is computed by taking the logarithm of (
+        (number of documents in corpus) divided by (number of documents
+        containing this term) ).
+        """
+        if term in self.stopwords:
+            return 0
+        if not term in self.term_num_docs:
+            return self.idf_default
+        return math.log(float(1 + self.num_docs) /
+                        (1 + self.term_num_docs[term]))
+
+    def get_doc_keywords(self, doc):
+        """Retrieve terms and corresponding tf-idf for the specified document.
+        The returned terms are ordered by decreasing tf-idf.
+        """
+        tfidf = {}
+        doclen=len(doc.stems)
+        for word in doc.termcnt:
+            # The definition of TF specifies the denominator as the count of terms
+            # within the document, but for short documents, I've found heuristically
+            # that sometimes len(tokens_set) yields more intuitive results.
+            mytf = float(doc.termcnt[word]) / doclen
+            myidf = self.get_idf(word)
+            tfidf[word] = mytf * myidf
+        return tfidf
+
+    def save(self):
+        self.__dict__['_id']=MiscDb.save(self.__dict__)
+
+tfidf=TfIdf()
