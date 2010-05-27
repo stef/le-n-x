@@ -4,6 +4,7 @@
 batchsize=32
 JOBMAX=4
 tmpdir=/home/stef/tmp/ptmp
+PPATH=`dirname $0`'/..'
 
 # clear batches
 find ${tmpdir}/ -name 'job*' | xargs rm 
@@ -18,11 +19,11 @@ totaljobs=$(find ${tmpdir} -name 'job*' |  wc -l)
 i=0
 find ${tmpdir} -name 'job*' | while read batch; do
    (echo "starting batch: ${batch##${tmpdir}/job}"
-    if PYTHONPATH=/home/stef/tasks/ DJANGO_SETTINGS_MODULE="lenx.settings" python bulkpippy.py <"${batch}"; then
+    if PYTHONPATH=$PPATH/../ DJANGO_SETTINGS_MODULE="lenx.settings" python $PPATH/brain/bulkpippy.py <"${batch}"; then
         echo "done $i/${totaljobs} ${batch##${tmpdir}/}" 
     else
         echo "abort $i/${totaljobs} ${batch##${tmpdir}/}"
     fi ) &
    i=$((i+1))
-   [[ -r ./bulkpippies ]] && JOBMAX=$(cat ./bulkpippies)
+   [[ -r $PPATH/brain/bulkpippies ]] && JOBMAX=$(cat $PPATH/brain/bulkpippies)
 done
