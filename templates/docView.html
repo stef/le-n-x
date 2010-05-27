@@ -58,7 +58,7 @@
 
 {% block main %}
 
-<h2>docView for {{ doc.title }} ({{ doc.eurlexid }})</h2>
+<h2>docView for {{ doc.title|safe }} ({{ doc.eurlexid }})</h2>
 
 <div class="rel">
     <fieldset><legend>Statistics</legend>
@@ -69,7 +69,7 @@
     <fieldset <legend>Related docs</legend>
         <ul>
         {% for dd in related %}
-            <li><a href="/doc/{{ dd.eurlexid }}?cutoff={{cutoff}}">{{dd.title}}</a><hr /></li>
+            <li><a href="/doc/{{ dd.eurlexid }}?cutoff={{cutoff}}">{{dd.title|safe}}</a><hr /></li>
         {% endfor %}
         </ul>
     </fieldset>
