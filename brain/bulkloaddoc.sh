@@ -3,7 +3,7 @@
 
 batchsize=32
 JOBMAX=4
-tmpdir=/home/stef/tmp/ptmp
+tmpdir=/tmp/
 
 # clear batches
 find ${tmpdir}/ -name 'job*' | xargs rm 
@@ -18,7 +18,7 @@ totaljobs=$(find ${tmpdir} -name 'job*' |  wc -l)
 i=0
 find ${tmpdir} -name 'job*' | while read batch; do
    (echo "starting batch: ${batch##${tmpdir}/job}"
-    if PYTHONPATH=/home/stef/tasks/ DJANGO_SETTINGS_MODULE="lenx.settings" python bulkpippy.py <"${batch}"; then
+    if PYTHONPATH=~wipeover/docs/projects/pippi/ DJANGO_SETTINGS_MODULE="lenx.settings" python bulkpippy.py <"${batch}"; then
         echo "done $i/${totaljobs} ${batch##${tmpdir}/}" 
     else
         echo "abort $i/${totaljobs} ${batch##${tmpdir}/}"
