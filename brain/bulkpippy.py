@@ -36,7 +36,7 @@ def getDoc(doc):
     return d
 
 def main():
-    fails=open('bulkpippy.fails','w+')
+    fails=open('bulkpippy.fails','a')
     for line in sys.stdin:
         (doc1,doc2)=line.strip().split('\t')
         print "[%d] %s, %s" % (os.getpid(),doc1,doc2)
