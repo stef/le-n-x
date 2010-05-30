@@ -44,6 +44,7 @@ def main():
             d1=getDoc(doc1)
         except:
            print "!!!!PIPPI ERROR: load doc",doc1
+           sys.stderr.write("%s\t%s\n" % (doc1,doc2))
            traceback.print_exc(file=sys.stderr)
            fails.write("%s\t%s\n" % (doc1,doc2))
            continue
@@ -51,6 +52,7 @@ def main():
             d2=getDoc(doc2)
         except:
            print "!!!!PIPPI ERROR: load doc",doc2
+           sys.stderr.write("%s\t%s\n" % (doc1,doc2))
            traceback.print_exc(file=sys.stderr)
            fails.write("%s\t%s\n" % (doc1,doc2))
            continue
@@ -58,6 +60,7 @@ def main():
            lcs.pippi(d1,d2)
         except:
            print "!!!!PIPPI ERROR: lcs",doc1,doc2
+           sys.stderr.write("%s\t%s\n" % (doc1,doc2))
            traceback.print_exc(file=sys.stderr)
            fails.write("%s\t%s\n" % (doc1,doc2))
     tfidf.save()
