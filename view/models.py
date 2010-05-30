@@ -48,8 +48,9 @@ class Pippi():
         if(frag):
             frag['docs']=set([PippiFrag(f['pos'],f['txt'],f['l'],f['doc']) for f in frag['docs']])
             self.__dict__=frag
+            self.pippi=tuple(self.pippi)
         else:
-            self.__dict__={'pippi': pippi,
+            self.__dict__={'pippi': tuple(pippi),
                            'len': len(pippi),
                            'docs': set([])} # should a be a set of {'pos':p,'txt':txt,'l':l,'doc':_id}
             self.save()
@@ -100,9 +101,6 @@ class Doc():
         if d:
             # load the values
             self.__dict__=d
-            if 'stems' in d:
-                # convert stems back to tuples - mongo only does lists
-                self.__dict__['stems'] = tuple([tuple(x) for x in d['stems']])
         elif eurlexid:
             # create a new document
             self.__dict__={}
@@ -183,10 +181,10 @@ class Doc():
             # stem each word and count the results
             stem=engine.stem(word.encode('utf8'))
             if stem:
-                stems.append((stem[0],))
+                stems.append(stem[0])
                 termcnt[stem[0]]=termcnt.get(stem[0],0)+1
             else:
-                stems.append(('',))
+                stems.append('')
         return (tuple(stems),termcnt)
 
     def _getHTMLMetaData(self, attr):

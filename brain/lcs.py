@@ -143,8 +143,8 @@ def getACS(str,st,d):
     return d
 
 def pippi(D1,D2,saver=bulksaver.Saver()):
-    doc1=tuple([('!1@3#@@%4%$#^7*(',) if x == ('',) else x for x in D1.stems]+['zAq!2WsX'])
-    doc2=tuple([('!1@3#@@%4%$#^7*(',) if x == ('',) else x for x in D2.stems]+['XsW@!qAz'])
+    doc1=tuple([('!1@3#@@%4%$#^7*(',) if x == '' else (x,) for x in D1.stems]+['zAq!2WsX'])
+    doc2=tuple([('!1@3#@@%4%$#^7*(',) if x == '' else (x,) for x in D2.stems]+['XsW@!qAz'])
 
     frag=LCS(doc1,doc2)
     res={}
@@ -157,7 +157,7 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
             else:
                 b.append(p-len(doc1))
         if a and b:
-            stem=tuple([('',) if x==('!1@3#@@%4%$#^7*(',) else tuple(x) for x in m['frag']])
+            stem=tuple(['' if x==('!1@3#@@%4%$#^7*(',) else x[0] for x in m['frag']])
             res[stem]=(a,b)
             l=len(stem)
             if saver:

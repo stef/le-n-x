@@ -79,11 +79,10 @@ class FragPool():
         return self.frags[f]
 
     def add(self,f):
-        key=tuple([tuple(t[0]) for t in f.pippi])
-        self.frags[key]=f
+        self.frags[f.pippi]=f
         #print f.docs
-        if not key in self.dirtyQ:
-            self.dirtyQ.append(key)
+        if not f.pippi in self.dirtyQ:
+            self.dirtyQ.append(f.pippi)
 
     def flush(self):
         for frag in self.dirtyQ:
