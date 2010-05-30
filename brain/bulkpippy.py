@@ -21,7 +21,7 @@ from django.core.management import setup_environ
 from lenx import settings
 from lenx.brain import lcs
 setup_environ(settings)
-import sys, os
+import sys, os, traceback
 
 docs={}
 tfidf=TfIdf()
@@ -36,6 +36,7 @@ def getDoc(doc):
     return d
 
 def main():
+    fails=open('bulkpippy.fails','w+')
     for line in sys.stdin:
         (doc1,doc2)=line.strip().split('\t')
         print "[%d] %s, %s" % (os.getpid(),doc1,doc2)
@@ -43,25 +44,31 @@ def main():
             d1=getDoc(doc1)
         except:
            print "!!!!PIPPI ERROR: load doc",doc1
-           raise
+           traceback.print_exc(file=sys.stderr)
+           fails.write("%s\t%s" % (doc1,doc2))
+           continue
         try:
             d2=getDoc(doc2)
         except:
            print "!!!!PIPPI ERROR: load doc",doc2
-           raise
+           traceback.print_exc(file=sys.stderr)
+           fails.write("%s\t%s" % (doc1,doc2))
+           continue
         try:
            lcs.pippi(d1,d2)
         except:
            print "!!!!PIPPI ERROR: lcs",doc1,doc2
-           raise
+           traceback.print_exc(file=sys.stderr)
+           fails.write("%s\t%s" % (doc1,doc2))
     tfidf.save()
+    fails.close()
 
 if __name__ == "__main__":
-    #import os
-    #import cProfile
-    #cProfile.run('main()', '/tmp/bp-%d.prof' % (os.getpid()))
     import platform
     if platform.machine() in ['i386', 'i686']:
         import psyco
         psyco.full()
+    #import os
+    #import cProfile
+    #cProfile.run('main()', '/tmp/bp-%d.prof' % (os.getpid()))
     main()
