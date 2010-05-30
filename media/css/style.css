@@ -41,4 +41,5 @@ div.rel { float: right; max-width: 350px; }
 .hover { width: auto; }
 .anchorLink { color: white; }
 .hover:hover .anchorLink { color: blue; }
-.pippiNote{display:none;width:400px;margin:0.9em;padding:4px;font-size:0.7em;background:rgba(239,239,239,0.9);border:3px solid #0088DD;-moz-border-radius:1em;-webkit-border-radius:1em;overflow:auto;}
+.pippiNote{display:none;max-width:400px;margin:0.9em;padding:4px;font-size:0.7em;background:rgba(239,239,239,0.9);border:3px solid #0088DD;-moz-border-radius:1em;-webkit-border-radius:1em;overflow:auto;}
+small {font-size: 0.5em}
