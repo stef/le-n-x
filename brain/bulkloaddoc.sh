@@ -21,10 +21,12 @@ find ${tmpdir} -name 'job*' | while read batch; do
    (echo "starting batch: ${batch##${tmpdir}/job}"
     if PYTHONPATH=$PPATH/../ DJANGO_SETTINGS_MODULE="lenx.settings" python $PPATH/brain/bulkpippy.py <"${batch}"; then
         echo "done $i/${totaljobs} ${batch##${tmpdir}/}"
+        mv "${batch}" "${batch}.done"
     else
         echo "abort $i/${totaljobs} ${batch##${tmpdir}/}"
+        mv "${batch}" "${batch}.error"
     fi ) &
    i=$((i+1))
    [[ -r $PPATH/brain/bulkpippies ]] && JOBMAX=$(cat $PPATH/brain/bulkpippies)
-   sleep 5;
+   sleep 2;
 done
