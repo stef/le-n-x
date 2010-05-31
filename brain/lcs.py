@@ -18,10 +18,12 @@
 
 # src: http://chipsndips.livejournal.com/425.html
 from lenx.view.models import Doc, Pippi
-from lenx.brain import bulksaver
+from lenx.brain import bulksaver, stopwords
 
 # kludge: infinity is a very large number
 inf = 100000000
+
+StopFrags=stopwords.StopFrags()
 
 # Define a class for a node in the suffix tree
 class SuffixNode(dict):
@@ -149,6 +151,7 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
     frag=LCS(doc1,doc2)
     res={}
     for m in getACS(frag.str,frag.root,{}).values():
+        if StopFrags.isStopFrag(m['frag']): continue
         a=[]
         b=[]
         for p in m['pos']:
