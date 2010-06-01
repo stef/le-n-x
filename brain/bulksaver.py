@@ -16,7 +16,7 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Pippi, Pippies, Docs, PippiFrag
+from lenx.view.models import Doc, Pippi, Pippies, Docs
 
 def lcsPkt(p1,p2,l,stem,d1,d2):
     if l>1:
@@ -33,7 +33,7 @@ class Saver():
         frag=Pippi(pkt['pippi'])
         Pippies.update({'_id' : frag._id},
                        {'$addToSet': { 'docs' : { '$each' :
-                            [PippiFrag(p['pos'],p['txt'],pkt['l'],d)
+                            [{'pos': p['pos'], 'txt': p['txt'], 'l': pkt['l'], 'doc': d}
                              for (d,p) in
                              [(d1._id, p) for p in pkt['d1ps']]+[(d2._id, p) for p in pkt['d2ps']]] } } })
         Docs.update({"_id" : d1._id},

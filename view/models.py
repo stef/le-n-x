@@ -46,29 +46,22 @@ class Pippi():
             # get by pippi
             frag=Pippies.find_one({"pippi": pippi})
         if(frag):
-            frag['docs']=set([PippiFrag(f['pos'],f['txt'],f['l'],f['doc']) for f in frag['docs']])
             self.__dict__=frag
             self.pippi=tuple(self.pippi)
         else:
             self.__dict__={'pippi': tuple(pippi),
                            'len': len(pippi),
-                           'docs': set([])} # should a be a set of {'pos':p,'txt':txt,'l':l,'doc':_id}
+                           'docs': []} # should a be a set of {'pos':p,'txt':txt,'l':l,'doc':_id}
             self.save()
 
     def save(self):
-        data=self.__dict__.copy()
-        data['docs']=list(data['docs'])
-        self.__dict__['_id']=Pippies.save(data)
+        self.__dict__['_id']=Pippies.save(self.__dict__)
 
     def __getattr__(self, name):
-        # handle and cache calculated properties
-        #dirty=False
         #if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
-        #    dirty=True
         #    if name == 'tfidf':
         #        self.tfidf=self._gettfidf()
         if name in self.__dict__:
-        #    if dirty: self.save()
             return self.__dict__[name]
         else:
             raise AttributeError, name
@@ -114,9 +107,7 @@ class Doc():
 
     def __getattr__(self, name):
         # handle and cache calculated properties
-        dirty=False
         if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
-            dirty=True
             if name == 'raw':
                 self.raw=self._getraw()
             if name == 'text':
@@ -132,7 +123,6 @@ class Doc():
             if name == 'tfidf':
                 self.tfidf=self._gettfidf()
         if name in self.__dict__.keys():
-            if dirty: self.save()
             return self.__dict__[name]
         else:
             raise AttributeError, name
@@ -146,19 +136,6 @@ class Doc():
         return self.eurlexid
 
     def save(self):
-        def uniq(seq, idfun=None):
-            seen = {}
-            result = []
-            if not idfun:
-                def idfun(x):
-                    return (str(x['txt']),x['pos'],x['l'])
-            for item in seq:
-                marker = idfun(item)
-                if marker in seen: continue
-                seen[marker] = 1
-                result+=[item]
-            return result
-        self.pippies=uniq(self.pippies)
         self.__dict__['_id']=Docs.save(self.__dict__)
 
     def _getraw(self, cache=CACHE):
@@ -299,25 +276,3 @@ class TfIdf:
         self.__dict__['_id']=MiscDb.save(self.__dict__)
 
 tfidf=TfIdf()
-
-class Frag(dict):
-    def __init__(self,pos,txt,lngth):
-        self['pos']=pos
-        self['txt']=txt
-        self['l']=lngth
-        self.hash=None
-    def __hash__(self):
-        return self.hash
-
-class PippiFrag(Frag):
-    def __init__(self,pos,txt,lngth,d):
-        Frag.__init__(self,pos,txt,lngth)
-        self['doc']=d
-        self.hash=hash((lngth,d.binary,pos))
-
-# stub if also needed for docs
-#class DocFrag(Frag):
-#    def __init__(self,pos,txt,lngth,f):
-#        Frag.__init__(self,pos,txt,lngth)
-#        self['frag']=f
-#        self.hash=hash((lngth,f.binary,pos))
