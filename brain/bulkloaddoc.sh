@@ -28,5 +28,6 @@ find ${tmpdir} -name 'job*' | while read batch; do
     fi ) &
    i=$((i+1))
    [[ -r $PPATH/brain/bulkpippies ]] && JOBMAX=$(cat $PPATH/brain/bulkpippies)
-   sleep 2;
+   sleep 3;
 done
+wait

@@ -164,9 +164,9 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
             res[stem]=(a,b)
             l=len(stem)
             if saver:
-                saver.write(bulksaver.lcsPkt(a,b,l,stem,D1,D2))
+                saver.save(D1,D2,bulksaver.lcsPkt(a,b,l,stem,D1,D2))
     if saver:
-        saver.flush(D1,D2)
+        saver.addDocs(D1,D2)
     return res
 
 if __name__ == "__main__":
