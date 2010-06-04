@@ -149,7 +149,7 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
     doc2=tuple([('!1@3#@@%4%$#^7*(',) if x == '' else (x,) for x in D2.stems]+['XsW@!qAz'])
 
     frag=LCS(doc1,doc2)
-    res={}
+    #res={}
     for m in getACS(frag.str,frag.root,{}).values():
         if StopFrags.isStopFrag(m['frag']): continue
         a=[]
@@ -161,13 +161,13 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
                 b.append(p-len(doc1))
         if a and b:
             stem=tuple(['' if x==('!1@3#@@%4%$#^7*(',) else x[0] for x in m['frag']])
-            res[stem]=(a,b)
+            #res[stem]=(a,b)
             l=len(stem)
             if saver:
                 saver.save(D1,D2,bulksaver.lcsPkt(a,b,l,stem,D1,D2))
     if saver:
         saver.addDocs(D1,D2)
-    return res
+    #return res
 
 if __name__ == "__main__":
     import pprint
