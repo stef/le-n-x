@@ -18,7 +18,7 @@ totaljobs=$(find ${tmpdir} -name 'job*' |  wc -l)
 # run all jobs
 i=0
 find ${tmpdir} -name 'job*' | while read batch; do
-   (echo "starting batch: ${batch##${tmpdir}/job}"
+   (echo "starting batch: $i/${totaljobs} /${batch##${tmpdir}/}"
     if PYTHONPATH=$PPATH/../ DJANGO_SETTINGS_MODULE="lenx.settings" python $PPATH/brain/bulkpippy.py <"${batch}"; then
         echo "done $i/${totaljobs} ${batch##${tmpdir}/}"
         mv "${batch}" "${batch}.done"
@@ -30,4 +30,5 @@ find ${tmpdir} -name 'job*' | while read batch; do
    [[ -r $PPATH/brain/bulkpippies ]] && JOBMAX=$(cat $PPATH/brain/bulkpippies)
    sleep 3;
 done
+echo "${0##*/}: waiting for jobs to finish"
 wait
