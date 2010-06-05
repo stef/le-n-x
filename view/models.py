@@ -236,9 +236,9 @@ class Doc():
                 if oid != self._id]
 
     def getFrags(self, cutoff=7):
-        return set(Frags.find({'l': { '$gte': int(cutoff)},
+        return Frags.find({'l': { '$gte': int(cutoff)},
                            'doc': self._id,
-                           }).sort([('l', pymongo.DESCENDING)]))
+                           }).sort([('l', pymongo.DESCENDING)])
 
     def addDoc(self,d):
         if not d._id in self.pippiDocs:
