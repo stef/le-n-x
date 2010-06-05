@@ -16,7 +16,6 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-import re
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.core.management import setup_environ
@@ -24,9 +23,10 @@ from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from lenx.brain import tagcloud
-from lenx.view.models import Doc, Pippi, Docs, Pippies
+from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
 from lenx.view.forms import XpippiForm, viewForm
 from operator import itemgetter
+import re, pymongo
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -61,15 +61,9 @@ def anchorArticles(txt):
         node=newNode.findNext(text=aregex)
     return unicode(str(nsoup),'utf8')
 
-def getPippiRelateddocs(d,pippi):
-    return [Doc('',oid=doc['doc'])
-            for doc
-            in Pippi('',oid=pippi['frag']).docs
-            if doc['doc']!=d._id]
-
 def annotatePippi(d,pippi,cutoff=7):
     itemtpl='<li><a href="/doc/%s?cutoff=%d">%s</a><hr /></li>'
-    docs=set(getPippiRelateddocs(d,pippi))
+    docs=Pippi('',oid=pippi['pippi']).getDocs(d,cutoff=cutoff)
     return '\n'.join([
         '<div class="pippiNote">',
         '<b>also appears in</b>',
@@ -92,7 +86,7 @@ def docView(request,doc=None,cutoff=20):
     relDocs = d.getRelatedDocs(cutoff=cutoff)
     ls = []
     matches = 0
-    for l in sorted(d.pippies,reverse=True,key=itemgetter('l')):
+    for l in d.getFrags(cutoff=cutoff):
         if( l['l'] < cutoff): break
         # for unique locset - optimalization?!
         if l['txt'] in ls:
@@ -113,7 +107,7 @@ def docView(request,doc=None,cutoff=20):
         #print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l['pos'], rtxt)
         for r in regex.finditer(cont):
             #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
-            span = (('<span class="highlight %s">') % l['frag'], '</span>'+annotatePippi(d,l,cutoff))
+            span = (('<span class="highlight %s">') % l['txt'], '</span>'+annotatePippi(d,l,cutoff))
             start = r.start()+offset
             if btxt:
                 start += 1
@@ -149,7 +143,7 @@ def htmlRefs(d, cutoff=7):
     res=[]
     f=[]
     i=0
-    for frag in d.getDocFrags(cutoff=cutoff):
+    for frag in d.getFrags(cutoff=cutoff):
         start=frag['pos']
         origfrag=frag['txt']
         res.append([])
@@ -158,7 +152,7 @@ def htmlRefs(d, cutoff=7):
                              # in the reference document
                              unicode(start),
                              " ".join(origfrag)))
-        for loc in filter(lambda x: x['doc'] != d._id, Pippi('', oid = frag['frag']).docs):
+        for loc in Frags.find({'pippi': frag['pippi'], 'doc': {'$ne': frag['doc']}}):
             f=loc['txt']
             f=" ".join(diffFrag(origfrag,f))
             doc=Doc('',oid=loc['doc']).eurlexid

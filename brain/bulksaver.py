@@ -16,7 +16,7 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Pippi, Pippies, Docs
+from lenx.view.models import Doc, Pippi, Pippies, Docs, Frags, Frag
 
 def lcsPkt(p1,p2,l,stem,d1,d2):
     if l>1:
@@ -30,20 +30,14 @@ class Saver():
     def save(self,d1,d2,pkt):
         # todo new code to directly addtoset mongo-style
         if not pkt: return
-        frag=Pippi(pkt['pippi'])
-        Pippies.update({'_id' : frag._id},
-                       {'$addToSet': { 'docs' : { '$each' :
-                            [{'pos': p['pos'], 'txt': p['txt'], 'l': pkt['l'], 'doc': d}
-                             for (d,p) in
-                             [(d1._id, p) for p in pkt['d1ps']]+[(d2._id, p) for p in pkt['d2ps']]] } } })
-        Docs.update({"_id" : d1._id},
-                    { '$addToSet' : { 'pippies' : { '$each' :
-                          [{'pos' : p['pos'], 'txt' : tuple(p['txt']), 'l' : pkt['l'], 'frag' : frag._id}
-                           for p in pkt['d1ps']] } } })
-        Docs.update({"_id" : d2._id},
-                    { '$addToSet' : { 'pippies' : { '$each' :
-                          [{'pos' : p['pos'], 'txt' : tuple(p['txt']), 'l' : pkt['l'], 'frag' : frag._id}
-                           for p in pkt['d2ps']] } } })
+        pippi=Pippi(pkt['pippi'])
+        Docs.update({'$in' : { '_id': [d1._id, d2._id]}},
+                    { '$addToSet' : { 'pippies' : pippi._id } })
+        Pippies.update({'_id' : pippi._id},
+                       {'$addToSet': { 'docs' : { '$each' : [d for d in [d1._id, d2._id]]}}})
+        [Frags.save({'pos': p['pos'], 'txt': p['txt'], 'l': pkt['l'], 'doc': d, 'pippi': pippi._id})
+                    for (d,p) in
+                    [(d1._id, p) for p in pkt['d1ps']]+[(d2._id, p) for p in pkt['d2ps']]]
 
     def addDocs(self,d1,d2):
         Docs.update({"_id" : d1._id},

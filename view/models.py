@@ -27,7 +27,7 @@ import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 from pymongo import Connection
 from operator import itemgetter
-import itertools, math
+import itertools, math, pymongo
 
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
@@ -35,7 +35,14 @@ conn = Connection()
 db=conn.pippi
 Docs=db.docs
 Pippies=db.pippies
+Frags=db.frags
 MiscDb=db.miscdb
+Frags.ensure_index([('pippi', pymongo.ASCENDING),
+                    ('doc', pymongo.ASCENDING),
+                    ('pos', pymongo.ASCENDING)], unique=True)
+Frags.ensure_index([('l', pymongo.DESCENDING)])
+Docs.ensure_index([('eurlexid', pymongo.ASCENDING)])
+Pippies.ensure_index([('pippi', pymongo.ASCENDING)])
 
 class Pippi():
     def __init__(self, pippi, oid=None, frag=None):
@@ -79,6 +86,38 @@ class Pippi():
 
     def __unicode__(self):
         return unicode(self.pippi)
+
+    def getDocs(self, d, cutoff=7):
+        return set([Doc('',oid=oid) for oid in self.docs if oid != d._id])
+
+class Frag():
+    def __init__(self, oid=None, frag=None):
+        if oid:
+            # get by mongo oid
+            frag=Frags.find_one({"_id": oid})
+        if(frag):
+            self.__dict__=frag
+        else:
+            self.__dict__={'pos':frag['p'],
+                           'txt':frag['txt'],
+                           'l':frag['l'],
+                           'pippi':frag['pippi']._id,
+                           'doc':frag['doc']._id}
+            self.save()
+
+    def save(self):
+        self.__dict__['_id']=Frags.save(self.__dict__)
+
+    def __getattr__(self, name):
+        if name in self.__dict__:
+            return self.__dict__[name]
+        else:
+            raise AttributeError, name
+
+    def __setattr__(self, name, value):
+        if name in self.__dict__.keys():
+            self.__dict__[name]=value
+        else: raise AttributeError, name
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc():
@@ -189,17 +228,17 @@ class Doc():
 
     def getRelatedDocs(self, cutoff=7):
         return [Doc('',oid=oid)
-                for oid in set([doc['doc']
-                                for frag in Pippies.find({'docs.doc' : self._id,
-                                                          'len' : { '$gte' : int(cutoff) }},
-                                                         ['docs.doc'])
-                                for doc in frag['docs']
-                                if doc['doc'] != self._id])]
+                for oid in set([doc
+                                for pippi in Pippies.find({'len': { '$gte': int(cutoff)},
+                                                           'docs': self._id},
+                                                          ['docs'])
+                                for doc in pippi['docs']])
+                if oid != self._id]
 
-    def getDocFrags(self, cutoff=7):
-        # returns the doc, with only the frags which are filtered by the cutoff and disctinct ordered by their location.
-        return sorted([x for x in self.pippies if x['l']>cutoff],
-                      key=itemgetter('pos'))
+    def getFrags(self, cutoff=7):
+        return set(Frags.find({'l': { '$gte': int(cutoff)},
+                           'doc': self._id,
+                           }).sort([('l', pymongo.DESCENDING)]))
 
     def addDoc(self,d):
         if not d._id in self.pippiDocs:
