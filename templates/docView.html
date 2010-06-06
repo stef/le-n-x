@@ -7,9 +7,50 @@
 
 <script type="text/javascript">
     $(document).ready(function() {
-        $('#loading').show();
-        $('.highlight').tooltip({effect: 'fade'});
-        $('#loading').hide();
+      $('#loading').show();
+
+	   $(".highlight").each(function(){
+		  var el = $(this);
+
+        tipId=el.attr("class").split(" ")[1];
+        parents=el.parents(".highlight");
+        if(parents.length>0) {
+          var moreDocs=[];
+          tip=$('#'+tipId);
+          newpid=[tip.attr('id')];
+
+          parents.each(function() {
+            pid=$(this).attr('class').split(" ")[1];
+            newpid.push(pid);
+            $("#"+pid).find('li').each(function() {
+              moreDocs.push($(this).clone());
+            });
+          });
+
+          newTipId=newpid.join('-');
+          if($("#"+newTipId).length==0) {
+            newTip=$("<span>").addClass('pippiNote').attr('id',newTipId);
+            newTip.append(tip.children().clone());
+            for(li in moreDocs) {
+              newTip.find("ul").append(moreDocs[li]);
+            }
+            $('#tooltips').append(newTip);
+          }
+          tipId=newTipId;
+        }
+
+		  el.tooltip({
+          effect: 'fade',
+          delay: 200,
+          predelay: 1000,
+			 tip : '#'+tipId,
+          onBeforeShow: function(e,pos) {
+            e.stopPropagation();
+          },
+		  });
+	   });
+
+      $('#loading').hide();
     });
 </script>
 {% endblock %}
@@ -36,5 +77,8 @@
 
 {{ content|safe }}
 
+<div id='tooltips'>
+{{tooltips|safe }}
+</div>
 
 {% endblock %}

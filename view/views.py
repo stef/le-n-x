@@ -65,7 +65,7 @@ def annotatePippi(d,pippi,cutoff=7):
     itemtpl='<li><a href="/doc/%s?cutoff=%d">%s</a><hr /></li>'
     docs=Pippi('',oid=pippi['pippi']).getDocs(d,cutoff=cutoff)
     return '\n'.join([
-        '<div class="pippiNote">',
+        '<div class="pippiNote" id="%s">' % pippi['pippi'],
         '<b>also appears in</b>',
         '<ul>',
         '\n'.join([(itemtpl % (doc.eurlexid, cutoff, doc.title)) for doc in docs]),
@@ -82,6 +82,7 @@ def docView(request,doc=None,cutoff=20):
         d = Doc(doc)
     except:
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
+    tooltips={}
     cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
     relDocs = d.getRelatedDocs(cutoff=cutoff)
     ls = []
@@ -105,9 +106,11 @@ def docView(request,doc=None,cutoff=20):
         i=0
         offset = 0
         #print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l['pos'], rtxt)
+        if not l['pippi'] in tooltips:
+            tooltips[l['pippi']]=annotatePippi(d,l,cutoff)
         for r in regex.finditer(cont):
             #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
-            span = (('<span class="highlight %s">') % l['txt'], '</span>'+annotatePippi(d,l,cutoff))
+            span = (('<span class="highlight %s">') % l['pippi'], '</span>')
             start = r.start()+offset
             if btxt:
                 start += 1
@@ -122,7 +125,13 @@ def docView(request,doc=None,cutoff=20):
         #print '-'*120
     cont=anchorArticles(cont)
     #print "[!] Rendering\n\tContent length: %d" % len(cont)
-    return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
+    return render_to_response('docView.html', {'doc': d,
+                                               'content': cont,
+                                               'related': relDocs,
+                                               'cutoff': cutoff,
+                                               'len': len(ls),
+                                               'tooltips': '\n'.join(tooltips.values()),
+                                               'matches': matches})
 
 def diffFrag(frag1,frag2):
     match=True
