@@ -6,52 +6,68 @@
 <script src="http://cdn.jquerytools.org/1.2.1/jquery.tools.min.js"></script>
 
 <script type="text/javascript">
-    $(document).ready(function() {
-      $('#loading').show();
+  Array.prototype.contains = function (element) {
+    for (var i = 0; i < this.length; i++) {
+      if (this[i] == element) { return true; }
+    }
+    return false; };
 
-	   $(".highlight").each(function(){
-		  var el = $(this);
+  $(document).ready(function() {
+    $('#loading').show();
 
-        tipId=el.attr("class").split(" ")[1];
-        parents=el.parents(".highlight");
-        if(parents.length>0) {
-          var moreDocs=[];
-          tip=$('#'+tipId);
-          newpid=[tip.attr('id')];
+	 $(".highlight").each(function(){
+		var el = $(this);
 
-          parents.each(function() {
-            pid=$(this).attr('class').split(" ")[1];
-            newpid.push(pid);
-            $("#"+pid).find('li').each(function() {
-              moreDocs.push($(this).clone());
-            });
-          });
+      tipId=el.attr("class").split(" ")[1];
+      parents=el.parents(".highlight");
+      // if we have hilited parents, then we merge the 'alsoin' tooltip contents
+      if(parents.length>0) {
+        var moreDocs=[];
+        tip=$('#'+tipId);
+        newpid=[tip.attr('id')];
 
-          newTipId=newpid.join('-');
-          if($("#"+newTipId).length==0) {
-            newTip=$("<span>").addClass('pippiNote').attr('id',newTipId);
-            newTip.append(tip.children().clone());
-            for(li in moreDocs) {
-              newTip.find("ul").append(moreDocs[li]);
+        // we collect the list items and the pippiOid for every parent hilite
+        parents.each(function() {
+          pid=$(this).attr('class').split(" ")[1];
+          newpid.push(pid);
+          moreDocs=moreDocs.concat($("#"+pid).find('li'));
+        });
+
+        newTipId=newpid.join('-');
+        // if no composite tooltip exists yet for this nested pippi, create one
+        if($("#"+newTipId).length==0) {
+          newTip=$("<span>").addClass('pippiNote').attr('id',newTipId);
+          newTip.append(tip.children().clone());
+          ul=newTip.find("ul");
+          links=ul.find("a").attr('href');
+          if(typeof(links) == 'string') links=Array(links);
+
+          // add each unique parent doc to the composite tooltip
+          moreDocs.forEach(function(elem) {
+            curl=$(elem).find("a").attr('href');
+            if(! links.contains(curl)) {
+              ul.append($(elem).clone());
+              links.push(curl);
             }
-            $('#tooltips').append(newTip);
-          }
-          tipId=newTipId;
+          });
+          $('#tooltips').append(newTip);
         }
+        tipId=newTipId;
+      }
 
-		  el.tooltip({
-          effect: 'fade',
-          delay: 200,
-          predelay: 1000,
-			 tip : '#'+tipId,
-          onBeforeShow: function(e,pos) {
-            e.stopPropagation();
-          },
-		  });
-	   });
+		el.tooltip({
+        effect: 'fade',
+        delay: 150,
+        predelay: 400,
+		  tip : '#'+tipId,
+        onBeforeShow: function(e,pos) {
+          e.stopPropagation();
+        },
+		});
+	 });
 
-      $('#loading').hide();
-    });
+    $('#loading').hide();
+  });
 </script>
 {% endblock %}
 
