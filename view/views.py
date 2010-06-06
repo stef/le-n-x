@@ -187,6 +187,7 @@ def getOverview():
     stats=[]
     stats.append({'title': 'Total documents', 'value': Docs.count()})
     stats.append({'title': 'Total Pippies', 'value': Pippies.count()})
+    stats.append({'title': 'Locations', 'value': Frags.count()})
     return stats
 
 def listDocs(request):
