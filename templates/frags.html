@@ -3,16 +3,16 @@
 {% block main %}
 <h1>Frags in documents</h1>
 <div class="pager-controls">
-<form action="/frags" name="paging" method="post" enctype="multipart/form-data">
-<input type="submit" name="firstpage" onclick="document.paging.pageaction.value='first'" value="FirstPage" />
-<input type="submit" name="backpage" onclick="document.paging.pageaction.value='prior'" value="PriorPage" />
+<form action="/frags" name="pagingtop" method="post" enctype="multipart/form-data">
+<input type="submit" name="firstpage" onclick="document.pagingtop.pageaction.value='first'" value="FirstPage" />
+<input type="submit" name="backpage" onclick="document.pagingtop.pageaction.value='prior'" value="PriorPage" />
 <SELECT name="limit">
   <OPTION {% if limit == '10' %}selected{%endif%} value="10">10</OPTION>
   <OPTION {% if limit == '50' %}selected{%endif%} value="50">50</OPTION>
   <OPTION {% if limit == '100' %}selected{%endif%} value="100">100</OPTION>
 </SELECT>
-<input type="submit" name="nextpage" onclick="document.paging.pageaction.value='next'" value="NextPage" />
-<input type="submit" name="lastpage" onclick="document.paging.pageaction.value='last'" value="LastPage" />
+<input type="submit" name="nextpage" onclick="document.pagingtop.pageaction.value='next'" value="NextPage" />
+<input type="submit" name="lastpage" onclick="document.pagingtop.pageaction.value='last'" value="LastPage" />
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
 <input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
 <input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
@@ -27,16 +27,16 @@
 {% endfor %}
 </table>
 <div class="pager-controls">
-<form action="/frags" name="paging" method="post" enctype="multipart/form-data">
-<input type="submit" name="firstpage" onclick="document.paging.pageaction.value='first'" value="FirstPage" />
-<input type="submit" name="backpage" onclick="document.paging.pageaction.value='prior'" value="PriorPage" />
+<form action="/frags" name="pagingbottom" method="post" enctype="multipart/form-data">
+<input type="submit" name="firstpage" onclick="document.pagingbottom.pageaction.value='first'" value="FirstPage" />
+<input type="submit" name="backpage" onclick="document.pagingbottom.pageaction.value='prior'" value="PriorPage" />
 <SELECT name="limit">
   <OPTION {% if limit == '10' %}selected{%endif%} value="10">10</OPTION>
   <OPTION {% if limit == '50' %}selected{%endif%} value="50">50</OPTION>
   <OPTION {% if limit == '100' %}selected{%endif%} value="100">100</OPTION>
 </SELECT>
-<input type="submit" name="nextpage" onclick="document.paging.pageaction.value='next'" value="NextPage" />
-<input type="submit" name="lastpage" onclick="document.paging.pageaction.value='last'" value="LastPage" />
+<input type="submit" name="nextpage" onclick="document.pagingbottom.pageaction.value='next'" value="NextPage" />
+<input type="submit" name="lastpage" onclick="document.pagingbottom.pageaction.value='last'" value="LastPage" />
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
 <input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
 <input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
