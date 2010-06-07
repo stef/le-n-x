@@ -46,7 +46,7 @@ stopwords=['', 'a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 
            'whom', 'whose', 'why', 'will', 'with', 'within', 'without', 'would', 'yet',
            'you', 'your', 'yours', 'yourself', 'yourselves',
            'shall', "Europa", "European", "states", "quot", "gt", "directive",
-           "member", "article" ]
+           "member", "article", "recital", "party" ]
 # remove single digits
 stopwords.extend([str(x) for x in range(0,10)])
 # remove single chars
