@@ -197,6 +197,7 @@ def listDocs(request):
            'title': doc.title or doc.eurlexid,
            'frags': len(doc.frags),
            'pippies': len(doc.pippies),
+           'docs': len(doc.getRelatedDocs()),
            'subject': doc.subject or "",
            'tags': tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in doc.tfidf.items() if t not in stopwords.stopwords]),l=25)}
           for doc in (Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
