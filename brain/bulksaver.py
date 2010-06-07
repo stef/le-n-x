@@ -31,7 +31,9 @@ class Saver():
         # todo new code to directly addtoset mongo-style
         if not pkt: return
         pippi=Pippi(pkt['pippi'])
-        Docs.update({'$in' : { '_id': [d1._id, d2._id]}},
+        Docs.update({'_id': d1._id},
+                    { '$addToSet' : { 'pippies' : pippi._id } })
+        Docs.update({'_id': d2._id},
                     { '$addToSet' : { 'pippies' : pippi._id } })
         Pippies.update({'_id' : pippi._id},
                        {'$addToSet': { 'docs' : { '$each' : [d for d in [d1._id, d2._id]]}}})
