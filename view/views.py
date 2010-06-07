@@ -257,7 +257,7 @@ def frags(request):
                              'pos':frag['pos'],
                              'txt':" ".join(frag['txt']),
                              'len':frag['l'],
-                             'score':frag['score'],
+                             'score':frag.get('score',0),
                              'pippi':Pippi('',oid=frag['pippi']),
                              'doc':Doc('',oid=frag['doc'])}
                             for frag in template_vars['data']]
