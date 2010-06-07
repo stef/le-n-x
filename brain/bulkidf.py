@@ -29,7 +29,7 @@ def main():
     for doc in Docs.find():
         d=Doc('',d=doc)
         print d.title
-        d.tfidf
+        #d.tfidf
         d.save()
         [(f._id,f.score,f.save()) for f in d.frags]
     for pippi in Pippies.find():
