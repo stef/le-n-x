@@ -195,9 +195,9 @@ def listDocs(request):
     docs=[{'id': doc.eurlexid,
            'indexed': doc.pippiDocsLen,
            'title': doc.title or doc.eurlexid,
-           'frags': len(doc.frags),
+           'frags': doc.getFrags().count(),
            'pippies': len(doc.pippies),
-           'docs': len(doc.getRelatedDocs()),
+           'docs': len(doc.getRelatedDocIds()),
            'subject': doc.subject or "",
            'tags': tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in doc.tfidf.items() if t not in stopwords.stopwords]),l=25)}
           for doc in (Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
@@ -250,8 +250,8 @@ def frags(request):
     #docfilter = cgi.escape(request.POST.get('doc',''))
     #lenfilter = cgi.escape(request.POST.get('len',''))
     #lenfilter = cgi.escape(request.POST.get('len',''))
-    orderBy = cgi.escape(request.POST.get('orderby','score'))
-    orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
+    orderBy = 'score'
+    orderDesc = True
     template_vars=pager(request,Frags.find(),orderBy,orderDesc)
     template_vars['frags']=[{'_id': frag['_id'],
                              'pos':frag['pos'],
@@ -267,6 +267,7 @@ def pippies(request):
     #docfilter = cgi.escape(request.POST.get('doc',''))
     #lenfilter = cgi.escape(request.POST.get('len',''))
     #lenfilter = cgi.escape(request.POST.get('len',''))
+    # todo add sortable column headers ala http://djangosnippets.org/snippets/308/
     orderBy = cgi.escape(request.POST.get('orderby','relevance'))
     orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
     template_vars=pager(request,Pippies.find(),orderBy,orderDesc)

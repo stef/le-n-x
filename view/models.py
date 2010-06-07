@@ -42,6 +42,7 @@ Frags.ensure_index([('pippi', pymongo.ASCENDING),
                     ('pos', pymongo.ASCENDING)], unique=True)
 Frags.ensure_index([('l', pymongo.DESCENDING)])
 Docs.ensure_index([('eurlexid', pymongo.ASCENDING)])
+Docs.ensure_index([('pippiDocsLen', pymongo.DESCENDING)])
 Pippies.ensure_index([('pippi', pymongo.ASCENDING)])
 
 class Pippi():
@@ -154,6 +155,7 @@ class Doc():
         else:
             raise KeyError('empty eurlexid')
 
+    # todo add interpretation according to http://www.ellispub.com/ojolplus/help/celex.htm#sectors2
     def __getattr__(self, name):
         # handle and cache calculated properties
         if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
@@ -243,12 +245,15 @@ class Doc():
 
     def getRelatedDocs(self, cutoff=7):
         return [Doc('',oid=oid)
-                for oid in set([doc
-                                for pippi in Pippies.find({'len': { '$gte': int(cutoff)},
-                                                           'docs': self._id},
-                                                          ['docs'])
-                                for doc in pippi['docs']])
+                for oid in self.getRelatedDocIds(cutoff=cutoff)
                 if oid != self._id]
+
+    def getRelatedDocIds(self, cutoff=7):
+        return set([doc
+                    for pippi in Pippies.find({'len': { '$gte': int(cutoff)},
+                                               'docs': self._id},
+                                              ['docs'])
+                    for doc in pippi['docs']])
 
     def getFrags(self, cutoff=7):
         return Frags.find({'l': { '$gte': int(cutoff)},

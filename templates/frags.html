@@ -14,8 +14,6 @@
 <input type="submit" name="nextpage" onclick="document.pagingtop.pageaction.value='next'" value="NextPage" />
 <input type="submit" name="lastpage" onclick="document.pagingtop.pageaction.value='last'" value="LastPage" />
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
-<input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
-<input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
 <input type="hidden" id="pageaction" name="pageaction" value="" />
 </form>
 </div>
@@ -38,8 +36,6 @@
 <input type="submit" name="nextpage" onclick="document.pagingbottom.pageaction.value='next'" value="NextPage" />
 <input type="submit" name="lastpage" onclick="document.pagingbottom.pageaction.value='last'" value="LastPage" />
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
-<input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
-<input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
 <input type="hidden" id="pageaction" name="pageaction" value="" />
 </form>
 </div>
