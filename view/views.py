@@ -22,11 +22,11 @@ from django.core.management import setup_environ
 from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
-from lenx.brain import tagcloud
+from lenx.brain import tagcloud, stopwords
 from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
 from lenx.view.forms import XpippiForm, viewForm
 from operator import itemgetter
-import re, pymongo
+import re, pymongo, cgi
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -195,11 +195,84 @@ def listDocs(request):
     docs=[{'id': doc.eurlexid,
            'indexed': doc.pippiDocsLen,
            'title': doc.title or doc.eurlexid,
+           'frags': len(doc.frags),
+           'pippies': len(doc.pippies),
            'subject': doc.subject or "",
-           #'tags': tagcloud.logTags(doc.stems,l=25)}
-           'tags': tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in doc.tfidf.items() if t not in tagcloud.stopwords]),l=25)}
+           'tags': tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in doc.tfidf.items() if t not in stopwords.stopwords]),l=25)}
           for doc in (Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
 def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })
+
+def pager(request,data, orderBy, orderDesc):
+    limit = int(cgi.escape(request.POST.get('limit','10')))
+    if limit>100: limit=100
+    #Count the total items in the dataset
+    totalinquery=data.count()
+    upperbound=totalinquery-limit
+    #Grabs the remainder when you divide the total by the offset
+    lowerbound=totalinquery%limit
+    offset = int(cgi.escape(request.POST.get('offset','0')))
+    pageaction = cgi.escape(request.POST.get('pageaction',""))
+    #if the first page is requested...set the offset to zero
+    if pageaction=='first':
+        offset=0
+    #if the last page is requested...set the offset to the total count - the number displayed
+    if pageaction=='last':
+        offset=upperbound
+    #if the next page is requested...add limit to the offset
+    if pageaction=='next':
+        offset=offset+limit
+        if offset>upperbound:
+            offset=upperbound
+    #if the prior page is requested....take limit away from the offset
+    if pageaction=='prior':
+        offset=offset-limit
+    #if the requested offset is less than the lower bound..go ahead and reset to zero so that
+    #ten items will always display on the first page
+    if offset < lowerbound:
+        offset=0
+    #fetch the data according to where the new offset is set.
+    res=data.limit(limit).skip(offset).sort([(orderBy, pymongo.DESCENDING if orderDesc else pymongo.ASCENDING)])
+    #pass the offset, the total in query, and all the data to the template
+    return {'limit': str(limit),
+            'offset':offset,
+            'page':offset/limit+1,
+            'totalpages':totalinquery/limit,
+            'orderby':orderBy,
+            'desc':orderDesc,
+            'totalinquery':totalinquery,
+            'data': res, }
+
+def frags(request):
+    #docfilter = cgi.escape(request.POST.get('doc',''))
+    #lenfilter = cgi.escape(request.POST.get('len',''))
+    #lenfilter = cgi.escape(request.POST.get('len',''))
+    orderBy = cgi.escape(request.POST.get('orderby','score'))
+    orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
+    template_vars=pager(request,Frags.find(),orderBy,orderDesc)
+    template_vars['frags']=[{'_id': frag['_id'],
+                             'pos':frag['pos'],
+                             'txt':" ".join(frag['txt']),
+                             'len':frag['l'],
+                             'score':frag['score'],
+                             'pippi':Pippi('',oid=frag['pippi']),
+                             'doc':Doc('',oid=frag['doc'])}
+                            for frag in template_vars['data']]
+    return render_to_response('frags.html', template_vars)
+
+def pippies(request):
+    #docfilter = cgi.escape(request.POST.get('doc',''))
+    #lenfilter = cgi.escape(request.POST.get('len',''))
+    #lenfilter = cgi.escape(request.POST.get('len',''))
+    orderBy = cgi.escape(request.POST.get('orderby','relevance'))
+    orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
+    template_vars=pager(request,Pippies.find(),orderBy,orderDesc)
+    template_vars['pippies']=[{'_id': pippi['_id'],
+                               'pippi':" ".join(pippi['pippi']),
+                               'docs':[Doc('',oid=d) for d in pippi['docs']],
+                               'docslen':len(pippi['docs']),
+                               'relevance':pippi['relevance'],}
+                               for pippi in template_vars['data']]
+    return render_to_response('pippies.html', template_vars)
