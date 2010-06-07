@@ -16,7 +16,7 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Pippi, Docs, Pippies
+from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
 from django.core.management import setup_environ
 from lenx import settings
 from lenx.brain import lcs
@@ -30,6 +30,12 @@ def main():
         d=Doc('',d=doc)
         print d.title
         d.tfidf
+        d.save()
+        [(f._id,f.score,f.save()) for f in d.frags]
+    for pippi in Pippies.find():
+        p=Pippi('',frag=pippi)
+        p.relevance=float(p.len)/float(len(p.docs))
+        p.save()
 
 if __name__ == "__main__":
     #import os

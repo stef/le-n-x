@@ -45,6 +45,7 @@ Docs.ensure_index([('eurlexid', pymongo.ASCENDING)])
 Pippies.ensure_index([('pippi', pymongo.ASCENDING)])
 
 class Pippi():
+    computed_attrs = [ 'relevance',]
     def __init__(self, pippi, oid=None, frag=None):
         if oid:
             # get by mongo oid
@@ -65,21 +66,21 @@ class Pippi():
         self.__dict__['_id']=Pippies.save(self.__dict__)
 
     def __getattr__(self, name):
-        #if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
-        #    if name == 'tfidf':
-        #        self.tfidf=self._gettfidf()
+        if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
+            if name == 'relevance':
+                self.__dict__[name]=self._getRelevance()
         if name in self.__dict__:
             return self.__dict__[name]
         else:
             raise AttributeError, name
 
     def __setattr__(self, name, value):
-        if name in self.__dict__.keys():
+        if name in self.__dict__.keys() or name in self.computed_attrs:
             self.__dict__[name]=value
         else: raise AttributeError, name
 
-    #def _gettfidf(self):
-    #    return tfidf.get_doc_keywords(set(self.pippi),len(self.pippi))
+    def _getRelevance(self):
+        return float(self.len)/float(len(self.docs)) if len(self.docs) else 0
 
     def getStr(self):
         return " ".join(eval(self.frag)).encode('utf8')
@@ -91,6 +92,7 @@ class Pippi():
         return set([Doc('',oid=oid) for oid in self.docs if oid != d._id])
 
 class Frag():
+    computed_attrs = [ 'score',]
     def __init__(self, oid=None, frag=None):
         if oid:
             # get by mongo oid
@@ -109,19 +111,27 @@ class Frag():
         self.__dict__['_id']=Frags.save(self.__dict__)
 
     def __getattr__(self, name):
+        if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
+            if name == 'score':
+                self.__dict__[name]=self._getScore()
         if name in self.__dict__:
             return self.__dict__[name]
         else:
             raise AttributeError, name
 
     def __setattr__(self, name, value):
-        if name in self.__dict__.keys():
+        if name in self.__dict__.keys() or name in self.computed_attrs:
             self.__dict__[name]=value
         else: raise AttributeError, name
 
+    def _getScore(self):
+        d=Doc('',oid=self.doc)
+        p=Pippi('',oid=self.pippi)
+        return sum([d.tfidf.get(t,0) for t in p.pippi])
+
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc():
-    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject', 'tfidf']
+    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject', 'tfidf', 'frags']
 
     def __init__(self,eurlexid,oid=None,d=None):
         if oid:
@@ -148,9 +158,9 @@ class Doc():
         # handle and cache calculated properties
         if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
             if name == 'raw':
-                self.raw=self._getraw()
+                return self._getraw()
             if name == 'text':
-                self.text=self._gettext()
+                return self._gettext()
             if name == 'tokens':
                 self.tokens=self._gettokens()
             if name in ['stems','termcnt']:
@@ -161,6 +171,8 @@ class Doc():
                 self.subject=self._getsubj()
             if name == 'tfidf':
                 self.tfidf=self._gettfidf()
+            if name == 'frags':
+                return self._getfrags()
         if name in self.__dict__.keys():
             return self.__dict__[name]
         else:
@@ -216,6 +228,9 @@ class Doc():
 
     def _gettfidf(self):
         return tfidf.get_doc_keywords(self)
+
+    def _getfrags(self):
+        return [Frag(frag=f) for f in self.getFrags(cutoff=1)]
 
     def __hash__(self):
         return hash(self._id)
