@@ -16,7 +16,7 @@ Stats: <ul id="stats">
             {% endfor %}
        </div>
        <a href="{% root_url %}/doc/{{doc.id}}">{{doc.title}}</a>
-       <small>({{doc.indexed}})</small>
+        {{doc.indexed}} Documents, {{doc.pippies}} Pippies, {{doc.frags}} Frags.
        <br style="clear: both;" />
     </li>
 {% endfor %}
