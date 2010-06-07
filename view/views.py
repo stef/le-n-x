@@ -271,8 +271,7 @@ def pippies(request):
     template_vars=pager(request,Pippies.find(),orderBy,orderDesc)
     template_vars['pippies']=[{'_id': pippi['_id'],
                                'pippi':" ".join(pippi['pippi']),
-                               'docs':[Doc('',oid=d) for d in pippi['docs']],
                                'docslen':len(pippi['docs']),
-                               'relevance':pippi['relevance'],}
+                               'relevance':pippi.get('relevance',0),}
                                for pippi in template_vars['data']]
     return render_to_response('pippies.html', template_vars)

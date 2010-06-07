@@ -15,7 +15,7 @@
 <input type="submit" name="lastpage" onclick="document.paging.pageaction.value='last'" value="LastPage" />
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
 <input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
-<input type="hidden" id="desc" name="desc" value="{{desc}}" />
+<input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
 <input type="hidden" id="pageaction" name="pageaction" value="" />
 </form>
 </div>
