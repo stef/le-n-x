@@ -81,7 +81,7 @@ class Pippi():
         else: raise AttributeError, name
 
     def _getRelevance(self):
-        return float(self.len)/float(len(self.docs)) if len(self.docs) else 0
+        return float(self.len)/float(len(self.docs) if len(self.docs) else 0)
 
     def getStr(self):
         return " ".join(eval(self.frag)).encode('utf8')
