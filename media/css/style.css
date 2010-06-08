@@ -25,8 +25,8 @@ div.rel { float: right; max-width: 350px; }
 .doc p { margin-bottom:.71em; text-align: justify;}
 .txt { width: 500px; padding-left: 10px; white-space: normal; }
 .pippi { background-color: #ddddaa;}
-.highlight { background: rgba(0, 120, 240, 0.2); position: relative;}
-.highlight:hover { background: rgba(0, 240, 120, 0.8); }
+.highlight, .highlight * { background: rgba(0, 120, 240, 0.2); position: relative;}
+.highlight:hover, .highlight *:hover { background: rgba(0, 240, 120, 0.8); }
 .tagcloud { float: right; width: 400px; border: 1px dotted blue; }
 .size0 { font-size: .4em; }
 .size1 { font-size: .5em }
@@ -41,4 +41,7 @@ div.rel { float: right; max-width: 350px; }
 .hover { width: auto; }
 .anchorLink { color: white; }
 .hover:hover .anchorLink { color: blue; }
-.pippiNote{display:none;width:400px;margin:0.9em;padding:4px;font-size:0.7em;background:rgba(239,239,239,0.9);border:3px solid #0088DD;-moz-border-radius:1em;-webkit-border-radius:1em;overflow:auto;}
+.pippiNote{display:none;max-width:400px;margin:0.9em;padding:4px;font-size:0.7em;background:rgba(239,239,239,0.9);border:3px solid #0088DD;-moz-border-radius:1em;-webkit-border-radius:1em;overflow:auto;}
+small {font-size: 0.5em}
+table.listing thead { color: #ffffff ; background-color: #0088DD; border: white 1px solid; }
+table.listing tr td { border-bottom: #0088dd 1px solid; }

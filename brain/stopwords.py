@@ -36,7 +36,7 @@ stopwords=['', 'a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 
            'so', 'some', 'somehow', 'someone', 'something', 'sometime', 'sometimes',
            'somewhere', 'still', 'such', 'system', 'take', 'ten', 'than', 'that', 'the',
            'their', 'them', 'themselves', 'then', 'thence', 'there', 'thereafter',
-           'thereby', 'therefore', 'therein', 'thereupon', 'these', 'they', 'thickv',
+           'thereby', 'therefore', 'therein', 'thereupon', 'these', 'they', 'thick',
            'thin', 'third', 'this', 'those', 'though', 'three', 'through', 'throughout',
            'thru', 'thus', 'to', 'together', 'too', 'top', 'toward', 'towards', 'twelve',
            'twenty', 'two', 'un', 'under', 'until', 'up', 'upon', 'us', 'very', 'via',
@@ -46,13 +46,27 @@ stopwords=['', 'a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 
            'whom', 'whose', 'why', 'will', 'with', 'within', 'without', 'would', 'yet',
            'you', 'your', 'yours', 'yourself', 'yourselves',
            'shall', "Europa", "European", "states", "quot", "gt", "directive",
-           "member", "article" ]
+           "member", "article", "recital", "party" ]
 # remove single digits
-stopwords+=[str(x) for x in range(0,10)]
+stopwords.extend([str(x) for x in range(0,10)])
 # remove single chars
-stopwords+=[chr(x) for x in range(ord('a'),ord('z'))+range(ord('A'),ord('Z'))]
+stopwords.extend([chr(x) for x in range(ord('a'),ord('z'))+range(ord('A'),ord('Z'))])
 
 class StopFrags():
     def __init__(self):
         #TODO db for stopfrags?
-        self.stopFrags = stopfrags
+        self.stopFrags = set(stopwords)
+
+    def isStopFrag(self,frag):
+        return not len(set(frag).difference(self.stopFrags))
+
+if __name__ == "__main__":
+    s=StopFrags()
+    a=('2','')
+    print s.isStopFrag(a)
+    a=('2','2')
+    print s.isStopFrag(a)
+    a=('','')
+    print s.isStopFrag(a)
+    a=('Kovacs','Istvan','')
+    print s.isStopFrag(a)

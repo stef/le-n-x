@@ -18,10 +18,12 @@
 
 # src: http://chipsndips.livejournal.com/425.html
 from lenx.view.models import Doc, Pippi
-from lenx.brain import bulksaver
+from lenx.brain import bulksaver, stopwords
 
 # kludge: infinity is a very large number
 inf = 100000000
+
+StopFrags=stopwords.StopFrags()
 
 # Define a class for a node in the suffix tree
 class SuffixNode(dict):
@@ -143,12 +145,14 @@ def getACS(str,st,d):
     return d
 
 def pippi(D1,D2,saver=bulksaver.Saver()):
-    doc1=tuple([('!1@3#@@%4%$#^7*(',) if x == ('',) else x for x in D1.stems]+['zAq!2WsX'])
-    doc2=tuple([('!1@3#@@%4%$#^7*(',) if x == ('',) else x for x in D2.stems]+['XsW@!qAz'])
+    doc1=tuple([('!1@3#@@%4%$#^7*(',) if x == '' else (x,) for x in D1.stems]+['zAq!2WsX'])
+    doc2=tuple([('!1@3#@@%4%$#^7*(',) if x == '' else (x,) for x in D2.stems]+['XsW@!qAz'])
 
     frag=LCS(doc1,doc2)
-    res={}
+    #res={}
     for m in getACS(frag.str,frag.root,{}).values():
+        stem=tuple(['' if x==('!1@3#@@%4%$#^7*(',) else x[0] for x in m['frag']])
+        if StopFrags.isStopFrag(stem): continue
         a=[]
         b=[]
         for p in m['pos']:
@@ -157,14 +161,13 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
             else:
                 b.append(p-len(doc1))
         if a and b:
-            stem=tuple([('',) if x==('!1@3#@@%4%$#^7*(',) else tuple(x) for x in m['frag']])
-            res[stem]=(a,b)
+            #res[stem]=(a,b)
             l=len(stem)
             if saver:
-                saver.write(bulksaver.lcsPkt(a,b,l,stem,D1,D2))
+                saver.save(D1,D2,bulksaver.lcsPkt(a,b,l,stem,D1,D2))
     if saver:
-        saver.flush(D1,D2)
-    return res
+        saver.addDocs(D1,D2)
+    #return res
 
 if __name__ == "__main__":
     import pprint

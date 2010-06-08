@@ -16,17 +16,17 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-import re
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.core.management import setup_environ
 from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
-from lenx.brain import tagcloud
-from lenx.view.models import Doc, Pippi, Docs, Pippies
+from lenx.brain import tagcloud, stopwords
+from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
 from lenx.view.forms import XpippiForm, viewForm
 from operator import itemgetter
+import re, pymongo, cgi
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -61,17 +61,11 @@ def anchorArticles(txt):
         node=newNode.findNext(text=aregex)
     return unicode(str(nsoup),'utf8')
 
-def getPippiRelateddocs(d,pippi):
-    return [Doc('',oid=doc['doc'])
-            for doc
-            in Pippi('',oid=pippi['frag']).docs
-            if doc['doc']!=d._id]
-
 def annotatePippi(d,pippi,cutoff=7):
     itemtpl='<li><a href="/doc/%s?cutoff=%d">%s</a><hr /></li>'
-    docs=set(getPippiRelateddocs(d,pippi))
+    docs=Pippi('',oid=pippi['pippi']).getDocs(d,cutoff=cutoff)
     return '\n'.join([
-        '<div class="pippiNote">',
+        '<div class="pippiNote" id="%s">' % pippi['pippi'],
         '<b>also appears in</b>',
         '<ul>',
         '\n'.join([(itemtpl % (doc.eurlexid, cutoff, doc.title)) for doc in docs]),
@@ -88,11 +82,12 @@ def docView(request,doc=None,cutoff=20):
         d = Doc(doc)
     except:
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
+    tooltips={}
     cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
     relDocs = d.getRelatedDocs(cutoff=cutoff)
     ls = []
     matches = 0
-    for l in sorted(d.pippies,reverse=True,key=itemgetter('l')):
+    for l in d.getFrags(cutoff=cutoff):
         if( l['l'] < cutoff): break
         # for unique locset - optimalization?!
         if l['txt'] in ls:
@@ -111,9 +106,11 @@ def docView(request,doc=None,cutoff=20):
         i=0
         offset = 0
         #print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l['pos'], rtxt)
+        if not l['pippi'] in tooltips:
+            tooltips[l['pippi']]=annotatePippi(d,l,cutoff)
         for r in regex.finditer(cont):
             #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
-            span = (('<span class="highlight %s">') % l['frag'], '</span>'+annotatePippi(d,l,cutoff))
+            span = (('<span class="highlight %s">') % l['pippi'], '</span>')
             start = r.start()+offset
             if btxt:
                 start += 1
@@ -128,7 +125,13 @@ def docView(request,doc=None,cutoff=20):
         #print '-'*120
     cont=anchorArticles(cont)
     #print "[!] Rendering\n\tContent length: %d" % len(cont)
-    return render_to_response('docView.html', {'doc': d, 'content': cont, 'related': relDocs, 'cutoff': cutoff, 'len': len(ls), 'matches': matches})
+    return render_to_response('docView.html', {'doc': d,
+                                               'content': cont,
+                                               'related': relDocs,
+                                               'cutoff': cutoff,
+                                               'len': len(ls),
+                                               'tooltips': '\n'.join(tooltips.values()),
+                                               'matches': matches})
 
 def diffFrag(frag1,frag2):
     match=True
@@ -149,7 +152,7 @@ def htmlRefs(d, cutoff=7):
     res=[]
     f=[]
     i=0
-    for frag in d.getDocFrags(cutoff=cutoff):
+    for frag in d.getFrags(cutoff=cutoff):
         start=frag['pos']
         origfrag=frag['txt']
         res.append([])
@@ -158,7 +161,7 @@ def htmlRefs(d, cutoff=7):
                              # in the reference document
                              unicode(start),
                              " ".join(origfrag)))
-        for loc in filter(lambda x: x['doc'] != d._id, Pippi('', oid = frag['frag']).docs):
+        for loc in Frags.find({'pippi': frag['pippi'], 'doc': {'$ne': frag['doc']}}):
             f=loc['txt']
             f=" ".join(diffFrag(origfrag,f))
             doc=Doc('',oid=loc['doc']).eurlexid
@@ -184,6 +187,7 @@ def getOverview():
     stats=[]
     stats.append({'title': 'Total documents', 'value': Docs.count()})
     stats.append({'title': 'Total Pippies', 'value': Pippies.count()})
+    stats.append({'title': 'Locations', 'value': Frags.count()})
     return stats
 
 def listDocs(request):
@@ -191,11 +195,85 @@ def listDocs(request):
     docs=[{'id': doc.eurlexid,
            'indexed': doc.pippiDocsLen,
            'title': doc.title or doc.eurlexid,
+           'frags': doc.getFrags().count(),
+           'pippies': len(doc.pippies),
+           'docs': len(doc.getRelatedDocIds()),
            'subject': doc.subject or "",
-           #'tags': tagcloud.logTags(doc.stems,l=25)}
-           'tags': tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in doc.tfidf.items() if t not in tagcloud.stopwords]),l=25)}
+           'tags': tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in doc.tfidf.items() if t not in stopwords.stopwords]),l=25)}
           for doc in (Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
 def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })
+
+def pager(request,data, orderBy, orderDesc):
+    limit = int(cgi.escape(request.POST.get('limit','10')))
+    if limit>100: limit=100
+    #Count the total items in the dataset
+    totalinquery=data.count()
+    upperbound=totalinquery-limit
+    #Grabs the remainder when you divide the total by the offset
+    lowerbound=totalinquery%limit
+    offset = int(cgi.escape(request.POST.get('offset','0')))
+    pageaction = cgi.escape(request.POST.get('pageaction',""))
+    #if the first page is requested...set the offset to zero
+    if pageaction=='first':
+        offset=0
+    #if the last page is requested...set the offset to the total count - the number displayed
+    if pageaction=='last':
+        offset=upperbound
+    #if the next page is requested...add limit to the offset
+    if pageaction=='next':
+        offset=offset+limit
+        if offset>upperbound:
+            offset=upperbound
+    #if the prior page is requested....take limit away from the offset
+    if pageaction=='prior':
+        offset=offset-limit
+    #if the requested offset is less than the lower bound..go ahead and reset to zero so that
+    #ten items will always display on the first page
+    if offset < lowerbound:
+        offset=0
+    #fetch the data according to where the new offset is set.
+    res=data.limit(limit).skip(offset).sort([(orderBy, pymongo.DESCENDING if orderDesc else pymongo.ASCENDING)])
+    #pass the offset, the total in query, and all the data to the template
+    return {'limit': str(limit),
+            'offset':offset,
+            'page':offset/limit+1,
+            'totalpages':totalinquery/limit,
+            'orderby':orderBy,
+            'desc':orderDesc,
+            'totalinquery':totalinquery,
+            'data': res, }
+
+def frags(request):
+    #docfilter = cgi.escape(request.POST.get('doc',''))
+    #lenfilter = cgi.escape(request.POST.get('len',''))
+    #lenfilter = cgi.escape(request.POST.get('len',''))
+    orderBy = 'score'
+    orderDesc = True
+    template_vars=pager(request,Frags.find(),orderBy,orderDesc)
+    template_vars['frags']=[{'_id': frag['_id'],
+                             'pos':frag['pos'],
+                             'txt':" ".join(frag['txt']),
+                             'len':frag['l'],
+                             'score':frag.get('score',0),
+                             'pippi':Pippi('',oid=frag['pippi']),
+                             'doc':Doc('',oid=frag['doc'])}
+                            for frag in template_vars['data']]
+    return render_to_response('frags.html', template_vars)
+
+def pippies(request):
+    #docfilter = cgi.escape(request.POST.get('doc',''))
+    #lenfilter = cgi.escape(request.POST.get('len',''))
+    #lenfilter = cgi.escape(request.POST.get('len',''))
+    # todo add sortable column headers ala http://djangosnippets.org/snippets/308/
+    orderBy = cgi.escape(request.POST.get('orderby','relevance'))
+    orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
+    template_vars=pager(request,Pippies.find(),orderBy,orderDesc)
+    template_vars['pippies']=[{'_id': pippi['_id'],
+                               'pippi':" ".join(pippi['pippi']),
+                               'docslen':len(pippi['docs']),
+                               'relevance':pippi.get('relevance',0),}
+                               for pippi in template_vars['data']]
+    return render_to_response('pippies.html', template_vars)

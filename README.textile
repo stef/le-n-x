@@ -3,6 +3,8 @@ le-n-x is a set of tools for navigating legislation.
 (C) 2009-2010 by Stefan Marsiske <stefan.marsiske@gmail.com>, Adam Tauber <asciimoo@gmail.com>
 Licensed under the GNU Affero General Public License v3
 
+!http://api.flattr.com/button/button-compact-static-100x17.png!:http://flattr.com/thing/16236/Pippi-Longstrings
+
  * arach: artful shell script to scrape eur-lex legislative texts.
  * bonobo: greasemonkey script for displaying tagclouds when browsing eur-lex
  * fetch et all: django backend for bonobo.

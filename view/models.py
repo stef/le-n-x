@@ -27,7 +27,7 @@ import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 from pymongo import Connection
 from operator import itemgetter
-import itertools, math
+import itertools, math, pymongo
 
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
@@ -35,9 +35,18 @@ conn = Connection()
 db=conn.pippi
 Docs=db.docs
 Pippies=db.pippies
+Frags=db.frags
 MiscDb=db.miscdb
+Frags.ensure_index([('pippi', pymongo.ASCENDING),
+                    ('doc', pymongo.ASCENDING),
+                    ('pos', pymongo.ASCENDING)], unique=True)
+Frags.ensure_index([('l', pymongo.DESCENDING)])
+Docs.ensure_index([('eurlexid', pymongo.ASCENDING)])
+Docs.ensure_index([('pippiDocsLen', pymongo.DESCENDING)])
+Pippies.ensure_index([('pippi', pymongo.ASCENDING)])
 
 class Pippi():
+    computed_attrs = [ 'relevance',]
     def __init__(self, pippi, oid=None, frag=None):
         if oid:
             # get by mongo oid
@@ -46,39 +55,33 @@ class Pippi():
             # get by pippi
             frag=Pippies.find_one({"pippi": pippi})
         if(frag):
-            frag['docs']=set([PippiFrag(f['pos'],f['txt'],f['l'],f['doc']) for f in frag['docs']])
             self.__dict__=frag
+            self.pippi=tuple(self.pippi)
         else:
-            self.__dict__={'pippi': pippi,
+            self.__dict__={'pippi': tuple(pippi),
                            'len': len(pippi),
-                           'docs': set([])} # should a be a set of {'pos':p,'txt':txt,'l':l,'doc':_id}
+                           'docs': []} # should a be a set of {'pos':p,'txt':txt,'l':l,'doc':_id}
             self.save()
 
     def save(self):
-        data=self.__dict__.copy()
-        data['docs']=list(data['docs'])
-        self.__dict__['_id']=Pippies.save(data)
+        self.__dict__['_id']=Pippies.save(self.__dict__)
 
     def __getattr__(self, name):
-        # handle and cache calculated properties
-        #dirty=False
-        #if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
-        #    dirty=True
-        #    if name == 'tfidf':
-        #        self.tfidf=self._gettfidf()
+        if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
+            if name == 'relevance':
+                self.__dict__[name]=self._getRelevance()
         if name in self.__dict__:
-        #    if dirty: self.save()
             return self.__dict__[name]
         else:
             raise AttributeError, name
 
     def __setattr__(self, name, value):
-        if name in self.__dict__.keys():
+        if name in self.__dict__.keys() or name in self.computed_attrs:
             self.__dict__[name]=value
         else: raise AttributeError, name
 
-    #def _gettfidf(self):
-    #    return tfidf.get_doc_keywords(set(self.pippi),len(self.pippi))
+    def _getRelevance(self):
+        return float(self.len)/float(len(self.docs)) if len(self.docs) else 0
 
     def getStr(self):
         return " ".join(eval(self.frag)).encode('utf8')
@@ -86,9 +89,50 @@ class Pippi():
     def __unicode__(self):
         return unicode(self.pippi)
 
+    def getDocs(self, d, cutoff=7):
+        return set([Doc('',oid=oid) for oid in self.docs if oid != d._id])
+
+class Frag():
+    computed_attrs = [ 'score',]
+    def __init__(self, oid=None, frag=None):
+        if oid:
+            # get by mongo oid
+            frag=Frags.find_one({"_id": oid})
+        if(frag):
+            self.__dict__=frag
+        else:
+            self.__dict__={'pos':frag['p'],
+                           'txt':frag['txt'],
+                           'l':frag['l'],
+                           'pippi':frag['pippi']._id,
+                           'doc':frag['doc']._id}
+            self.save()
+
+    def save(self):
+        self.__dict__['_id']=Frags.save(self.__dict__)
+
+    def __getattr__(self, name):
+        if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
+            if name == 'score':
+                self.__dict__[name]=self._getScore()
+        if name in self.__dict__:
+            return self.__dict__[name]
+        else:
+            raise AttributeError, name
+
+    def __setattr__(self, name, value):
+        if name in self.__dict__.keys() or name in self.computed_attrs:
+            self.__dict__[name]=value
+        else: raise AttributeError, name
+
+    def _getScore(self):
+        d=Doc('',oid=self.doc)
+        p=Pippi('',oid=self.pippi)
+        return sum([d.tfidf.get(t,0) for t in p.pippi])
+
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc():
-    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject', 'tfidf']
+    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject', 'tfidf', 'frags']
 
     def __init__(self,eurlexid,oid=None,d=None):
         if oid:
@@ -100,9 +144,6 @@ class Doc():
         if d:
             # load the values
             self.__dict__=d
-            if 'stems' in d:
-                # convert stems back to tuples - mongo only does lists
-                self.__dict__['stems'] = tuple([tuple(x) for x in d['stems']])
         elif eurlexid:
             # create a new document
             self.__dict__={}
@@ -114,15 +155,14 @@ class Doc():
         else:
             raise KeyError('empty eurlexid')
 
+    # todo add interpretation according to http://www.ellispub.com/ojolplus/help/celex.htm#sectors2
     def __getattr__(self, name):
         # handle and cache calculated properties
-        dirty=False
         if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
-            dirty=True
             if name == 'raw':
-                self.raw=self._getraw()
+                return self._getraw()
             if name == 'text':
-                self.text=self._gettext()
+                return self._gettext()
             if name == 'tokens':
                 self.tokens=self._gettokens()
             if name in ['stems','termcnt']:
@@ -133,8 +173,9 @@ class Doc():
                 self.subject=self._getsubj()
             if name == 'tfidf':
                 self.tfidf=self._gettfidf()
+            if name == 'frags':
+                return self._getfrags()
         if name in self.__dict__.keys():
-            if dirty: self.save()
             return self.__dict__[name]
         else:
             raise AttributeError, name
@@ -148,19 +189,6 @@ class Doc():
         return self.eurlexid
 
     def save(self):
-        def uniq(seq, idfun=None):
-            seen = {}
-            result = []
-            if not idfun:
-                def idfun(x):
-                    return (str(x['txt']),x['pos'],x['l'])
-            for item in seq:
-                marker = idfun(item)
-                if marker in seen: continue
-                seen[marker] = 1
-                result+=[item]
-            return result
-        self.pippies=uniq(self.pippies)
         self.__dict__['_id']=Docs.save(self.__dict__)
 
     def _getraw(self, cache=CACHE):
@@ -183,10 +211,10 @@ class Doc():
             # stem each word and count the results
             stem=engine.stem(word.encode('utf8'))
             if stem:
-                stems.append((stem[0],))
+                stems.append(stem[0])
                 termcnt[stem[0]]=termcnt.get(stem[0],0)+1
             else:
-                stems.append(('',))
+                stems.append('')
         return (tuple(stems),termcnt)
 
     def _getHTMLMetaData(self, attr):
@@ -203,6 +231,9 @@ class Doc():
     def _gettfidf(self):
         return tfidf.get_doc_keywords(self)
 
+    def _getfrags(self):
+        return [Frag(frag=f) for f in self.getFrags(cutoff=1)]
+
     def __hash__(self):
         return hash(self._id)
 
@@ -214,17 +245,20 @@ class Doc():
 
     def getRelatedDocs(self, cutoff=7):
         return [Doc('',oid=oid)
-                for oid in set([doc['doc']
-                                for frag in Pippies.find({'docs.doc' : self._id,
-                                                          'len' : { '$gte' : int(cutoff) }},
-                                                         ['docs.doc'])
-                                for doc in frag['docs']
-                                if doc['doc'] != self._id])]
+                for oid in self.getRelatedDocIds(cutoff=cutoff)
+                if oid != self._id]
 
-    def getDocFrags(self, cutoff=7):
-        # returns the doc, with only the frags which are filtered by the cutoff and disctinct ordered by their location.
-        return sorted([x for x in self.pippies if x['l']>cutoff],
-                      key=itemgetter('pos'))
+    def getRelatedDocIds(self, cutoff=7):
+        return set([doc
+                    for pippi in Pippies.find({'len': { '$gte': int(cutoff)},
+                                               'docs': self._id},
+                                              ['docs'])
+                    for doc in pippi['docs']])
+
+    def getFrags(self, cutoff=7):
+        return Frags.find({'l': { '$gte': int(cutoff)},
+                           'doc': self._id,
+                           }).sort([('l', pymongo.DESCENDING)])
 
     def addDoc(self,d):
         if not d._id in self.pippiDocs:
@@ -301,25 +335,3 @@ class TfIdf:
         self.__dict__['_id']=MiscDb.save(self.__dict__)
 
 tfidf=TfIdf()
-
-class Frag(dict):
-    def __init__(self,pos,txt,lngth):
-        self['pos']=pos
-        self['txt']=txt
-        self['l']=lngth
-        self.hash=None
-    def __hash__(self):
-        return self.hash
-
-class PippiFrag(Frag):
-    def __init__(self,pos,txt,lngth,d):
-        Frag.__init__(self,pos,txt,lngth)
-        self['doc']=d
-        self.hash=hash((lngth,d.binary,pos))
-
-# stub if also needed for docs
-#class DocFrag(Frag):
-#    def __init__(self,pos,txt,lngth,f):
-#        Frag.__init__(self,pos,txt,lngth)
-#        self['frag']=f
-#        self.hash=hash((lngth,f.binary,pos))

@@ -6,59 +6,74 @@
 <script src="http://cdn.jquerytools.org/1.2.1/jquery.tools.min.js"></script>
 
 <script type="text/javascript">
+  Array.prototype.contains = function (element) {
+    for (var i = 0; i < this.length; i++) {
+      if (this[i] == element) { return true; }
+    }
+    return false; };
 
-    jQuery.fn.highlight = function(b) { 
-        function a(e,j) { 
-            var l=0;
-            if(e.nodeType==3) { 
-                var k=e.data.toUpperCase().indexOf(j);
-                if(k>=0) { 
-                    var h=document.createElement("span");
-                    h.className="highlight";
-                    var f=e.splitText(k);
-                    var c=f.splitText(j.length);
-                    var d=f.cloneNode(true);
-                    h.appendChild(d);
-                    f.parentNode.replaceChild(h,f);
-                    l=1;
-                }
-            } else { 
-                if(e.nodeType==1&&e.childNodes&&!/(script|style)/i.test(e.tagName)) { 
-                    for(var g=0;g<e.childNodes.length;++g) { 
-                        g+=a(e.childNodes[g],j);
-                    }
-                }
-            }
-            return l;
-        }
-        return this.each( function(){a(this,b.toUpperCase())})
-    };
-    jQuery.fn.removeHighlight=function() { 
-        return this.find("span.highlight").each(function(){this.parentNode.firstChild.nodeName;with(this.parentNode){replaceChild(this.firstChild,this);normalize()}}).end();
-    };
-    var locSet = [];
+  $(document).ready(function() {
+    $('#loading').show();
 
-    $(document).ready(function() {
-        $('.highlight').tooltip({effect: 'fade'});
-        if(1) return;
-        var match;
-        $('#loading').show();
-        for(var i=0; i<Math.min(locSet.length, 100); i++) {
-            match = new RegExp(locSet[i]).exec($('#TexteOnly').text())
-            if(match) {
-                $('#TexteOnly').highlight(match[0]);
-            } else {
-                alert(locSet[i]+' - '+i);
+	 $(".highlight").each(function(){
+		var el = $(this);
+
+      tipId=el.attr("class").split(" ")[1];
+      parents=el.parents(".highlight");
+      // if we have hilited parents, then we merge the 'alsoin' tooltip contents
+      if(parents.length>0) {
+        var moreDocs=[];
+        tip=$('#'+tipId);
+        newpid=[tip.attr('id')];
+
+        // we collect the list items and the pippiOid for every parent hilite
+        parents.each(function() {
+          pid=$(this).attr('class').split(" ")[1];
+          newpid.push(pid);
+          moreDocs=moreDocs.concat($("#"+pid).find('li'));
+        });
+
+        newTipId=newpid.join('-');
+        // if no composite tooltip exists yet for this nested pippi, create one
+        if($("#"+newTipId).length==0) {
+          newTip=$("<span>").addClass('pippiNote').attr('id',newTipId);
+          newTip.append(tip.children().clone());
+          ul=newTip.find("ul");
+          links=ul.find("a").attr('href');
+          if(typeof(links) == 'string') links=Array(links);
+
+          // add each unique parent doc to the composite tooltip
+          moreDocs.forEach(function(elem) {
+            curl=$(elem).find("a").attr('href');
+            if(! links.contains(curl)) {
+              ul.append($(elem).clone());
+              links.push(curl);
             }
+          });
+          $('#tooltips').append(newTip);
         }
-        $('#loading').hide();
-    });
+        tipId=newTipId;
+      }
+
+		el.tooltip({
+        effect: 'fade',
+        delay: 150,
+        predelay: 400,
+		  tip : '#'+tipId,
+        onBeforeShow: function(e,pos) {
+          e.stopPropagation();
+        },
+		});
+	 });
+
+    $('#loading').hide();
+  });
 </script>
 {% endblock %}
 
 {% block main %}
 
-<h2>docView for {{ doc.title }} ({{ doc.eurlexid }})</h2>
+<h2>docView for {{ doc.title|safe }} ({{ doc.eurlexid }})</h2>
 
 <div class="rel">
     <fieldset><legend>Statistics</legend>
@@ -69,7 +84,7 @@
     <fieldset <legend>Related docs</legend>
         <ul>
         {% for dd in related %}
-            <li><a href="/doc/{{ dd.eurlexid }}?cutoff={{cutoff}}">{{dd.title}}</a><hr /></li>
+            <li><a href="/doc/{{ dd.eurlexid }}?cutoff={{cutoff}}">{{dd.title|safe}}</a><hr /></li>
         {% endfor %}
         </ul>
     </fieldset>
@@ -78,5 +93,8 @@
 
 {{ content|safe }}
 
+<div id='tooltips'>
+{{tooltips|safe }}
+</div>
 
 {% endblock %}

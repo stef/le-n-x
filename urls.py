@@ -9,6 +9,8 @@ urlpatterns = patterns('',
     (r'^xpippi/(?P<doc>.+)', view.xpippi),
     (r'^all$', view.listDocs),
     (r'^stats$', view.stats),
+    (r'^frags$', view.frags),
+    (r'^pippies$', view.pippies),
     (r'^doc/(?P<doc>.+)$', view.docView),
 )
 
