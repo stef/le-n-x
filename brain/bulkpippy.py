@@ -30,6 +30,8 @@ def getDoc(doc):
     d=Doc(doc)
     if not 'stems' in d.__dict__ or not d.stems:
         # let's calculate and cache the results
+        d.title
+        d.subject
         tfidf.add_input_document(d.termcnt.keys())
         d.save()
     docs[doc] = d
