@@ -16,7 +16,7 @@
     $('#loading').show();
 
 	 $(".highlight").each(function(){
-		var el = $(this);
+	 	var el = $(this);
 
       tipId=el.attr("class").split(" ")[1];
       parents=el.parents(".highlight");
@@ -63,7 +63,7 @@
         onBeforeShow: function(e,pos) {
           e.stopPropagation();
         },
-		});
+               });
 	 });
 
     $('#loading').hide();
@@ -81,7 +81,7 @@
         <h4>Pippies: {{ len }}</h4>
         <h4>Highlights in text: {{ matches }}</h4>
     </fieldset>
-    <fieldset <legend>Related docs</legend>
+    <fieldset> <legend>Related docs</legend>
         <ul>
         {% for dd in related %}
             <li><a href="/doc/{{ dd.eurlexid }}?cutoff={{cutoff}}">{{dd.title|safe}}</a><hr /></li>
