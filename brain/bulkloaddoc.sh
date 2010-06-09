@@ -1,10 +1,8 @@
 #!/usr/bin/env ksh
 # $1 contains the doc do xpippi
 
-batchsize=32
-JOBMAX=4
-tmpdir=/tmp/
 PPATH=`dirname $0`'/..'
+. $PPATH/brain/shell.cfg
 
 # clear batches
 find ${tmpdir}/ -name 'job*' | xargs rm
