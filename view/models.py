@@ -243,11 +243,6 @@ class Doc():
     def getFrag(self,start,len):
         return " ".join(self.tokens[start:start+len]).encode('utf8')
 
-    def getRelatedDocs(self, cutoff=7):
-        return [Doc('',oid=oid)
-                for oid in self.getRelatedDocIds(cutoff=cutoff)
-                if oid != self._id]
-
     def getRelatedDocIds(self, cutoff=7):
         return set([doc
                     for pippi in Pippies.find({'len': { '$gte': int(cutoff)},

@@ -84,7 +84,7 @@ def docView(request,doc=None,cutoff=20):
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
     tooltips={}
     cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
-    relDocs = d.getRelatedDocs(cutoff=cutoff)
+    relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=cutoff))} }, ['eurlexid','title'])
     ls = []
     matches = 0
     for l in d.getFrags(cutoff=cutoff):
@@ -209,6 +209,7 @@ def stats(request):
 def pager(request,data, orderBy, orderDesc):
     limit = int(cgi.escape(request.POST.get('limit','10')))
     if limit>100: limit=100
+    elif limit<10: limit=10
     #Count the total items in the dataset
     totalinquery=data.count()
     upperbound=totalinquery-limit
