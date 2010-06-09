@@ -3,7 +3,7 @@
 
 batchsize=32
 JOBMAX=4
-tmpdir=/home/stef/tmp/ptmp
+tmpdir=/tmp/
 PPATH=`dirname $0`'/..'
 
 # clear batches

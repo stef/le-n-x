@@ -26,7 +26,7 @@ div.rel { float: right; max-width: 350px; }
 .txt { width: 500px; padding-left: 10px; white-space: normal; }
 .pippi { background-color: #ddddaa;}
 .highlight, .highlight * { background: rgba(0, 120, 240, 0.2); position: relative;}
-.highlight:hover, .highlight *:hover { background: rgba(0, 240, 120, 0.8); }
+.hovered { background: rgba(0, 240, 120, 0.8); } 
 .tagcloud { float: right; width: 400px; border: 1px dotted blue; }
 .size0 { font-size: .4em; }
 .size1 { font-size: .5em }
