@@ -105,7 +105,7 @@ def docView(request,doc=None,cutoff=20):
         regex=re.compile(rtxt, re.I | re.M | re.U)
         i=0
         offset = 0
-        print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l['pos'], rtxt)
+        #print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l['pos'], rtxt)
         if not l['pippi'] in tooltips:
             tooltips[l['pippi']]=annotatePippi(d,l,cutoff)
         for r in regex.finditer(cont):
