@@ -21,6 +21,7 @@ from lenx import settings
 setup_environ(settings)
 from lenx.brain import cache as Cache
 CACHE=Cache.Cache(settings.CACHE_PATH)
+from lenx.brain import tagcloud, stopwords
 
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
@@ -37,6 +38,9 @@ Docs=db.docs
 Pippies=db.pippies
 Frags=db.frags
 MiscDb=db.miscdb
+DocTexts=db.DocTexts
+DocStems=db.DocStems
+DocTokens=db.DocTokens
 Frags.ensure_index([('pippi', pymongo.ASCENDING),
                     ('doc', pymongo.ASCENDING),
                     ('pos', pymongo.ASCENDING)], unique=True)
@@ -133,6 +137,7 @@ class Frag():
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class Doc():
     computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject', 'tfidf', 'frags']
+    fieldMap = {'text': DocTexts, 'stems':  DocStems, 'tokens': DocTokens, }
 
     def __init__(self,eurlexid,oid=None,d=None):
         if oid:
@@ -148,8 +153,8 @@ class Doc():
             # create a new document
             self.__dict__={}
             self.__dict__['eurlexid'] = eurlexid
-            self.__dict__['pippies'] = [] # should a be a list of {'pos':p,'txt':txt,'l':l,'frag':frag._id}
-            self.__dict__['pippiDocs'] = [] # should a be a list of docs this doc has been compared to
+            self.__dict__['pippies'] = []
+            self.__dict__['pippiDocs'] = []
             self.__dict__['pippiDocsLen'] = 0
             self.save()
         else:
@@ -160,21 +165,23 @@ class Doc():
         # handle and cache calculated properties
         if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
             if name == 'raw':
-                return self._getraw()
+                return self._getraw() # cached on fs
             if name == 'text':
-                return self._gettext()
+                self.__dict__['text'] = self._gettext() # cached in extfields
             if name == 'tokens':
-                self.tokens=self._gettokens()
-            if name in ['stems','termcnt']:
-                (self.stems,self.termcnt)=self._getstems()
+                self.__dict__['tokens'] = self._gettokens() # cached in extfields
+            if name == 'stems':
+                self.__dict__['stems'] = self._getstems() # cached in extfields
+            if name == 'termcnt':
+                self.__dict__['termcnt']=self._getstemcount()
             if name == 'title':
-                self.title=self._gettitle()
+                self.__dict__['title']=self._gettitle()
             if name == 'subject':
-                self.subject=self._getsubj()
+                self.__dict__['subject']=self._getsubj()
             if name == 'tfidf':
-                self.tfidf=self._gettfidf()
+                self.__dict__['tfidf']=self._gettfidf()
             if name == 'frags':
-                return self._getfrags()
+                return self._getfrags() # not cached at all
         if name in self.__dict__.keys():
             return self.__dict__[name]
         else:
@@ -189,33 +196,53 @@ class Doc():
         return self.eurlexid
 
     def save(self):
+        tmp=[(i,self.__dict__[i]) for i in self.fieldMap if i in self.__dict__]
+        for i in tmp: del self.__dict__[i[0]]
         self.__dict__['_id']=Docs.save(self.__dict__)
+        for (i,val) in tmp: self.__dict__[i]=val
 
     def _getraw(self, cache=CACHE):
         return cache.fetchUrl(EURLEXURL+self.eurlexid)
 
-    def _gettext(self, cache=CACHE):
+    def _gettext(self):
+        res=self._getExtField('text')
+        if res: return res
         soup = BeautifulSoup(self.raw)
-        # TexteOnly is the id used on eur-lex pages containing distinct docs
-        return [unicode(x) for x in soup.find(id='TexteOnly').findAll(text=True)]
+        # TexteOnly is the id used on eur-lex pages containing docs
+        res = [unicode(x) for x in soup.find(id='TexteOnly').findAll(text=True)]
+        self._setExtField('text',res) # cache data
+        return res
 
     def _gettokens(self):
-        return [token for frag in self.text if frag for token in nltk.tokenize.wordpunct_tokenize(unicode(frag))]
+        res=self._getExtField('tokens')
+        if res: return res
+        res = [token for frag in self.text if frag for token in nltk.tokenize.wordpunct_tokenize(unicode(frag))]
+        self._setExtField('tokens',res) # cache data
+        return res
 
     def _getstems(self):
         # start stemming
+        stems= self._getExtField('stems') or []
+        if stems:
+            return tuple(stems)
+
         engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
-        stems=[]
-        termcnt={}
         for word in self.tokens:
-            # stem each word and count the results
+            # stem each word
             stem=engine.stem(word.encode('utf8'))
             if stem:
                 stems.append(stem[0])
-                termcnt[stem[0]]=termcnt.get(stem[0],0)+1
             else:
                 stems.append('')
-        return (tuple(stems),termcnt)
+        self._setExtField('stems',stems) # cache data
+        return tuple(stems)
+
+    def _getstemcount(self):
+        termcnt={}
+        for stem in self.stems:
+            if not stem=='':
+                termcnt[stem]=termcnt.get(stem,0)+1
+        return termcnt
 
     def _getHTMLMetaData(self, attr):
         soup = BeautifulSoup(self.raw)
@@ -240,9 +267,6 @@ class Doc():
     def __eq__(self,other):
         return self._id == other._id
 
-    def getFrag(self,start,len):
-        return " ".join(self.tokens[start:start+len]).encode('utf8')
-
     def getRelatedDocIds(self, cutoff=7):
         return set([doc
                     for pippi in Pippies.find({'len': { '$gte': int(cutoff)},
@@ -260,6 +284,17 @@ class Doc():
             self.pippiDocs.append(d._id)
             self.pippiDocsLen=len(self.pippiDocs)
 
+    def _getExtField(self, field):
+        if field+"id" in self.__dict__:
+            res=self.fieldMap[field].find_one({'_id': self.__dict__[field+'id']})
+            if res: return res['value']
+
+    def _setExtField(self, field, data):
+        self.__dict__[field+'id']=self.fieldMap[field].save({'value': data})
+
+    def autoTags(self,l):
+        return tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in self.tfidf.items() if t not in stopwords.stopwords]),l=l)
+
 class TfIdf:
     def __init__(self, DEFAULT_IDF = 1.5):
 
@@ -273,7 +308,6 @@ class TfIdf:
             self.__dict__['name'] = "tfidf"
             self.__dict__['num_docs'] = 0
             self.__dict__['term_num_docs'] = {} # term : num_docs_containing_term
-            self.__dict__['stopwords'] = []
             self.__dict__['idf_default'] = DEFAULT_IDF
             self.save()
 
@@ -304,8 +338,6 @@ class TfIdf:
         (number of documents in corpus) divided by (number of documents
         containing this term) ).
         """
-        if term in self.stopwords:
-            return 0
         if not term in self.term_num_docs:
             return self.idf_default
         return math.log(float(1 + self.num_docs) /
@@ -330,3 +362,11 @@ class TfIdf:
         self.__dict__['_id']=MiscDb.save(self.__dict__)
 
 tfidf=TfIdf()
+
+if __name__ == "__main__":
+    d=Doc('acta-release')
+    print d.stems
+    #d.save()
+    print 'asdf'
+    d1=Doc('acta-release')
+    print d1.stems

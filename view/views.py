@@ -22,7 +22,6 @@ from django.core.management import setup_environ
 from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
-from lenx.brain import tagcloud, stopwords
 from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
 from lenx.view.forms import XpippiForm, viewForm
 from operator import itemgetter
@@ -199,7 +198,7 @@ def listDocs(request):
            'pippies': len(doc.pippies),
            'docs': len(doc.getRelatedDocIds()),
            'subject': doc.subject or "",
-           'tags': tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in doc.tfidf.items() if t not in stopwords.stopwords]),l=25)}
+           'tags': doc.autoTags(25) }
           for doc in (Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 

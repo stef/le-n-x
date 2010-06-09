@@ -30,7 +30,7 @@ def main():
     pippieslen=pippies.count()
     i=1
     for pippi in pippies:
-        print "%.2f" % (float(i)/float(pippieslen)*100)
+        print "%d%% done" % (i*100/pippieslen)
         Pippies.update({'_id' : pippi['_id']},
                        { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs']))}})
         i=i+1
