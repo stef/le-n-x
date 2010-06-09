@@ -26,16 +26,27 @@ import sys, os
 docs={}
 
 def main():
-    for doc in Docs.find():
-        d=Doc('',d=doc)
-        print d.title
-        #d.tfidf
-        d.save()
-        [(f._id,f.score,f.save()) for f in d.frags]
-    for pippi in Pippies.find():
-        p=Pippi('',frag=pippi)
-        p.relevance=float(p.len)/float(len(p.docs))
-        p.save()
+    pippies=Pippies.find({},['docs','len'])
+    pippieslen=pippies.count()
+    i=1
+    for pippi in pippies:
+        print "%.2f" % (float(i)/float(pippieslen)*100)
+        Pippies.update({'_id' : pippi['_id']},
+                       { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs']))}})
+        i=i+1
+
+    # this is to slow, we need to find another way around this
+    #frags=Frags.find()
+    #fragslen=frags.count()
+    #i=1
+    #for f in frags:
+    #    print "%.2f" % (float(i)/float(fragslen)*100)
+    #    p=Pippies.find_one({'_id': f['pippi']},['pippi'])
+    #    doc=Docs.find_one({'_id': f['doc']},['tokens'])
+    #    d=Doc('',d=doc)
+    #    Frags.update({'_id' : f['_id']},
+    #                 { '$set': { 'score': sum([d.tfidf.get(t,0) for t in p['pippi']])}})
+    #    i=i+1
 
 if __name__ == "__main__":
     #import os
