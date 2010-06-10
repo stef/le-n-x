@@ -5,8 +5,6 @@ import view.views as view
 urlpatterns = patterns('',
     (r'^$', view.index),
     (r'^tagcloud$', 'lenx.tagcloud.views.handler'),
-    (r'^xpippi$', view.xpippiFormView),
-    (r'^xpippi/(?P<doc>.+)', view.xpippi),
     (r'^all$', view.listDocs),
     (r'^stats$', view.stats),
     (r'^frags$', view.frags),
