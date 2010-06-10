@@ -293,7 +293,7 @@ class Doc():
         self.__dict__[field+'id']=self.fieldMap[field].save({'value': data})
 
     def autoTags(self,l):
-        return tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in self.tfidf.items() if t not in stopwords.stopwords]),l=l)
+        return sorted(tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in self.tfidf.items() if t not in stopwords.stopwords]),l=l),key=itemgetter('tag'))
 
 class TfIdf:
     def __init__(self, DEFAULT_IDF = 1.5):
