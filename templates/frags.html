@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load lenx %}
 {% block main %}
-<h1>Frags in documents</h1>
+<h1>Frags {% if doc %}in {{doc}}{% else %}{%if pippi %}for pippi{%else%}in database{%endif%}{%endif%}</h1>
 <div class="pager-controls">
-<form action="/frags" name="pagingtop" method="post" enctype="multipart/form-data">
+<form action="/frags{% if getparams%}?{{getparams}}{%endif%}" name="pagingtop" method="post" enctype="multipart/form-data">
 <input type="submit" name="firstpage" onclick="document.pagingtop.pageaction.value='first'" value="FirstPage" />
 <input type="submit" name="backpage" onclick="document.pagingtop.pageaction.value='prior'" value="PriorPage" />
 <SELECT name="limit">
@@ -21,11 +21,11 @@
 <table class="listing">
   <thead><tr><td>Text</td><td>Document</td><td>Score</td></tr></thead>
 {% for frag in frags %}
-<tr><td>{{frag.txt}}</td><td><a href="/doc/{{frag.doc.eurlexid}}">{{frag.doc.title}}</a></td><td>{{frag.score}}</td></tr>
+<tr><td>{{frag.txt|safe}}</td><td><a href="/doc/{{frag.doc.eurlexid}}">{{frag.doc.title}}</a></td><td>{{frag.score}}</td></tr>
 {% endfor %}
 </table>
 <div class="pager-controls">
-<form action="/frags" name="pagingbottom" method="post" enctype="multipart/form-data">
+<form action="/frags{% if getparams%}?{{getparams}}{%endif%}" name="pagingbottom" method="post" enctype="multipart/form-data">
 <input type="submit" name="firstpage" onclick="document.pagingbottom.pageaction.value='first'" value="FirstPage" />
 <input type="submit" name="backpage" onclick="document.pagingbottom.pageaction.value='prior'" value="PriorPage" />
 <SELECT name="limit">
