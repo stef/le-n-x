@@ -187,9 +187,9 @@ def xpippi(request, doc):
 
 def getOverview():
     stats=[]
-    stats.append({'title': 'Total documents', 'value': Docs.count()})
-    stats.append({'title': 'Total Pippies', 'value': Pippies.count()})
-    stats.append({'title': 'Locations', 'value': Frags.count()})
+    stats.append({'title': 'Total documents', 'value': Docs.count(), 'text': "%s Documents" % Docs.count()})
+    stats.append({'title': 'Total Pippies', 'value': Pippies.count(), 'text': "with %s Pippies" % Pippies.count()})
+    stats.append({'title': 'Locations', 'value': Frags.count(), 'text': "in %s Locations" % Frags.count()})
     return stats
 
 def listDocs(request):
