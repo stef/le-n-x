@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% load lenx %}
-{% block main %}
-<h1>Get overall pippies</h1>
-<form action="{% root_url %}/xpippi" method="post">
-  {{ form.as_p }}
-  <p><input type="submit" value="getit" /></p>
-</form>
-{% endblock %}
