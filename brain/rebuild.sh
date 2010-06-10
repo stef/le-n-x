@@ -11,7 +11,7 @@ printf "use pippi\ndb.miscdb.drop()\ndb.frags.drop()\ndb.docs.drop()\ndb.DocText
 
 
 # load docs to pippify
-(ls $1 | grep $3'' | ksh $PPATH/brain/bulkloaddoc.sh $2 2>>$PPATH/brain/bulk.err; cd -) 
+ls $1 | grep $3'' | ksh $PPATH/brain/bulkloaddoc.sh $2 2>>$PPATH/brain/bulk.err
 
 # calculate/store tf-idf for processed docs
 PYTHONPATH=$PPATH/../ DJANGO_SETTINGS_MODULE="lenx.settings" python $PPATH/brain/bulkidf.py
