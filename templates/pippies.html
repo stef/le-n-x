@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load lenx %}
 {% block main %}
-<h1>Pippies in documents</h1>
+<h1>Pippies in {% if doc %}{{doc}}{%else%}documents{%endif%}</h1>
 <div class="pager-controls">
-<form action="/pippies" name="pagingtop" method="post" enctype="multipart/form-data">
+<form action="/pippies{% if getparams%}?{{getparams}}{%endif%}" name="pagingtop" method="post" enctype="multipart/form-data">
 <input type="submit" name="firstpage" onclick="document.pagingtop.pageaction.value='first'" value="FirstPage" />
 <input type="submit" name="backpage" onclick="document.pagingtop.pageaction.value='prior'" value="PriorPage" />
 <SELECT name="limit">
@@ -23,11 +23,11 @@
 <table class="listing">
   <thead><tr><td>Text</td><td>Also in</td><td>Relevance</td></tr></thead>
 {% for pippi in pippies %}
-<tr><td>{{pippi.pippi}}</td><td>{{pippi.docslen}}</td><td>{{pippi.relevance}}</td></tr>
+<tr><td>{{pippi.pippi}}</td><td><a href="/frags?pippi={{pippi.id}}">{{pippi.docslen}}</a></td><td>{{pippi.relevance}}</td></tr>
 {% endfor %}
 </table>
 <div class="pager-controls">
-<form action="/pippies" name="pagingbottom" method="post" enctype="multipart/form-data">
+<form action="/pippies{% if getparams%}?{{getparams}}{%endif%}" name="pagingbottom" method="post" enctype="multipart/form-data">
 <input type="submit" name="firstpage" onclick="document.pagingbottom.pageaction.value='first'" value="FirstPage" />
 <input type="submit" name="backpage" onclick="document.pagingbottom.pageaction.value='prior'" value="PriorPage" />
 <SELECT name="limit">
