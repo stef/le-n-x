@@ -35,6 +35,9 @@ def main():
                        { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs']))}})
         i=i+1
 
+    for dd in Docs.find({},['termcnt','eurlexid','stemsid']):
+        Docs.update({'_id': dd['_id']},{ '$set': { 'tfidf': Doc('',d=dd).tfidf } })
+
     # this is to slow, we need to find another way around this
     #frags=Frags.find()
     #fragslen=frags.count()
