@@ -23,7 +23,6 @@ from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
-from lenx.view.forms import XpippiForm, viewForm
 from operator import itemgetter
 import re, pymongo, cgi
 
@@ -133,6 +132,10 @@ def docView(request,doc=None,cutoff=20):
                                                'matches': matches})
 
 def diffFrag(frag1,frag2):
+    if not frag1 and frag2:
+        return frag2
+    if not frag2 and frag1:
+        return frag1
     match=True
     i=0
     while i<len(frag2):
@@ -192,6 +195,7 @@ def getOverview():
 def listDocs(request):
     docslen=Docs.count()
     docs=[{'id': doc.eurlexid,
+           'oid': doc._id,
            'indexed': doc.pippiDocsLen,
            'title': doc.title or doc.eurlexid,
            'frags': doc.getFrags().count(),
@@ -247,33 +251,84 @@ def pager(request,data, orderBy, orderDesc):
             'data': res, }
 
 def frags(request):
-    #docfilter = cgi.escape(request.POST.get('doc',''))
-    #lenfilter = cgi.escape(request.POST.get('len',''))
-    #lenfilter = cgi.escape(request.POST.get('len',''))
-    orderBy = 'score'
+    filtr={}
+    template_vars={}
+    docfilter=None
+    cutoff=None
+    pippifilter=None
+    try:
+        cutoff = int(cgi.escape(request.GET.get('cutoff','7')))
+    except:
+        pass
+    if cutoff: filtr['l']={ '$gte': cutoff }
+    try:
+        docfilter =  pymongo.objectid.ObjectId(cgi.escape(request.GET.get('doc','')))
+    except:
+        pass
+    if docfilter:
+        filtr['doc']=docfilter
+    try:
+        pippifilter = pymongo.objectid.ObjectId(cgi.escape(request.GET.get('pippi','')))
+    except:
+        pass
+    if pippifilter:
+        filtr['pippi']=pippifilter
+    orderBy = 'l'
     orderDesc = True
-    template_vars=pager(request,Frags.find(),orderBy,orderDesc)
-    template_vars['frags']=[{'_id': frag['_id'],
-                             'pos':frag['pos'],
-                             'txt':" ".join(frag['txt']),
-                             'len':frag['l'],
-                             'score':frag.get('score',0),
-                             'pippi':Pippi('',oid=frag['pippi']),
-                             'doc':Doc('',oid=frag['doc'])}
-                            for frag in template_vars['data']]
+    template_vars=pager(request,Frags.find(filtr),orderBy,orderDesc)
+    prevDoc=None
+    template_vars['frags']=[]
+    for frag in template_vars['data']:
+        p=Pippi('',oid=frag['pippi'])
+        d=Doc('',oid=frag['doc'])
+        if pippifilter:
+            frag['txt']=diffFrag(prevDoc,frag['txt'])
+            prevDoc=frag['txt']
+        template_vars['frags'].append({'_id': frag['_id'],
+                                       'pos': frag['pos'],
+                                       'txt': " ".join(frag['txt']),
+                                       'len': frag['l'],
+                                       'score': sum([d.tfidf.get(t,0) for t in p.pippi]),
+                                       'pippi': p,
+                                       'doc': d,
+                                       })
+
+    template_vars['getparams']=request.GET.urlencode()
+    if docfilter: template_vars['doc']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['eurlexid']
+    if pippifilter: template_vars['pippi']=1 #" ".join(Pippies.find_one({'_id': pippifilter},['pippi'])['pippi'])
     return render_to_response('frags.html', template_vars)
 
 def pippies(request):
-    #docfilter = cgi.escape(request.POST.get('doc',''))
-    #lenfilter = cgi.escape(request.POST.get('len',''))
-    #lenfilter = cgi.escape(request.POST.get('len',''))
+    filtr={}
+    template_vars={}
+    docfilter=None
+    relfilter=None
+    cutoff=None
+    try:
+        cutoff = int(cgi.escape(request.GET.get('cutoff','7')))
+    except:
+        pass
+    if cutoff: filtr['len']={ '$gte': cutoff }
+    try:
+        docfilter =  pymongo.objectid.ObjectId(cgi.escape(request.GET.get('doc','')))
+    except:
+        pass
+    if docfilter:
+        filtr['docs']=docfilter
+    try:
+        relfilter =  int(cgi.escape(request.GET.get('relevance','')))
+    except:
+        pass
+    if relfilter: filtr['relevance']=relfilter
     # todo add sortable column headers ala http://djangosnippets.org/snippets/308/
     orderBy = cgi.escape(request.POST.get('orderby','relevance'))
     orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
-    template_vars=pager(request,Pippies.find(),orderBy,orderDesc)
-    template_vars['pippies']=[{'_id': pippi['_id'],
+    template_vars=pager(request,Pippies.find(filtr),orderBy,orderDesc)
+    template_vars['pippies']=[{'id': pippi['_id'],
                                'pippi':" ".join(pippi['pippi']),
                                'docslen':len(pippi['docs']),
                                'relevance':pippi.get('relevance',0),}
                                for pippi in template_vars['data']]
+    template_vars['getparams']=request.GET.urlencode()
+    if docfilter: template_vars['doc']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['title']
     return render_to_response('pippies.html', template_vars)
