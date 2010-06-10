@@ -26,6 +26,7 @@ import sys, os
 docs={}
 
 def main():
+    print "updateing pippies.relevance"
     pippies=Pippies.find({},['docs','len'])
     pippieslen=pippies.count()
     i=1
@@ -35,8 +36,14 @@ def main():
                        { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs']))}})
         i=i+1
 
-    for dd in Docs.find({},['termcnt','eurlexid','stemsid']):
+    print "updateing docs.idf"
+    docs=Docs.find({},['termcnt','eurlexid','stemsid'])
+    docslen=docs.count()
+    i=1
+    for dd in docs:
+        print "%d%% done" % (i*100/docslen)
         Docs.update({'_id': dd['_id']},{ '$set': { 'tfidf': Doc('',d=dd).tfidf } })
+        i=i+1
 
     # this is to slow, we need to find another way around this
     #frags=Frags.find()
