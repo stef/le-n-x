@@ -150,41 +150,6 @@ def diffFrag(frag1,frag2):
         i=i+1
     return frag2
 
-def htmlRefs(d, cutoff=7):
-    res=[]
-    f=[]
-    i=0
-    for frag in d.getFrags(cutoff=cutoff):
-        start=frag['pos']
-        origfrag=frag['txt']
-        res.append([])
-        res[i].append(htmlPippi(d,
-                             # BUG display all idx, not just the first
-                             # in the reference document
-                             unicode(start),
-                             " ".join(origfrag)))
-        for loc in Frags.find({'pippi': frag['pippi'], 'doc': {'$ne': frag['doc']}}):
-            f=loc['txt']
-            f=" ".join(diffFrag(origfrag,f))
-            doc=Doc('',oid=loc['doc']).eurlexid
-            res[i].append(htmlPippi(doc, unicode(loc['pos']), f))
-        i+=1
-    return res
-
-def xpippiFormView(request):
-     if request.method == 'POST':
-         form = XpippiForm(request.POST)
-         if form.is_valid():
-             return HttpResponseRedirect(settings.ROOT_URL+"/xpippi/%s" % form.cleaned_data['doc'])
-     else:
-        form = XpippiForm()
-     return render_to_response('xpippiForm.html', { 'form': form, })
-
-def xpippi(request, doc):
-    d=Doc(doc)
-    result=htmlRefs(d)
-    return render_to_response('xpippi.html', { 'frags': result, 'doc': d })
-
 def getOverview():
     stats=[]
     stats.append({'title': 'Total documents', 'value': Docs.count(), 'text': "%s Documents" % Docs.count()})
