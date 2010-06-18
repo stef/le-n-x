@@ -95,8 +95,8 @@ INSTALLED_APPS = (
     'lenx.view',
     'lenx.brain',
     'lenx.utils',
+    'lenx.diff',
 )
-
 
 try:
     from lenx.local_settings import *

@@ -1,11 +1,13 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
 import view.views as view
+import diff.views as diff
 
 urlpatterns = patterns('',
     (r'^$', view.index),
     (r'^tagcloud$', 'lenx.tagcloud.views.handler'),
     (r'^all$', view.listDocs),
+    (r'^diff$', diff.diff),
     (r'^stats$', view.stats),
     (r'^frags$', view.frags),
     (r'^pippies$', view.pippies),
