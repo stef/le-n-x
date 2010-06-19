@@ -25,15 +25,20 @@ from forms import diffForm
 from lenx.brain import lcs
 from operator import itemgetter
 from itertools import izip
-import difflib
+from dmp import diff_match_patch as dmp
 from pymongo import Connection
 conn = Connection()
 db=conn.pippi
 Docs=db.diffs
-threshold=20
+threshold=5
+PIPPI=0
+TEXT=1
+DIFF_DELETE = -1
+DIFF_INSERT = 1
+DIFF_EQUAL = 0
 
 class Frag():
-    def __init__(self,t1,t2,p1,p2,type='text'):
+    def __init__(self,t1,t2,p1,p2,type=TEXT):
         self.__dict__={'text1': t1,
                        'text2': t2,
                        'pos1': p1,
@@ -55,11 +60,35 @@ class Frag():
     def __repr__(self):
         return repr((len(self.text1),self.pos1,self.pos2,self.type))
 
+def html(diffs):
+    old=[]
+    new=[]
+    i = 0
+    for (op, data) in diffs:
+        text = clean(data)
+        if op == DIFF_INSERT:
+            old.append("<INS CLASS=\"diff-hidden\">%s</INS>" % (text))
+            new.append("<INS>%s</INS>" % (text))
+        elif op == DIFF_DELETE:
+            old.append('<DEL>%s</DEL>' % (text))
+            new.append('<DEL CLASS=\"diff-hidden\">%s</DEL>' % (text))
+        elif op == DIFF_EQUAL:
+            old.append("<SPAN>%s</SPAN>" % (text))
+            new.append("<SPAN>%s</SPAN>" % (text))
+        if op != DIFF_DELETE:
+            i += len(data)
+    return ("".join(old),"".join(new))
+
+def clean(t):
+    return (t.replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace("\n", "<BR>"))
+
 def pdiff(D1,D2):
     d1=D1.read()
     d2=D2.read()
     frag=lcs.LCS(d1,d2)
     frags=[]
+    # create a list of pippies between the two docs
     for m in lcs.getACS(frag.str,frag.root,{}).values():
         stem=m['frag']
         if len(stem)<threshold: continue
@@ -73,12 +102,13 @@ def pdiff(D1,D2):
         if len(a)==len(b)==1:
             frags.append((len(stem),a[0],b[0]))
     res=[Frag(d1,d2,0,0)]
+    # break up the document according to the pippies
     for match in sorted(frags,reverse=True):
         i=0
         for frag in res:
             if frag.pos1>match[1] or frag.pos2>match[2]:
                 break
-            if frag.type=='text':
+            if frag.type==TEXT:
                 if frag.pos1<=match[1]<match[1]+match[0]<=frag.pos1+len(frag.text1) and frag.pos2<=match[2]<match[2]+match[0]<=frag.pos2+len(frag.text2):
                     cut11=match[1]-frag.pos1
                     cut12=match[2]-frag.pos2
@@ -88,20 +118,32 @@ def pdiff(D1,D2):
                                  frag.text2[cut22:],
                                  frag.pos1+cut21,
                                  frag.pos2+cut22))
-                    #print '3',len(res)
                     res[i]=Frag(frag.text1[cut11:cut21],
                                 frag.text2[cut12:cut22],
                                 frag.pos1+cut11,
-                                frag.pos2+cut12,type='match')
-                    #print '2',len(res)
+                                frag.pos2+cut12,type=PIPPI)
                     res.insert(i,Frag(frag.text1[:cut11],
                                  frag.text2[:cut12],
                                  frag.pos1,
                                  frag.pos2))
-                    #print '1',len(res)
                     break
             i=i+1
-    return "".join([difflib.HtmlDiff().make_table(frag.text1.decode('utf8').split('\n\n'), frag.text2.decode('utf8').split('\n\n'), D1.name, D2.name)  for frag in res])
+    differ=dmp()
+    r=[]
+    olds=[]
+    news=[]
+    # color the fragmented document accordingly
+    for frag in res:
+        if(frag.type==PIPPI):
+            olds.append(clean(frag.text1))
+            news.append(clean(frag.text2))
+        else:
+            diffarray=differ.diff_main(frag.text1.decode('utf8'), frag.text2.decode('utf8'))
+            differ.diff_cleanupSemantic(diffarray)
+            o,n=html(diffarray)
+            olds.append(o)
+            news.append(n)
+    return '<div class="diff-block"><span class="old"><h2>%s</h2>%s</span><span class="new"><h2>%s</h2>%s</span></div>' % (D1.name,"".join(olds),D2.name,"".join(news))
 
 def diff(request):
     error=''
