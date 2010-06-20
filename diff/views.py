@@ -83,9 +83,7 @@ def clean(t):
     return (t.replace("&", "&amp;").replace("<", "&lt;")
             .replace(">", "&gt;").replace("\n", "<BR>"))
 
-def pdiff(D1,D2):
-    d1=D1.read()
-    d2=D2.read()
+def getPippies(d1,d2):
     frag=lcs.LCS(d1,d2)
     frags=[]
     # create a list of pippies between the two docs
@@ -101,7 +99,10 @@ def pdiff(D1,D2):
                 b.append(p-len(d1))
         if len(a)==len(b)==1:
             frags.append((len(stem),a[0],b[0]))
-    res=[Frag(d1,d2,0,0)]
+    return frags
+
+def splitDocs(D1,D2,frags):
+    res=[Frag(D1,D2,0,0)]
     # break up the document according to the pippies
     for match in sorted(frags,reverse=True):
         i=0
@@ -109,7 +110,8 @@ def pdiff(D1,D2):
             if frag.pos1>match[1] or frag.pos2>match[2]:
                 break
             if frag.type==TEXT:
-                if frag.pos1<=match[1]<match[1]+match[0]<=frag.pos1+len(frag.text1) and frag.pos2<=match[2]<match[2]+match[0]<=frag.pos2+len(frag.text2):
+                if ((frag.pos1<=match[1]<match[1]+match[0]<=frag.pos1+len(frag.text1)) and
+                    (frag.pos2<=match[2]<match[2]+match[0]<=frag.pos2+len(frag.text2))):
                     cut11=match[1]-frag.pos1
                     cut12=match[2]-frag.pos2
                     cut21=cut11+match[0]
@@ -128,22 +130,32 @@ def pdiff(D1,D2):
                                  frag.pos2))
                     break
             i=i+1
+    return res
+
+def markupDiff(frags):
     differ=dmp()
-    r=[]
     olds=[]
     news=[]
     # color the fragmented document accordingly
-    for frag in res:
+    for frag in frags:
         if(frag.type==PIPPI):
             olds.append(clean(frag.text1))
             news.append(clean(frag.text2))
         else:
-            diffarray=differ.diff_main(frag.text1.decode('utf8'), frag.text2.decode('utf8'))
+            diffarray=differ.diff_main(frag.text1.decode('utf8'),
+                                       frag.text2.decode('utf8'))
             differ.diff_cleanupSemantic(diffarray)
             o,n=html(diffarray)
             olds.append(o)
             news.append(n)
-    return '<div class="diff-block"><span class="old"><h2>%s</h2>%s</span><span class="new"><h2>%s</h2>%s</span></div>' % (D1.name,"".join(olds),D2.name,"".join(news))
+    return (olds,news)
+
+def pdiff(D1,D2):
+    d1=D1.read()
+    d2=D2.read()
+    olds,news=markupDiff(splitDocs(d1,d2,getPippies(d1,d2)))
+    return ('<div class="diff-block"><span class="old"><h2>%s</h2>%s</span><span class="new"><h2>%s</h2>%s</span></div>' %
+            (D1.name,"".join(olds),D2.name,"".join(news)))
 
 def diff(request):
     error=''
