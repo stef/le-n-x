@@ -60,7 +60,7 @@ class Pippi():
             frag=Pippies.find_one({"pippi": pippi})
         if(frag):
             self.__dict__=frag
-            self.pippi=tuple(self.pippi)
+            self.pippi=tuple(self.pippi.split(" "))
         else:
             self.__dict__={'pippi': tuple(pippi),
                            'len': len(pippi),
@@ -68,7 +68,10 @@ class Pippi():
             self.save()
 
     def save(self):
+        tmp=self.pippi
+        self.pippi=" ".join(self.pippi)
         self.__dict__['_id']=Pippies.save(self.__dict__)
+        self.pippi=tmp
 
     def __getattr__(self, name):
         if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
@@ -91,7 +94,7 @@ class Pippi():
         return " ".join(eval(self.frag)).encode('utf8')
 
     def __unicode__(self):
-        return unicode(self.pippi)
+        return unicode(" ".join(self.pippi))
 
     def getDocs(self, d, cutoff=7):
         return set([Doc('',oid=oid) for oid in self.docs if oid != d._id])

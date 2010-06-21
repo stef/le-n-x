@@ -290,7 +290,7 @@ def pippies(request):
     orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
     template_vars=pager(request,Pippies.find(filtr),orderBy,orderDesc)
     template_vars['pippies']=[{'id': pippi['_id'],
-                               'pippi':" ".join(pippi['pippi']),
+                               'pippi':pippi['pippi'],
                                'docslen':len(pippi['docs']),
                                'relevance':pippi.get('relevance',0),}
                                for pippi in template_vars['data']]
