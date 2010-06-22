@@ -208,7 +208,7 @@ def pager(request,data, orderBy, orderDesc):
     #fetch the data according to where the new offset is set.
     res=list(data.limit(limit).skip(offset).sort([(orderBy, pymongo.DESCENDING if orderDesc else pymongo.ASCENDING)]))
     #pass the offset, the total in query, and all the data to the template
-    return {'limit': str(limit),
+    return {'limit': limit,
             'offset':offset,
             'page':(offset/limit)+1,
             'totalpages':(totalinquery/limit)+1,

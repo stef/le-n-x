@@ -3,6 +3,7 @@
 {% block main %}
 <h1>Search for "{{q}}"</h1>
 {% if totalinquery > 0%}
+{% if totalinquery > limit%}
 <div class="pager-controls">
 <form action="{%root_url%}/search{% if getparams%}?{{getparams}}{%endif%}" name="pagingtop" method="post" enctype="multipart/form-data">
 <input type="submit" name="firstpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingtop.pageaction.value='first'" value="FirstPage" />
@@ -21,12 +22,16 @@
 </form>
 </div>
 <p>Page {{page}}/{{totalpages}} - Showing {{totalitems}} of {{totalinquery}} results.</p>
+{%else%}
+<p>Showing {{totalitems}} of {{totalinquery}} results.</p>
+{%endif%}
 <table class="listing">
   <thead><tr><td>Text</td><td>Also in</td><td>Relevance</td></tr></thead>
 {% for pippi in pippies %}
 <tr><td>{{pippi.pippi|safe}}</td><td><a href="{%root_url%}/frags?pippi={{pippi.id}}">{{pippi.docslen}}</a></td><td>{{pippi.relevance}}</td></tr>
 {% endfor %}
 </table>
+{% if totalinquery > limit%}
 <div class="pager-controls">
  <form action="{%root_url%}/search{% if getparams%}?{{getparams}}{%endif%}" name="pagingbottom" method="post" enctype="multipart/form-data">
 <input type="submit" name="firstpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingbottom.pageaction.value='first'" value="FirstPage" />
@@ -44,6 +49,7 @@
 <input type="hidden" id="pageaction" name="pageaction" value="" />
 </form>
 </div>
+{%endif%}
 {% else %}
 <p>No matches found</p>
 {% endif %}
