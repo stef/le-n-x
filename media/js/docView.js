@@ -9,14 +9,14 @@
 
      $('.highlight').hover(
          function() {
-         $.map($('.'+$(this).attr('class').split(' ')[1]), 
-             function(e) { 
-                 $(e).addClass('hovered'); 
+         $.map($('.'+$(this).attr('class').split(' ')[1]),
+             function(e) {
+                 $(e).addClass('hovered');
              });
-         }, 
+         },
          function(){
-         $.map($('.'+$(this).attr('class').split(' ')[1]), 
-             function(e) { 
+         $.map($('.'+$(this).attr('class').split(' ')[1]),
+             function(e) {
                  $(e).removeClass('hovered');
              });
          });
