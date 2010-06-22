@@ -51,6 +51,6 @@ table.listing { width: 95%; margin-left: auto; margin-right: auto;}
 table.listing thead { color: #ffffff ; background-color: #0088DD; border: white 1px solid; }
 table.listing thead a {color: #ffffff;}
 table.listing tr td { border-bottom: #0088dd 1px solid; }
-.hilite-query{font-weight:bold;}
+.hilite-query{background: rgba(0, 120, 240, 0.05); position: relative;}
 input[disabled] {border: 1px solid grey;font-color:grey; background-color:#eeeeee;}
 thead td.orderedby{font-weight:bold;}
