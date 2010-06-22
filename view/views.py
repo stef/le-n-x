@@ -311,7 +311,7 @@ def search(request):
     # TODO also order by docslen (need to add that to bulksaver)
     if not orderBy in ['relevance', 'docslen', 'len', ]: orderBy='len'
     # TODO also handle desc/asc via the tableheader on the web ui
-    orderDesc = False
+    orderDesc = True
     engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
     filtr=[]
     for word in [token for token in nltk.tokenize.wordpunct_tokenize(unicode(q))]:
@@ -323,7 +323,7 @@ def search(request):
             filtr.append('')
     template_vars=pager(request,Pippies.find({'pippi': re.compile(' '.join(filtr))}),orderBy,orderDesc)
     template_vars['pippies']=[{'id': pippi['_id'],
-                               'pippi':'%s<span class="hilite-query">%s</span>%s' % ' '.join([p if p else '*' for p in pippi['pippi'].split(' ')]).partition(q),
+                               'pippi':'%s<span class="hilite-query">%s</span>%s' % ' '.join([p if p else '*' for p in pippi['pippi'].split(' ')]).partition(' '.join([p if p else '*' for p in filtr])),
                                'docslen':pippi['docslen'],
                                'len':len(pippi['pippi'].split(' ')),
                                'relevance':pippi.get('relevance',0),}

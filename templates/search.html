@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% load lenx %}
 {% block main %}
-<h1>Search for "{{q}}"</h1>
+<h1>Search Results</h1>
+<p>query: <em>"{{q}}"<em></p>
 {% if totalinquery > 0%}
 {% if totalinquery > limit%}
 <div class="pager-controls">
@@ -33,13 +34,12 @@
       <input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
       <input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
       <td>Text</td>
-      <td>{% if orderby != '2'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='len'; return true; ">Length</a>{%else%}Length{%endif%}</td>
-      <td>{% if orderby != '3'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='docslen'; return true; ">Also in</a>{%else%}Also in{%endif%}</td>
-      <td>{% if orderby != '4'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='relevance'; return true; ">Relevance</a>{%else%}Relevance{%endif%}</td>
+      <td {%if orderby == 'docslen'%}class="orderedby"{%endif%}>{% if orderby != '3'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='docslen'; return true; ">Also in</a>{%else%}Also in{%endif%}</td>
+      <td {%if orderby == 'relevance'%}class="orderedby"{%endif%}>{% if orderby != '4'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='relevance'; return true; ">Relevance</a>{%else%}Relevance{%endif%}</td>
     </form>
 </tr></thead>
 {% for pippi in pippies %}
-<tr><td>{{pippi.pippi|safe}}</td><td>{{pippi.len}}</td><td><a href="{%root_url%}/frags?pippi={{pippi.id}}">{{pippi.docslen}}</a></td><td>{{pippi.relevance}}</td></tr>
+<tr><td><a href="{%root_url%}/frags?pippi={{pippi.id}}">{{pippi.pippi|safe}}</a></td><td>{{pippi.docslen}}</td><td>{{pippi.relevance}}</td></tr>
 {% endfor %}
 </table>
 {% if totalinquery > limit%}
