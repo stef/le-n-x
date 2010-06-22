@@ -26,9 +26,20 @@
 <p>Showing {{totalitems}} of {{totalinquery}} results.</p>
 {%endif%}
 <table class="listing">
-  <thead><tr><td>Text</td><td>Also in</td><td>Relevance</td></tr></thead>
+  <thead><tr>
+    <form action="{%root_url%}/search{% if getparams%}?{{getparams}}{%endif%}" name="orderby" method="post" enctype="multipart/form-data">
+      <input type="hidden" id="limit" name="limit" value="{{limit}}" />
+      <input type="hidden" id="offset" name="offset" value="{{offset}}" />
+      <input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
+      <input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
+      <td>Text</td>
+      <td>{% if orderby != '2'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='len'; return true; ">Length</a>{%else%}Length{%endif%}</td>
+      <td>{% if orderby != '3'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='docslen'; return true; ">Also in</a>{%else%}Also in{%endif%}</td>
+      <td>{% if orderby != '4'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='relevance'; return true; ">Relevance</a>{%else%}Relevance{%endif%}</td>
+    </form>
+</tr></thead>
 {% for pippi in pippies %}
-<tr><td>{{pippi.pippi|safe}}</td><td><a href="{%root_url%}/frags?pippi={{pippi.id}}">{{pippi.docslen}}</a></td><td>{{pippi.relevance}}</td></tr>
+<tr><td>{{pippi.pippi|safe}}</td><td>{{pippi.len}}</td><td><a href="{%root_url%}/frags?pippi={{pippi.id}}">{{pippi.docslen}}</a></td><td>{{pippi.relevance}}</td></tr>
 {% endfor %}
 </table>
 {% if totalinquery > limit%}

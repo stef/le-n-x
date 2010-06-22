@@ -307,7 +307,10 @@ def search(request):
     if not q:
         return render_to_response('error.html', {'error': 'Missing search query!'})
 
-    orderBy = 'l'
+    orderBy = cgi.escape(request.POST.get('orderby',''))
+    # TODO also order by docslen (need to add that to bulksaver)
+    if not orderBy in ['relevance', 'docslen', 'len', ]: orderBy='len'
+    # TODO also handle desc/asc via the tableheader on the web ui
     orderDesc = False
     engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
     filtr=[]
@@ -321,7 +324,8 @@ def search(request):
     template_vars=pager(request,Pippies.find({'pippi': re.compile(' '.join(filtr))}),orderBy,orderDesc)
     template_vars['pippies']=[{'id': pippi['_id'],
                                'pippi':'%s<span class="hilite-query">%s</span>%s' % ' '.join([p if p else '*' for p in pippi['pippi'].split(' ')]).partition(q),
-                               'docslen':len(pippi['docs']),
+                               'docslen':pippi['docslen'],
+                               'len':len(pippi['pippi'].split(' ')),
                                'relevance':pippi.get('relevance',0),}
                                for pippi in template_vars['data']]
     template_vars['getparams']=request.GET.urlencode()

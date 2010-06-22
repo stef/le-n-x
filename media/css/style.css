@@ -49,6 +49,7 @@ div.rel { float: right; max-width: 350px; }
 small {font-size: 0.5em}
 table.listing { width: 95%; margin-left: auto; margin-right: auto;}
 table.listing thead { color: #ffffff ; background-color: #0088DD; border: white 1px solid; }
+table.listing thead a {color: #ffffff;}
 table.listing tr td { border-bottom: #0088dd 1px solid; }
 .hilite-query{font-weight:bold;}
 input[disabled] {border: 1px solid grey;font-color:grey; background-color:#eeeeee;}
