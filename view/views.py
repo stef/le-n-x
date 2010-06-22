@@ -211,7 +211,7 @@ def pager(request,data, orderBy, orderDesc):
     return {'limit': str(limit),
             'offset':offset,
             'page':offset/limit+1,
-            'totalpages':totalinquery/limit,
+            'totalpages':(totalinquery/limit)+1,
             'orderby':orderBy,
             'desc':orderDesc,
             'totalinquery':totalinquery,
