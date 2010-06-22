@@ -182,7 +182,7 @@ def pager(request,data, orderBy, orderDesc):
     elif limit<10: limit=10
     #Count the total items in the dataset
     totalinquery=data.count()
-    upperbound=totalinquery-limit
+    upperbound=(totalinquery/limit)*limit
     #Grabs the remainder when you divide the total by the offset
     lowerbound=totalinquery%limit
     offset = int(cgi.escape(request.POST.get('offset','0')))
@@ -206,12 +206,13 @@ def pager(request,data, orderBy, orderDesc):
     if offset < lowerbound:
         offset=0
     #fetch the data according to where the new offset is set.
-    res=data.limit(limit).skip(offset).sort([(orderBy, pymongo.DESCENDING if orderDesc else pymongo.ASCENDING)])
+    res=list(data.limit(limit).skip(offset).sort([(orderBy, pymongo.DESCENDING if orderDesc else pymongo.ASCENDING)]))
     #pass the offset, the total in query, and all the data to the template
     return {'limit': str(limit),
             'offset':offset,
-            'page':offset/limit+1,
+            'page':(offset/limit)+1,
             'totalpages':(totalinquery/limit)+1,
+            'totalitems': len(res),
             'orderby':orderBy,
             'desc':orderDesc,
             'totalinquery':totalinquery,
@@ -308,10 +309,9 @@ def search(request):
 
     orderBy = 'l'
     orderDesc = False
-    tmp = [token for token in nltk.tokenize.wordpunct_tokenize(unicode(q))]
     engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
     filtr=[]
-    for word in tmp:
+    for word in [token for token in nltk.tokenize.wordpunct_tokenize(unicode(q))]:
         # stem each word
         stem=engine.stem(word.encode('utf8'))
         if stem:
