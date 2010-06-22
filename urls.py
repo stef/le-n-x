@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     (r'^frags$', view.frags),
     (r'^pippies$', view.pippies),
     (r'^doc/(?P<doc>.+)$', view.docView),
+    (r'^search$', view.search),
 )
 
 if settings.DEV_SERVER:

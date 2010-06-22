@@ -25,6 +25,8 @@ from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
 from operator import itemgetter
 import re, pymongo, cgi
+import nltk.tokenize # get this from http://www.nltk.org/
+from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -222,11 +224,6 @@ def frags(request):
     cutoff=None
     pippifilter=None
     try:
-        cutoff = int(cgi.escape(request.GET.get('cutoff','7')))
-    except:
-        pass
-    if cutoff: filtr['l']={ '$gte': cutoff }
-    try:
         docfilter =  pymongo.objectid.ObjectId(cgi.escape(request.GET.get('doc','')))
     except:
         pass
@@ -238,6 +235,12 @@ def frags(request):
         pass
     if pippifilter:
         filtr['pippi']=pippifilter
+    else:
+        try:
+            cutoff = int(cgi.escape(request.GET.get('cutoff','7')))
+        except:
+            pass
+    if cutoff: filtr['l']={ '$gte': cutoff }
     orderBy = 'l'
     orderDesc = True
     template_vars=pager(request,Frags.find(filtr),orderBy,orderDesc)
@@ -290,10 +293,37 @@ def pippies(request):
     orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
     template_vars=pager(request,Pippies.find(filtr),orderBy,orderDesc)
     template_vars['pippies']=[{'id': pippi['_id'],
-                               'pippi':pippi['pippi'],
+                               'pippi': ' '.join([p if p else '*' for p in pippi['pippi'].split(' ')]),
                                'docslen':len(pippi['docs']),
                                'relevance':pippi.get('relevance',0),}
                                for pippi in template_vars['data']]
     template_vars['getparams']=request.GET.urlencode()
     if docfilter: template_vars['doc']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['title']
     return render_to_response('pippies.html', template_vars)
+
+def search(request):
+    q = cgi.escape(request.GET.get('q',''))
+    if not q:
+        return render_to_response('error.html', {'error': 'Missing search query!'})
+
+    orderBy = 'l'
+    orderDesc = False
+    tmp = [token for token in nltk.tokenize.wordpunct_tokenize(unicode(q))]
+    engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
+    filtr=[]
+    for word in tmp:
+        # stem each word
+        stem=engine.stem(word.encode('utf8'))
+        if stem:
+            filtr.append(stem[0])
+        else:
+            filtr.append('')
+    template_vars=pager(request,Pippies.find({'pippi': re.compile(' '.join(filtr))}),orderBy,orderDesc)
+    template_vars['pippies']=[{'id': pippi['_id'],
+                               'pippi':'%s<span class="hilite-query">%s</span>%s' % ' '.join([p if p else '*' for p in pippi['pippi'].split(' ')]).partition(q),
+                               'docslen':len(pippi['docs']),
+                               'relevance':pippi.get('relevance',0),}
+                               for pippi in template_vars['data']]
+    template_vars['getparams']=request.GET.urlencode()
+    template_vars['q']=q
+    return render_to_response('search.html', template_vars)

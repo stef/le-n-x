@@ -57,7 +57,7 @@ class Pippi():
             frag=Pippies.find_one({"_id": oid})
         elif pippi:
             # get by pippi
-            frag=Pippies.find_one({"pippi": pippi})
+            frag=Pippies.find_one({"pippi": ' '.join(pippi)})
         if(frag):
             self.__dict__=frag
             self.pippi=tuple(self.pippi.split(" "))
