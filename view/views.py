@@ -68,7 +68,7 @@ def annotatePippi(d,pippi,cutoff=7):
         '<div class="pippiNote" id="%s">' % pippi['pippi'],
         '<b>also appears in</b>',
         '<ul>',
-        '\n'.join([(itemtpl % (doc.eurlexid, cutoff, doc.title)) for doc in docs]),
+        '\n'.join([(itemtpl % (doc.eurlexid, cutoff, doc.title.encode('utf8'))) for doc in docs]),
         '</ul>',
         '</div>',
         ])
