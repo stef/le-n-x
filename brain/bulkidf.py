@@ -31,20 +31,30 @@ def main():
     pippieslen=pippies.count()
     i=1
     for pippi in pippies:
-        print "%d%% done" % (i*100/pippieslen)
+        if (i*100/pippieslen)!=((i-1)*100/pippieslen):
+            if (i*100/pippieslen) % 10 == 0:
+                sys.stdout.write("%d" % (i*100/pippieslen))
+            else:
+                sys.stdout.write('.')
         Pippies.update({'_id' : pippi['_id']},
-                       { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs']))},
-                         '$set': { 'docslen': len(pippi['docs'])}, })
+                       { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs'])),
+                                   'docslen': len(pippi['docs']),}, })
         i=i+1
+    sys.stdout.write('\n')
 
     print "updateing docs.idf"
     docs=Docs.find({},['termcnt','eurlexid','stemsid'])
     docslen=docs.count()
     i=1
     for dd in docs:
-        print "%d%% done" % (i*100/docslen)
+        if (i*100/docslen)!=((i-1)*100/docslen):
+            if (i*100/docslen) % 10 == 0:
+                sys.stdout.write("%d" % (i*100/docslen))
+            else:
+                sys.stdout.write('.')
         Docs.update({'_id': dd['_id']},{ '$set': { 'tfidf': Doc('',d=dd).tfidf } })
         i=i+1
+    sys.stdout.write('\n')
 
     # this is to slow, we need to find another way around this
     #frags=Frags.find()
