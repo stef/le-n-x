@@ -7,7 +7,7 @@
 PPATH=`dirname $0`'/..'
 
 # mongo db delete
-printf "use pippi\ndb.miscdb.drop()\ndb.frags.drop()\ndb.docs.drop()\ndb.DocTexts.drop()\ndb.DocStems.drop()\ndb.DocTokens.drop()\ndb.pippies.drop()\nexit\n" | mongo
+printf "use pippi\ndb.dropDatabase()\nexit\n" | mongo
 
 
 # load docs to pippify
