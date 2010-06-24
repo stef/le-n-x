@@ -275,7 +275,8 @@ class Doc():
                     for pippi in Pippies.find({'len': { '$gte': int(cutoff)},
                                                'docs': self._id},
                                               ['docs'])
-                    for doc in pippi['docs']])
+                    for doc in pippi['docs']
+                    if doc != self._id])
 
     def getFrags(self, cutoff=7):
         return Frags.find({'l': { '$gte': int(cutoff)},
