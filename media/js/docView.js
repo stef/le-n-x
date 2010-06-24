@@ -10,9 +10,18 @@
       this.aborto = new Date();
       this.abortc = new Date();
       this.it = idleTime;
+      this.ids = new Array();
       this.ct = 0; // close timer
-      this.show = function(c) { 
+      this.show = function(c, id) { 
           if((new Date())-this.aborto > this.it) {
+              if(this.ids.length > 0) {
+                  for(var i=0; i<this.ids.length; i++) {
+                      if(this.ids[i] == id) {
+                          return;
+                      }
+                  }
+              }
+              this.ids.push(id);
               if(!$(this.e).is(':visible')) {
                   $(this.e).fadeIn('slow');
                   $('#msgbox_c').html(c);
@@ -21,22 +30,20 @@
               }
           }
       }
-      this.timedShow = function(c) {
+      this.timedShow = function(c, id) {
           var a = this;
-          setTimeout( function() { a.show(c); }, this.it);
+          setTimeout( function() { a.show(c, id); }, this.it);
       }
-      this.doHide = function(){  if((new Date())-this.abortc > this.ct) this.e.fadeOut(); }
+      this.doHide = function(){  if((new Date())-this.abortc > this.ct) { this.ids = []; this.e.fadeOut(); } }
       this.hide = function(t) {
           this.ct = t;
           var a = this;
           setTimeout(function() { a.doHide(); } , t);
       }
       this.abortClose = function() {
-          console.log("abortClose called");
           this.abortc = new Date();
       }
       this.abortOpen = function() {
-          console.log("abortOpen called");
           this.aborto = new Date();
       }
   }
@@ -44,14 +51,18 @@
      $('#loading').show();
      var msgBox = new MsgBox('#msgbox', 300);
      $('#msgbox').hover(function() { msgBox.abortClose(); }, function() { msgBox.hide(1000); });
+     $('.msgbox_close').click(function () { msgBox.hide(0); });
      $('.highlight').hover(
          function() {
-         $.map($('.'+$(this).attr('class').split(' ')[1]),
+         var id = $(this).attr('class').split(' ')[1];
+         $.map($('.'+id),
              function(e) {
                  $(e).addClass('hovered');
+                 c = $('#'+id).html();
+                 console.log(id);
+                 msgBox.timedShow(c, id);
              });
          msgBox.abortClose();
-         msgBox.timedShow($(this).html());
          },
          function(){
          $.map($('.'+$(this).attr('class').split(' ')[1]),
@@ -62,56 +73,5 @@
          msgBox.hide(2000);
          }
      );
-	 $(".highlight").each(function(){
-	 	var el = $(this);
-
-      tipId=el.attr("class").split(" ")[1];
-      parents=el.parents(".highlight");
-      // if we have hilited parents, then we merge the 'alsoin' tooltip contents
-      if(parents.length>0) {
-        var moreDocs=[];
-        tip=$('#'+tipId);
-        newpid=[tip.attr('id')];
-
-        // we collect the list items and the pippiOid for every parent hilite
-        parents.each(function() {
-          pid=$(this).attr('class').split(" ")[1];
-          newpid.push(pid);
-          moreDocs=moreDocs.concat($("#"+pid).find('li'));
-        });
-
-        newTipId=newpid.join('-');
-        // if no composite tooltip exists yet for this nested pippi, create one
-        if($("#"+newTipId).length==0) {
-          newTip=$("<span>").addClass('pippiNote').attr('id',newTipId);
-          newTip.append(tip.children().clone());
-          ul=newTip.find("ul");
-          links=ul.find("a").attr('href');
-          if(typeof(links) == 'string') links=Array(links);
-
-          // add each unique parent doc to the composite tooltip
-          moreDocs.forEach(function(elem) {
-            curl=$(elem).find("a").attr('href');
-            if(! links.contains(curl)) {
-              ul.append($(elem).clone());
-              links.push(curl);
-            }
-          });
-          $('#tooltips').append(newTip);
-        }
-        tipId=newTipId;
-      }
-
-		el.tooltip({
-        effect: 'fade',
-        delay: 150,
-        predelay: 400,
-		  tip : '#'+tipId,
-        onBeforeShow: function(e,pos) {
-          e.stopPropagation();
-        },
-               });
-	 });
-
     $('#loading').hide();
   });
