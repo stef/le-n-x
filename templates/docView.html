@@ -3,7 +3,6 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{%media_url%}/js/jquery.1.4.2.min.js"></script>
-<script type="text/javascript" src="http://cdn.jquerytools.org/1.2.1/jquery.tools.min.js"></script>
 <script type="text/javascript" src="{%media_url%}/js/docView.js"></script>
 {% endblock %}
 
@@ -33,4 +32,8 @@
 {{tooltips|safe }}
 </div>
 
+{% endblock %}
+
+{% block other_content %}
+<div class="msgbox" id="msgbox"><div class="msgbox_close"> X </div><div id="msgbox_c"> </div></div>
 {% endblock %}

@@ -46,6 +46,9 @@ div.rel { float: right; max-width: 350px; }
 .anchorLink { color: white; }
 .hover:hover .anchorLink { color: blue; }
 .pippiNote{display:none;max-width:400px;margin:0.9em;padding:4px;font-size:0.7em;background:rgba(239,239,239,0.9);border:3px solid #0088DD;-moz-border-radius:1em;-webkit-border-radius:1em;overflow:auto;}
+.msgbox { position: fixed; bottom: 8px;  right: 16px; width: 300px; padding: 5px; background: #000000; color: #FFFFFF; min-height: 40px; border: solid 1px #0088DD; opacity: .40; filter: alpha(opacity='40'); z-index: 200; overflow: hidden; overflow-y: auto; display: none; font-size: 0.8em; }
+.msgbox:hover { lightgray; opacity: .90; filter: alpha(opacity='90'); }
+.msgbox_close { position: absolute; right: 10px; top: 2px; color:red; font-size: 12pt; font-weight: bold; cursor: pointer; }
 small {font-size: 0.5em}
 table.listing { width: 95%; margin-left: auto; margin-right: auto;}
 table.listing thead { color: #ffffff ; background-color: #0088DD; border: white 1px solid; }
