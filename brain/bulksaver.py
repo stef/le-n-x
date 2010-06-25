@@ -36,7 +36,8 @@ class Saver():
         Docs.update({'_id': d2._id},
                     { '$addToSet' : { 'pippies' : pippi._id } })
         Pippies.update({'_id' : pippi._id},
-                       {'$addToSet': { 'docs' : { '$each' : [d for d in [d1._id, d2._id]]}}})
+                       {'$addToSet': { 'docs' : { '$each' : [d for d in [d1._id, d2._id]]}},
+                        '$inc' : { 'docslen' : 2 }})
         [Frags.save({'pos': p['pos'], 'txt': p['txt'], 'l': pkt['l'], 'doc': d, 'pippi': pippi._id})
                     for (d,p) in
                     [(d1._id, p) for p in pkt['d1ps']]+[(d2._id, p) for p in pkt['d2ps']]]
