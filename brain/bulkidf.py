@@ -34,13 +34,16 @@ def main():
         if (i*100/pippieslen)!=((i-1)*100/pippieslen):
             if (i*100/pippieslen) % 10 == 0:
                 sys.stdout.write("%d" % (i*100/pippieslen))
+                sys.stdout.flush()
             else:
                 sys.stdout.write('.')
+                sys.stdout.flush()
         Pippies.update({'_id' : pippi['_id']},
                        { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs'])),
                                    'docslen': len(pippi['docs']),}, })
         i=i+1
     sys.stdout.write('\n')
+    sys.stdout.flush()
 
     print "updateing docs.idf"
     docs=Docs.find({},['termcnt','eurlexid','stemsid'])
@@ -50,11 +53,14 @@ def main():
         if (i*100/docslen)!=((i-1)*100/docslen):
             if (i*100/docslen) % 10 == 0:
                 sys.stdout.write("%d" % (i*100/docslen))
+                sys.stdout.flush()
             else:
                 sys.stdout.write('.')
+                sys.stdout.flush()
         Docs.update({'_id': dd['_id']},{ '$set': { 'tfidf': Doc('',d=dd).tfidf } })
         i=i+1
     sys.stdout.write('\n')
+    sys.stdout.flush()
 
     # this is to slow, we need to find another way around this
     #frags=Frags.find()
