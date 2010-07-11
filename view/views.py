@@ -177,7 +177,7 @@ def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })
 
 def pager(request,data, orderBy, orderDesc):
-    limit = int(cgi.escape(request.POST.get('limit','10')))
+    limit = int(cgi.escape(request.GET.get('limit','10')))
     if limit>100: limit=100
     elif limit<10: limit=10
     #Count the total items in the dataset
@@ -185,8 +185,8 @@ def pager(request,data, orderBy, orderDesc):
     upperbound=(totalinquery/limit)*limit
     #Grabs the remainder when you divide the total by the offset
     lowerbound=totalinquery%limit
-    offset = int(cgi.escape(request.POST.get('offset','0')))
-    pageaction = cgi.escape(request.POST.get('pageaction',""))
+    offset = int(cgi.escape(request.GET.get('offset','0')))
+    pageaction = cgi.escape(request.GET.get('pageaction',""))
     #if the first page is requested...set the offset to zero
     if pageaction=='first':
         offset=0
@@ -262,9 +262,10 @@ def frags(request):
                                        'doc': d,
                                        })
 
-    template_vars['getparams']=request.GET.urlencode()
-    if docfilter: template_vars['doc']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['eurlexid']
-    if pippifilter: template_vars['pippi']=1 #" ".join(Pippies.find_one({'_id': pippifilter},['pippi'])['pippi'])
+    template_vars['pippi']=pippifilter
+    template_vars['doc']=docfilter
+    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['eurlexid']
+    if pippifilter: template_vars['pippiFilter']=1 #" ".join(Pippies.find_one({'_id': pippifilter},['pippi'])['pippi'])
     return render_to_response('frags.html', template_vars)
 
 def pippies(request):
@@ -290,16 +291,16 @@ def pippies(request):
         pass
     if relfilter: filtr['relevance']=relfilter
     # todo add sortable column headers ala http://djangosnippets.org/snippets/308/
-    orderBy = cgi.escape(request.POST.get('orderby','relevance'))
-    orderDesc = True if '1'==cgi.escape(request.POST.get('desc','1')) else False
+    orderBy = cgi.escape(request.GET.get('orderby','relevance'))
+    orderDesc = True if '1'==cgi.escape(request.GET.get('desc','1')) else False
     template_vars=pager(request,Pippies.find(filtr),orderBy,orderDesc)
     template_vars['pippies']=[{'id': pippi['_id'],
                                'pippi': ' '.join([p if p else '*' for p in pippi['pippi'].split(' ')]),
                                'docslen':len(pippi['docs']),
                                'relevance':pippi.get('relevance',0),}
                                for pippi in template_vars['data']]
-    template_vars['getparams']=request.GET.urlencode()
-    if docfilter: template_vars['doc']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['title']
+    template_vars['doc']=docfilter
+    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['title']
     return render_to_response('pippies.html', template_vars)
 
 def search(request):
@@ -307,7 +308,7 @@ def search(request):
     if not q:
         return render_to_response('error.html', {'error': 'Missing search query!'})
 
-    orderBy = cgi.escape(request.POST.get('orderby',''))
+    orderBy = cgi.escape(request.GET.get('orderby',''))
     # TODO also order by docslen (need to add that to bulksaver)
     if not orderBy in ['relevance', 'docslen', 'len', ]: orderBy='len'
     # TODO also handle desc/asc via the tableheader on the web ui
