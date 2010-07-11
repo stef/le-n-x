@@ -48,6 +48,7 @@ Frags.ensure_index([('l', pymongo.DESCENDING)])
 Docs.ensure_index([('eurlexid', pymongo.ASCENDING)])
 Docs.ensure_index([('pippiDocsLen', pymongo.DESCENDING)])
 Pippies.ensure_index([('pippi', pymongo.ASCENDING)])
+Pippies.ensure_index([('relevance', pymongo.ASCENDING)])
 
 class Pippi():
     computed_attrs = [ 'relevance',]
