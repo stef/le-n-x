@@ -7,6 +7,7 @@
 <form action="{%root_url%}/pippies" name="pagingtop">
 {%if doc %}<input type="hidden" id="doc" name="doc" value="{{doc}}" />{%endif%}
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
+<input type="hidden" id="cutoff" name="cutoff" value="{{cutoff}}" />
 <input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
 <input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
 <input type="submit" name="firstpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingtop.pageaction.value='first'" value="FirstPage" />
@@ -35,6 +36,7 @@
 <div class="pager-controls">
  <form action="{%root_url%}/pippies" name="pagingbottom">
 {%if doc %}<input type="hidden" id="doc" name="doc" value="{{doc}}" />{%endif%}
+<input type="hidden" id="cutoff" name="cutoff" value="{{cutoff}}" />
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
 <input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
 <input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
