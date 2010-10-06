@@ -154,8 +154,11 @@ def pdiff(D1,D2):
     d1=D1.read()
     d2=D2.read()
     olds,news=markupDiff(splitDocs(d1,d2,getPippies(d1,d2)))
-    return ('<div class="diff-block"><span class="old"><h2>%s</h2>%s</span><span class="new"><h2>%s</h2>%s</span></div>' %
-            (D1.name,"".join(olds),D2.name,"".join(news)))
+    return (u'<div class="diff-block"><span class="old"><h2>%s</h2>%s</span><span class="new"><h2>%s</h2>%s</span></div>' %
+            (D1.name,
+             "".join(olds),
+             D2.name,
+             "".join(news)))
 
 def diff(request):
     error=''

@@ -174,7 +174,7 @@ if __name__ == "__main__":
     import sys
     d1=Doc(sys.argv[1].strip('\t\n'))
     d2=Doc(sys.argv[2].strip('\t\n'))
-    topfrags=[ x for x in sorted( pippi(d1,d2).items(),
+    topfrags=[ x for x in sorted( pippi(d1,d2,None).items(),
                                  reverse=True,
                                  cmp=lambda x,y: cmp(len(x[0]),len(y[0])))
                 if len(x[0])>0 ]
