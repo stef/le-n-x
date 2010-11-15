@@ -1,0 +1,5 @@
+div#main{overflow:visible;}
+div#wrapper {border: 0;-moz-border-radius: 0px; -webkit-border-radius: 0px;}
+div#header{margin:0;border: 8px solid #0088DD; -moz-border-radius: 1em; -webkit-border-radius: 1em;  }
+div#menu,div#searchbar,div#footer,.rel,div#tooltips,div#msgbox,.hilite-query,.tagcloud {display:none;}
+span.highlight,span.higlight*{background: #0088DD !important;position:static;}

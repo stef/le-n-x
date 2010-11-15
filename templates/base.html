@@ -9,7 +9,8 @@
     <title>{% block title %}[!] PippiLongstrings{% endblock %}</title>
     {% block scripts %}
     {% endblock %}
-    <link rel="stylesheet" type="text/css" href="{% media_url %}/css/style.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="{% media_url %}/css/style.css" />
+    <link rel="stylesheet" type="text/css" media="print" href="{% media_url %}/css/print.css" />
     {% block styles %}
     {% endblock %}
 </head>
