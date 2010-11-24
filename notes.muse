@@ -1,3 +1,7 @@
+** how to annotate co-ment
+ - http://www.co-ment.org/wiki/AnnotationInternals
+** stet like javascript lib by okfn
+ - http://okfn.org/projects/annotator/
 ** pippies
  - if the Korea document is in the corpus, as well as Candad, xpippi should find IPRED1art8 in both 
    http://euwiki.org/2004/48/EC#Article_8 in http://euwiki.org/FTA/Korea#ARTICLE_10.45
