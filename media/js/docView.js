@@ -59,7 +59,7 @@
              function(e) {
                  $(e).addClass('hovered');
                  c = $('#'+id).html();
-                 console.log(id);
+                 //console.log(id);
                  msgBox.timedShow(c, id);
              });
          msgBox.abortClose();
