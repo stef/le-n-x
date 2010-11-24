@@ -92,11 +92,13 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'tinymce',
     'lenx.view',
     'lenx.brain',
     'lenx.utils',
 )
 
+TINYMCE_COMPRESSOR = True
 
 try:
     from lenx.local_settings import *

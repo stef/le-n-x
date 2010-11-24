@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load lenx %}
+
+{% block scripts %}
+<script type="text/javascript" src="{%media_url%}/js/tinymce/tiny_mce.js"></script>
+<script type="text/javascript" src="{%media_url%}/js/uploadmce.js"></script>
+{% endblock %}
+
+{% block main %}
+<link href="http://www.ctrlc.hu/~stef/pippi.css" media="screen" rel="stylesheet" title="" type="text/css"  />
+<h1>Upload document</h1>
+<form action="/submit" method="get">
+  {{ form.as_p }}
+<input type="submit" value="submit" />
+</form>
+{% endblock %}

@@ -4,9 +4,12 @@ import view.views as view
 
 urlpatterns = patterns('',
     (r'^$', view.index),
+    (r'^tinymce/', include('tinymce.urls')),
     (r'^tagcloud$', 'lenx.tagcloud.views.handler'),
     (r'^all$', view.listDocs),
     (r'^stats$', view.stats),
+    (r'^upload$', view.uploadDoc),
+    (r'^submit$', view.submitDoc),
     (r'^frags$', view.frags),
     (r'^pippies$', view.pippies),
     (r'^doc/(?P<doc>.+)$', view.docView),
