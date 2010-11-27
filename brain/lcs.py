@@ -129,53 +129,49 @@ def find(sub,target):
         c=c+len(sub)
     return res
 
-
-def getACS(str,st,d):
-    for n in st:
-        i,j,s = st[n]
-        if(j<inf) and s:
-            d=getACS(str,s,d)
-            l=j+1-i
-            if not j in d or l>d[j]['l']:
-                d[j]={
-                    'l':l,
-                    'pos':[x[0]-l for x in s.values()],
-                    'frag':str[i:j+1],
-                    }
-    return d
+def walkACS(i,j,s):
+    if not s:
+        return [(i,0)]
+    return [(end, l+j-i+1) for (m,n,o) in s.values() for (end, l) in walkACS(m,n,o)]
 
 def pippi(D1,D2,saver=bulksaver.Saver()):
-    doc1=tuple([('!1@3#@@%4%$#^7*(',) if x == '' else (x,) for x in D1.stems]+['zAq!2WsX'])
-    doc2=tuple([('!1@3#@@%4%$#^7*(',) if x == '' else (x,) for x in D2.stems]+['XsW@!qAz'])
+    doc1=tuple(D1.stems+('zAq!2WsX',))
+    doc2=tuple(D2.stems+('XsW@!qAz',))
+    lcs=LCS(doc1,doc2)
 
-    frag=LCS(doc1,doc2)
-    #res={}
-    for m in getACS(frag.str,frag.root,{}).values():
-        stem=tuple(['' if x==('!1@3#@@%4%$#^7*(',) else x[0] for x in m['frag']])
+    pips={}
+    for end, l in sorted([candidate for i,j,s in lcs.root.values() for candidate in walkACS(i,j,s)]):
+        if not end in pips or pips[end]<l:
+            pips[end]=l
+    #return pips.items()
+
+    frags={}
+    for end, l in pips.items():
+        stem=lcs.str[end-l:end]
+        if not stem in frags:
+            frags[stem]=[l, []]
+        frags[stem][1].append(end-l)
+
+    if not saver:
+        return [(" ".join(stem), l, pos) for stem, (l, pos) in frags.items() if len(pos)>1 and l>1]
+
+    res=[]
+    for stem, (l, pos) in frags.items():
         if StopFrags.isStopFrag(stem): continue
-        a=[]
-        b=[]
-        for p in m['pos']:
-            if p<len(doc1):
-                a.append(p)
-            else:
-                b.append(p-len(doc1))
+        ld=len(doc1)
+        a,b=[ sorted([x for x in pos if x<ld]), sorted([x-ld for x in pos if x>=ld]) ]
         if a and b:
-            #res[stem]=(a,b)
-            l=len(stem)
-            if saver:
-                saver.save(D1,D2,bulksaver.lcsPkt(a,b,l,stem,D1,D2))
-    if saver:
-        saver.addDocs(D1,D2)
-    #return res
+            saver.save(D1,D2,bulksaver.lcsPkt(a,b,l,stem,D1,D2))
+            res.append((a,b,l,stem))
+    saver.addDocs(D1,D2)
+    return res
 
+import pprint
 if __name__ == "__main__":
-    import pprint
     import sys
-    d1=Doc(sys.argv[1].strip('\t\n'))
-    d2=Doc(sys.argv[2].strip('\t\n'))
-    topfrags=[ x for x in sorted( pippi(d1,d2).items(),
-                                 reverse=True,
-                                 cmp=lambda x,y: cmp(len(x[0]),len(y[0])))
-                if len(x[0])>0 ]
-    print pprint.pprint(topfrags)
+    #frag=LCS(doc1,doc2)
+    #pprint.pprint(frag.root)
+
+    pips=pippi(Doc(sys.argv[1].strip('\t\n')),Doc(sys.argv[2].strip('\t\n')))
+    print len(pips)
+    pprint.pprint(pips)
