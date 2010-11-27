@@ -139,27 +139,36 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
     doc2=tuple(D2.stems+('XsW@!qAz',))
     lcs=LCS(doc1,doc2)
 
-    pips={}
-    for end, l in sorted([candidate for i,j,s in lcs.root.values() for candidate in walkACS(i,j,s)]):
-        if not end in pips or pips[end]<l:
-            pips[end]=l
-    #return pips.items()
+    pips=[candidate for i,j,s in lcs.root.values() for candidate in walkACS(i,j,s)]
+    pips=[(stem, (pos, l))
+          for pos
+          in set([x[0] for x in pips])
+          for l in [max([l for p,l in pips if pos==p])]
+          for stem in [lcs.str[pos-l:pos]]
+          if not StopFrags.isStopFrag(stem)]
 
-    frags={}
-    for end, l in pips.items():
-        stem=lcs.str[end-l:end]
-        if not stem in frags:
-            frags[stem]=[l, []]
-        frags[stem][1].append(end-l)
+    ld=len(doc1)
+    frags=[(stem,(l,
+                sorted([pos for s, (pos, l) in pips if s==stem and pos<ld]),
+                sorted([pos-ld-l for s, (pos, l) in pips if s==stem and pos>=ld])))
+          for stem, tmp
+          in pips]
 
-    if not saver:
-        return [(" ".join(stem), l, pos) for stem, (l, pos) in frags.items() if len(pos)>1 and l>1]
+    #frags={}
+    #for end, l in pips:
+    #   stem=lcs.str[end-l:end]
+    #   if StopFrags.isStopFrag(stem): continue
+    #   if not stem in frags:
+    #       frags[stem]=[l, [], []]
+    #   if end-l<ld:
+    #       frags[stem][1].append(end-l)
+    #   else:
+    #       frags[stem][2].append(end-l-ld)
+    # 6.7/5.4, 5.4/4.3, 5.4/4.3, 6.6/5.3
 
     res=[]
-    for stem, (l, pos) in frags.items():
-        if StopFrags.isStopFrag(stem): continue
-        ld=len(doc1)
-        a,b=[ sorted([x for x in pos if x<ld]), sorted([x-ld for x in pos if x>=ld]) ]
+    for stem, (l, a, b) in frags:
+        #a,b=[ sorted([x for x in pos if x<ld]), sorted([x-ld for x in pos if x>=ld]) ]
         if a and b:
             saver.save(D1,D2,bulksaver.lcsPkt(a,b,l,stem,D1,D2))
             res.append((a,b,l,stem))
@@ -173,5 +182,5 @@ if __name__ == "__main__":
     #pprint.pprint(frag.root)
 
     pips=pippi(Doc(sys.argv[1].strip('\t\n')),Doc(sys.argv[2].strip('\t\n')))
-    print len(pips)
-    pprint.pprint(pips)
+    #print len(pips)
+    #pprint.pprint(pips)
