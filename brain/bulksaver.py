@@ -41,6 +41,7 @@ class Saver():
         [Frags.save({'pos': p['pos'], 'txt': p['txt'], 'l': pkt['l'], 'doc': d, 'pippi': pippi._id})
                     for (d,p) in
                     [(d1._id, p) for p in pkt['d1ps']]+[(d2._id, p) for p in pkt['d2ps']]]
+        return pkt
 
     def addDocs(self,d1,d2):
         Docs.update({"_id" : d1._id},

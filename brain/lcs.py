@@ -140,38 +140,37 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
     lcs=LCS(doc1,doc2)
 
     pips={}
+    # filter out sub-pippies, by only retaining the longest ones ending in the same position.
     for end, l in sorted([candidate for i,j,s in lcs.root.values() for candidate in walkACS(i,j,s)]):
         if not end in pips or pips[end]<l:
             pips[end]=l
-    #return pips.items()
 
     frags={}
+    ld=len(doc1)
+    # calculate stem, and foreach assemble list of pos
     for end, l in pips.items():
         stem=lcs.str[end-l:end]
-        if not stem in frags:
-            frags[stem]=[l, []]
-        frags[stem][1].append(end-l)
-
-    if not saver:
-        return [(" ".join(stem), l, pos) for stem, (l, pos) in frags.items() if len(pos)>1 and l>1]
-
-    res=[]
-    for stem, (l, pos) in frags.items():
         if StopFrags.isStopFrag(stem): continue
-        ld=len(doc1)
-        a,b=[ sorted([x for x in pos if x<ld]), sorted([x-ld for x in pos if x>=ld]) ]
-        if a and b:
-            saver.save(D1,D2,bulksaver.lcsPkt(a,b,l,stem,D1,D2))
-            res.append((a,b,l,stem))
-    saver.addDocs(D1,D2)
-    return res
+        if not stem in frags:
+            frags[stem]=[l, [],[]]
+        # append position to list appointed by sel
+        sel=((end-l)/ld)>0
+        frags[stem][1+sel].append(end-l-(sel*ld))
 
-import pprint
+    if saver: saver.addDocs(D1,D2)
+    return [(saver.save(D1,D2,bulksaver.lcsPkt(sorted(a),sorted(b),l,stem,D1,D2))
+             if saver
+             else (l,stem,sorted(a),sorted(b)))
+            for stem, (l, a, b)
+            in frags.items()
+            if a and b]
+
 if __name__ == "__main__":
+    import pprint
     import sys
     #frag=LCS(doc1,doc2)
     #pprint.pprint(frag.root)
 
     pips=pippi(Doc(sys.argv[1].strip('\t\n')),Doc(sys.argv[2].strip('\t\n')))
-    print len(pips)
-    pprint.pprint(pips)
+    #print len(pips)
+    #pprint.pprint(pips)
