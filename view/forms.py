@@ -2,12 +2,16 @@ from django import forms
 from datetime import datetime
 from django.conf import settings
 
-class XpippiForm(forms.Form):
-    doc = forms.CharField(required=True)
+class AdvancedEditor(forms.Textarea):
+	class Media:
+		js = (settings.MEDIA_URL+'/js/tinymce/tiny_mce.js',)
 
-class PippiForm(forms.Form):
-    doc1 = forms.CharField(required=True)
-    doc2 = forms.CharField(required=True)
+	def __init__(self, language=None, attrs=None):
+		self.language = language or settings.LANGUAGE_CODE[:2]
+		self.attrs = {'class': 'advancededitor'}
+		if attrs: self.attrs.update(attrs)
+		super(AdvancedEditor, self).__init__(attrs)
 
-class viewForm(forms.Form):
-    doc = forms.CharField(required=True)
+class UploadForm(forms.Form):
+    doc = forms.CharField(widget=AdvancedEditor())
+

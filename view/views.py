@@ -19,11 +19,11 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.core.management import setup_environ
-from django import forms
 from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
+from lenx.view.forms import UploadForm
 from operator import itemgetter
 import re, pymongo, cgi
 import tidy
@@ -175,19 +175,6 @@ def listDocs(request):
           for doc in (Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
-class AdvancedEditor(forms.Textarea):
-	class Media:
-		js = (settings.MEDIA_URL+'/js/tinymce/tiny_mce.js',)
-
-	def __init__(self, language=None, attrs=None):
-		self.language = language or settings.LANGUAGE_CODE[:2]
-		self.attrs = {'class': 'advancededitor'}
-		if attrs: self.attrs.update(attrs)
-		super(AdvancedEditor, self).__init__(attrs)
-
-class UploadForm(forms.Form):
-    doc = forms.CharField(widget=AdvancedEditor())
-
 def uploadDoc(request):
     form = UploadForm(request.GET)
     return render_to_response('upload.html', { 'form': form, })
@@ -201,6 +188,15 @@ def submitDoc(request):
     form = UploadForm(request.GET)
     if form.is_valid():
         doc=form.cleaned_data['doc']
+        #d=Doc(doc)
+        #if not 'stems' in d.__dict__ or not d.stems:
+        #    # let's calculate and cache the results
+        #    d.title
+        #    d.subject
+        #    tfidf.add_input_document(d.termcnt.keys())
+        #    d.save()
+        #docs[doc] = d
+        #return d
         options = dict(output_xhtml=1, add_xml_decl=0, indent=0, tidy_mark=0, doctype="strict", wrap=0)
         return HttpResponse('%s' % (tidy.parseString(doc, **options)))
 
