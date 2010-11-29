@@ -134,9 +134,36 @@ def walkACS(i,j,s):
         return [(i,0)]
     return [(end, l+j-i+1) for (m,n,o) in s.values() for (end, l) in walkACS(m,n,o)]
 
-def pippi(D1,D2,saver=bulksaver.Saver()):
-    doc1=tuple(D1.stems+('zAq!2WsX',))
-    doc2=tuple(D2.stems+('XsW@!qAz',))
+def remap(stems,pippi,pos):
+    if not pippi: return pos
+    for p in xrange(pos-1,len(stems)):
+        if not pippi[-1] == stems[p]:
+            continue
+        match=True
+        i=0
+        for stem in reversed(pippi):
+            while not stems[p-i]: i=i+1
+            if not stem==stems[p-i]:
+                match=False
+                break
+            i=i+1
+        if match:
+            print l=i
+            return p+1
+        else:
+            continue
+    print pos, p
+    print pippi
+    print stems
+    raise IndexError
+
+def pippi(D1,D2,saver=bulksaver.Saver(),strict=True):
+    if strict:
+        doc1=tuple(D1.stems+('zAq!2WsX',))
+        doc2=tuple(D2.stems+('XsW@!qAz',))
+    else:
+        doc1=tuple([x for x in D1.stems+('zAq!2WsX',) if x])
+        doc2=tuple([x for x in D2.stems+('XsW@!qAz',) if x])
     lcs=LCS(doc1,doc2)
 
     pips={}
@@ -149,19 +176,23 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
     ld=len(doc1)
     # calculate stem, and foreach assemble list of pos
     for end, l in pips.items():
-        stem=lcs.str[end-l:end]
-        if StopFrags.isStopFrag(stem): continue
-        if not stem in frags:
-            frags[stem]=[l, [],[]]
+        pippi=lcs.str[end-l:end]
+        if StopFrags.isStopFrag(pippi): continue
+        sel=(((end-l)/ld)>0)*1
+        if not strict:
+            stems=[D1.stems,D2.stems][sel]
+            p=end-(sel*ld)
+            end=remap(stems,pippi,p)+(sel*ld)
+        if not pippi in frags:
+            frags[pippi]=[l, [],[]]
         # append position to list appointed by sel
-        sel=((end-l)/ld)>0
-        frags[stem][1+sel].append(end-l-(sel*ld))
+        frags[pippi][1+sel].append(end-l-(sel*ld))
 
     if saver: saver.addDocs(D1,D2)
-    return [(saver.save(D1,D2,bulksaver.lcsPkt(sorted(a),sorted(b),l,stem,D1,D2))
+    return [(saver.save(D1,D2,bulksaver.lcsPkt(sorted(a),sorted(b),l,pippi,D1,D2))
              if saver
-             else (l,stem,sorted(a),sorted(b)))
-            for stem, (l, a, b)
+             else (l,pippi,sorted(a),sorted(b)))
+            for pippi, (l, a, b)
             in frags.items()
             if a and b]
 
@@ -171,6 +202,6 @@ if __name__ == "__main__":
     #frag=LCS(doc1,doc2)
     #pprint.pprint(frag.root)
 
-    pips=pippi(Doc(sys.argv[1].strip('\t\n')),Doc(sys.argv[2].strip('\t\n')))
+    pips=pippi(Doc(sys.argv[1].strip('\t\n')),Doc(sys.argv[2].strip('\t\n')),strict=False)
     #print len(pips)
     #pprint.pprint(pips)
