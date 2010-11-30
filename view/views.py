@@ -22,7 +22,8 @@ from django.core.management import setup_environ
 from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
-from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
+from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags, TfIdf
+from lenx.view.doc import Doc as NewDoc
 from lenx.view.forms import UploadForm
 from operator import itemgetter
 import re, pymongo, cgi
@@ -85,7 +86,7 @@ def docView(request,doc=None,cutoff=20):
     except:
         return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
     tooltips={}
-    cont = unicode(str(BeautifulSoup(d.raw).find(id='TexteOnly')), 'utf8')
+    cont = unicode(str(d.text), 'utf8')
     relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=cutoff))} }, ['eurlexid','title'])
     ls = []
     matches = 0
@@ -188,17 +189,22 @@ def submitDoc(request):
     form = UploadForm(request.GET)
     if form.is_valid():
         doc=form.cleaned_data['doc']
-        #d=Doc(doc)
-        #if not 'stems' in d.__dict__ or not d.stems:
-        #    # let's calculate and cache the results
-        #    d.title
-        #    d.subject
-        #    tfidf.add_input_document(d.termcnt.keys())
-        #    d.save()
-        #docs[doc] = d
-        #return d
-        options = dict(output_xhtml=1, add_xml_decl=0, indent=0, tidy_mark=0, doctype="strict", wrap=0)
-        return HttpResponse('%s' % (tidy.parseString(doc, **options)))
+
+        raw=unicode(str(tidy.parseString(doc, **{'output_xhtml' : 1,
+                                      'add_xml_decl' : 0,
+                                      'indent' : 0,
+                                      'tidy_mark' : 0,
+                                      'doctype' : "strict",
+                                      'wrap' : 0})),'utf8')
+        d=NewDoc(raw)
+        if not 'stems' in d.__dict__ or not d.stems:
+            # let's calculate and cache the results
+            #d.title
+            #d.subject
+            tfidf=TfIdf()
+            tfidf.add_input_document(d.termcnt.keys())
+            d.save()
+        return HttpResponse('<h1>Saved %s</h1>%s' % (d.title,raw))
 
 def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })

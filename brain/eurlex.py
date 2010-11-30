@@ -19,6 +19,8 @@
 from BeautifulSoup import BeautifulSoup
 import re
 
+EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
+
 CELEXCODES={ "1": { "Sector": "Treaties",
                     "Document Types" : { "D": "Treaty of Amsterdam 1997",
                                          "M": "Treaty on the European Union, Maastricht 1992 - EU Treaty - consolidated version 1997",
@@ -152,6 +154,17 @@ class Eurlex():
 
     def __repr__(self):
         return self.__unicode__()
+
+    def _getHTMLMetaData(self, attr):
+        soup = BeautifulSoup(self.raw)
+        res=map(lambda x: (x and x.has_key('content') and x['content']) or "", soup.findAll('meta',attrs={'name':attr}))
+        return '|'.join(res).encode('utf-8')
+
+    def _gettitle(self):
+        return self._getHTMLMetaData('DC.description') or self.eurlexid
+
+    def _getsubj(self):
+        return self._getHTMLMetaData('DC.subject')
 
     def extractMetadata(self,raw):
         soup = BeautifulSoup(unicode(raw))
