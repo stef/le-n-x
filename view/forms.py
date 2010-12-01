@@ -13,5 +13,6 @@ class AdvancedEditor(forms.Textarea):
 		super(AdvancedEditor, self).__init__(attrs)
 
 class UploadForm(forms.Form):
-    doc = forms.CharField(widget=AdvancedEditor())
+   docid =forms.CharField(required=False, label="Document identifier")
+   doc = forms.CharField(widget=AdvancedEditor(), label="Document")
 
