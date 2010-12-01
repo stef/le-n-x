@@ -16,7 +16,8 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Pippi, TfIdf
+from lenx.view.models import Pippi, TfIdf
+from lenx.view.eurlex import Eurlex as Doc
 from django.core.management import setup_environ
 from lenx import settings
 from lenx.brain import lcs

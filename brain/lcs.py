@@ -17,7 +17,6 @@
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 # src: http://chipsndips.livejournal.com/425.html
-from lenx.view.models import Doc, Pippi
 from lenx.brain import bulksaver, stopwords
 
 # kludge: infinity is a very large number
@@ -166,11 +165,13 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
             if a and b]
 
 if __name__ == "__main__":
+    #from lenx.view.Eurlex import Doc
+    from lenx.view.models import Doc
     import pprint
     import sys
     #frag=LCS(doc1,doc2)
     #pprint.pprint(frag.root)
 
-    pips=pippi(Doc(sys.argv[1].strip('\t\n')),Doc(sys.argv[2].strip('\t\n')))
+    pips=pippi(Doc(docid=sys.argv[1].strip('\t\n')),Doc(docid=sys.argv[2].strip('\t\n')))
     #print len(pips)
     #pprint.pprint(pips)

@@ -16,7 +16,9 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags
+from lenx.view.models import Pippi
+from lenx.view.doc import Doc
+from lenx.view.db import Pippies, Frags, Docs
 from django.core.management import setup_environ
 from lenx import settings
 from lenx.brain import lcs
@@ -46,7 +48,7 @@ def main():
     sys.stdout.flush()
 
     print "updateing docs.idf"
-    docs=Docs.find({},['termcnt','eurlexid','stemsid'])
+    docs=Docs.find({},['termcnt','docid','stemsid'])
     docslen=docs.count()
     i=1
     for dd in docs:
@@ -57,7 +59,7 @@ def main():
             else:
                 sys.stdout.write('.')
                 sys.stdout.flush()
-        Docs.update({'_id': dd['_id']},{ '$set': { 'tfidf': Doc('',d=dd).tfidf } })
+        Docs.update({'_id': dd['_id']},{ '$set': { 'tfidf': Doc(d=dd).tfidf } })
         i=i+1
     sys.stdout.write('\n')
     sys.stdout.flush()

@@ -21,25 +21,15 @@ from lenx import settings
 setup_environ(settings)
 from lenx.brain import cache as Cache
 CACHE=Cache.Cache(settings.CACHE_PATH)
+from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 from lenx.brain import tagcloud, stopwords
 
-from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
-from pymongo import Connection
 from operator import itemgetter
-import itertools, math, pymongo, gridfs
-
-conn = Connection()
-db=conn.pippi
-DocStore=conn.DocStore
-fs = gridfs.GridFS(DocStore)
-Docs=db.docs
-DocTexts=db.DocTexts
-DocStems=db.DocStems
-DocTokens=db.DocTokens
-Docs.ensure_index([('eurlexid', pymongo.ASCENDING)])
-Docs.ensure_index([('pippiDocsLen', pymongo.DESCENDING)])
+import pymongo, hashlib
+import models
+from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 
 SLUGCHARS='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+'
 def str_base(num, base=len(SLUGCHARS), numerals = SLUGCHARS):
@@ -60,37 +50,40 @@ def str_base(num, base=len(SLUGCHARS), numerals = SLUGCHARS):
     return sign + result
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
-class Doc():
-    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'tfidf', 'frags']
+class Doc(object):
+    computed_attrs = [ 'raw', 'body', 'text', 'tokens', 'stems', 'termcnt', 'tfidf', 'frags']
     fieldMap = {'raw': None, 'text': DocTexts, 'stems':  DocStems, 'tokens': DocTokens, }
+    metafields = ['subject']
 
-    def __init__(self,raw,title=None,oid=None,d=None):
+    def __init__(self,raw=None,docid=None,oid=None,d=None):
         if oid:
             # get by mongo oid
             d=Docs.find_one({"_id": oid})
-        elif title:
-            # get by title
-            d=Docs.find_one({"title": title})
+        elif docid:
+            # get by docid
+            d=Docs.find_one({"docid": docid})
         if d:
             # load the values
-            self.__dict__=d
+            self.__dict__.update(d)
         elif raw:
             # create a new document
-            self.__dict__={
-                'title' : title,
+            self.__dict__.update({
+                'docid' : docid,
                 'pippies' : [],
                 'pippiDocs' : [],
                 'pippiDocsLen' : 0,
                 'rawid' : None,
-                }
-            self.raw=raw
+                'metadata' : {},
+                })
+            if raw:
+                self.raw=raw
             self.save()
         else:
-            raise KeyError('empty title')
+            raise KeyError('empty docid')
 
     def __getattr__(self, name):
         # handle and cache calculated properties
-        if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
+        if name not in self.__dict__ or not self.__dict__[name]:
             if name == 'raw':
                 return self._getraw() # cached on fs
             if name == 'text':
@@ -103,8 +96,14 @@ class Doc():
                 self.__dict__['termcnt']=self._getstemcount()
             if name == 'tfidf':
                 self.__dict__['tfidf']=self._gettfidf()
+            if name == 'title':
+                self.__dict__['title']=self.docid
             if name == 'frags':
                 return self._getfrags() # not cached at all
+            if name == 'body':
+                return self._getbody() # not cached
+            if name in self.metafields:
+                return ''
         if name in self.__dict__.keys():
             return self.__dict__[name]
         else:
@@ -118,7 +117,7 @@ class Doc():
         else: raise AttributeError, name
 
     def __unicode__(self):
-        return self.title
+        return self.docid
 
     def save(self):
         tmp=[(i,self.__dict__[i]) for i in self.fieldMap if i in self.__dict__]
@@ -132,11 +131,14 @@ class Doc():
     def _setraw(self, raw):
         f=fs.new_file()
         self.rawid=f._id
-        if not self.title:
-            self.title=str_base(int(str(self.rawid),16))
-        f.filename=self.title
-        f.write(raw.encode('utf8'))
+        if not self.docid:
+            self.docid=str_base(int(str(hashlib.sha1(str(self.rawid)).hexdigest()),16))
+        f.filename=self.docid
+        f.write(raw)
         f.close()
+
+    def _getbody(self):
+        return unicode(str(BeautifulSoup(self.raw).body), 'utf8')
 
     def _gettext(self):
         res=self._getExtField('text')
@@ -179,10 +181,10 @@ class Doc():
         return termcnt
 
     def _gettfidf(self):
-        return tfidf.get_doc_keywords(self)
+        return models.tfidf.get_doc_keywords(self)
 
     def _getfrags(self):
-        return [Frag(frag=f) for f in self.getFrags(cutoff=1)]
+        return [models.Frag(frag=f) for f in self.getFrags(cutoff=1)]
 
     def __hash__(self):
         return hash(self._id)

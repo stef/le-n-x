@@ -22,8 +22,8 @@ from django.core.management import setup_environ
 from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
-from lenx.view.models import Doc, Pippi, Docs, Pippies, Frags, TfIdf
-from lenx.view.doc import Doc as NewDoc
+from lenx.view.models import Pippi, Pippies, Frags, TfIdf, tfidf
+from lenx.view.doc import Doc, Docs
 from lenx.view.forms import UploadForm
 from operator import itemgetter
 import re, pymongo, cgi
@@ -71,7 +71,7 @@ def annotatePippi(d,pippi,cutoff=7):
         '<div class="pippiNote" id="%s">' % pippi['pippi'],
         '<b>also appears in</b>',
         '<ul>',
-        '\n'.join([(itemtpl % (doc.eurlexid, cutoff, doc.title)) for doc in docs]).encode('utf8'),
+        '\n'.join([(itemtpl % (doc.docid, cutoff, doc.title)) for doc in docs]).encode('utf8'),
         '</ul>',
         '</div>',
         ])
@@ -82,12 +82,13 @@ def docView(request,doc=None,cutoff=20):
     if not doc or not cutoff:
         return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
     try:
-        d = Doc(doc)
+        d = Doc(docid=doc)
     except:
-        return render_to_response('error.html', {'error': 'Wrong document: %s!' % doc})
+        form = UploadForm({'docid': doc})
+        return render_to_response('upload.html', { 'form': form, })
     tooltips={}
-    cont = unicode(str(d.text), 'utf8')
-    relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=cutoff))} }, ['eurlexid','title'])
+    cont = d.body
+    relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=cutoff))} }, ['docid','title'])
     ls = []
     matches = 0
     for l in d.getFrags(cutoff=cutoff):
@@ -164,20 +165,20 @@ def getOverview():
 
 def listDocs(request):
     docslen=Docs.count()
-    docs=[{'id': doc.eurlexid,
+    docs=[{'id': doc.docid,
            'oid': doc._id,
            'indexed': doc.pippiDocsLen,
-           'title': doc.title or doc.eurlexid,
+           'title': doc.title,
            'frags': doc.getFrags().count(),
            'pippies': len(doc.pippies),
            'docs': len(doc.getRelatedDocIds()),
            'subject': doc.subject or "",
            'tags': doc.autoTags(25) }
-          for doc in (Doc('',d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
+          for doc in (Doc(d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
 def uploadDoc(request):
-    form = UploadForm(request.GET)
+    form = UploadForm(request.POST)
     return render_to_response('upload.html', { 'form': form, })
     if form.is_valid():
         doc=form.cleaned_data['doc']
@@ -186,25 +187,22 @@ def uploadDoc(request):
         return render_to_response('upload.html', { 'form': form, })
 
 def submitDoc(request):
-    form = UploadForm(request.GET)
+    form = UploadForm(request.POST)
     if form.is_valid():
         doc=form.cleaned_data['doc']
-
+        docid=form.cleaned_data['docid']
         raw=unicode(str(tidy.parseString(doc, **{'output_xhtml' : 1,
                                       'add_xml_decl' : 0,
                                       'indent' : 0,
                                       'tidy_mark' : 0,
                                       'doctype' : "strict",
                                       'wrap' : 0})),'utf8')
-        d=NewDoc(raw)
+        d=Doc(raw=raw.encode('utf8'),docid=docid.encode('utf8'))
         if not 'stems' in d.__dict__ or not d.stems:
             # let's calculate and cache the results
-            #d.title
-            #d.subject
-            tfidf=TfIdf()
             tfidf.add_input_document(d.termcnt.keys())
             d.save()
-        return HttpResponse('<h1>Saved %s</h1>%s' % (d.title,raw))
+        return HttpResponseRedirect('/doc/%s' % (d.title))
 
 def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })
@@ -282,7 +280,7 @@ def frags(request):
     template_vars['frags']=[]
     for frag in template_vars['data']:
         p=Pippi('',oid=frag['pippi'])
-        d=Doc('',oid=frag['doc'])
+        d=Doc(oid=frag['doc'])
         if pippifilter:
             frag['txt']=diffFrag(prevDoc,frag['txt'])
             prevDoc=frag['txt']
@@ -297,7 +295,7 @@ def frags(request):
 
     template_vars['pippi']=pippifilter
     template_vars['doc']=docfilter
-    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['eurlexid']
+    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['docid', 'title'])['docid']
     if pippifilter: template_vars['pippiFilter']=1 #" ".join(Pippies.find_one({'_id': pippifilter},['pippi'])['pippi'])
     return render_to_response('frags.html', template_vars)
 
@@ -333,7 +331,7 @@ def pippies(request):
                                'relevance':pippi.get('relevance',0),}
                                for pippi in template_vars['data']]
     template_vars['doc']=docfilter
-    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['eurlexid', 'title'])['title']
+    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['docid', 'title'])['title']
     return render_to_response('pippies.html', template_vars)
 
 def search(request):
