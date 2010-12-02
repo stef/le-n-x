@@ -22,33 +22,11 @@ setup_environ(settings)
 from lenx.brain import cache as Cache
 CACHE=Cache.Cache(settings.CACHE_PATH)
 from lenx.brain import tagcloud, stopwords
-
-from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
-import nltk.tokenize # get this from http://www.nltk.org/
-from BeautifulSoup import BeautifulSoup # apt-get?
-from pymongo import Connection
-from operator import itemgetter
-import itertools, math, pymongo
+from lenx.view.db import Pippies, Frags, MiscDb
+from lenx.view.doc import Doc
+import math
 
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
-
-conn = Connection()
-db=conn.pippi
-Docs=db.docs
-Pippies=db.pippies
-Frags=db.frags
-MiscDb=db.miscdb
-DocTexts=db.DocTexts
-DocStems=db.DocStems
-DocTokens=db.DocTokens
-Frags.ensure_index([('pippi', pymongo.ASCENDING),
-                    ('doc', pymongo.ASCENDING),
-                    ('pos', pymongo.ASCENDING)], unique=True)
-Frags.ensure_index([('l', pymongo.DESCENDING)])
-Docs.ensure_index([('eurlexid', pymongo.ASCENDING)])
-Docs.ensure_index([('pippiDocsLen', pymongo.DESCENDING)])
-Pippies.ensure_index([('pippi', pymongo.ASCENDING)])
-Pippies.ensure_index([('relevance', pymongo.ASCENDING)])
 
 class Pippi():
     computed_attrs = [ 'relevance',]
@@ -98,7 +76,7 @@ class Pippi():
         return unicode(" ".join(self.pippi))
 
     def getDocs(self, d, cutoff=7):
-        return set([Doc('',oid=oid) for oid in self.docs if oid != d._id])
+        return set([Doc(oid=oid) for oid in self.docs if oid != d._id])
 
 class Frag():
     computed_attrs = [ 'score',]
@@ -134,171 +112,9 @@ class Frag():
         else: raise AttributeError, name
 
     def _getScore(self):
-        d=Doc('',oid=self.doc)
+        d=Doc(oid=self.doc)
         p=Pippi('',oid=self.pippi)
         return sum([d.tfidf.get(t,0) for t in p.pippi])
-
-""" class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
-class Doc():
-    computed_attrs = [ 'raw', 'text', 'tokens', 'stems', 'termcnt', 'title', 'subject', 'tfidf', 'frags']
-    fieldMap = {'text': DocTexts, 'stems':  DocStems, 'tokens': DocTokens, }
-
-    def __init__(self,eurlexid,oid=None,d=None):
-        if oid:
-            # get by mongo oid
-            d=Docs.find_one({"_id": oid})
-        elif eurlexid:
-            # get by eurlexid
-            d=Docs.find_one({"eurlexid": eurlexid})
-        if d:
-            # load the values
-            self.__dict__=d
-        elif eurlexid:
-            # create a new document
-            self.__dict__={}
-            self.__dict__['eurlexid'] = eurlexid
-            self.__dict__['pippies'] = []
-            self.__dict__['pippiDocs'] = []
-            self.__dict__['pippiDocsLen'] = 0
-            self.save()
-        else:
-            raise KeyError('empty eurlexid')
-
-    # todo add interpretation according to http://www.ellispub.com/ojolplus/help/celex.htm#sectors2
-    def __getattr__(self, name):
-        # handle and cache calculated properties
-        if name in self.computed_attrs and name not in self.__dict__ or not self.__dict__[name]:
-            if name == 'raw':
-                return self._getraw() # cached on fs
-            if name == 'text':
-                self.__dict__['text'] = self._gettext() # cached in extfields
-            if name == 'tokens':
-                self.__dict__['tokens'] = self._gettokens() # cached in extfields
-            if name == 'stems':
-                self.__dict__['stems'] = self._getstems() # cached in extfields
-            if name == 'termcnt':
-                self.__dict__['termcnt']=self._getstemcount()
-            if name == 'title':
-                self.__dict__['title']=self._gettitle()
-            if name == 'subject':
-                self.__dict__['subject']=self._getsubj()
-            if name == 'tfidf':
-                self.__dict__['tfidf']=self._gettfidf()
-            if name == 'frags':
-                return self._getfrags() # not cached at all
-        if name in self.__dict__.keys():
-            return self.__dict__[name]
-        else:
-            raise AttributeError, name
-
-    def __setattr__(self, name, value):
-        if name in self.__dict__.keys() or name in self.computed_attrs:
-            self.__dict__[name]=value
-        else: raise AttributeError, name
-
-    def __unicode__(self):
-        return self.eurlexid
-
-    def save(self):
-        tmp=[(i,self.__dict__[i]) for i in self.fieldMap if i in self.__dict__]
-        for i in tmp: del self.__dict__[i[0]]
-        self.__dict__['_id']=Docs.save(self.__dict__)
-        for (i,val) in tmp: self.__dict__[i]=val
-
-    def _getraw(self, cache=CACHE):
-        return cache.fetchUrl(EURLEXURL+self.eurlexid)
-
-    def _gettext(self):
-        res=self._getExtField('text')
-        if res: return res
-        soup = BeautifulSoup(self.raw)
-        # TexteOnly is the id used on eur-lex pages containing docs
-        res = [unicode(x) for x in soup.find(id='TexteOnly').findAll(text=True)]
-        self._setExtField('text',res) # cache data
-        return res
-
-    def _gettokens(self):
-        res=self._getExtField('tokens')
-        if res: return res
-        res = [token for frag in self.text if frag for token in nltk.tokenize.wordpunct_tokenize(unicode(frag))]
-        self._setExtField('tokens',res) # cache data
-        return res
-
-    def _getstems(self):
-        # start stemming
-        stems= self._getExtField('stems') or []
-        if stems:
-            return tuple(stems)
-
-        engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
-        for word in self.tokens:
-            # stem each word
-            stem=engine.stem(word.encode('utf8'))
-            if stem:
-                stems.append(stem[0])
-            else:
-                stems.append('')
-        self._setExtField('stems',stems) # cache data
-        return tuple(stems)
-
-    def _getstemcount(self):
-        termcnt={}
-        for stem in self.stems:
-            if not stem=='':
-                termcnt[stem]=termcnt.get(stem,0)+1
-        return termcnt
-
-    def _getHTMLMetaData(self, attr):
-        soup = BeautifulSoup(self.raw)
-        res=map(lambda x: (x and x.has_key('content') and x['content']) or "", soup.findAll('meta',attrs={'name':attr}))
-        return '|'.join(res).encode('utf-8')
-
-    def _gettitle(self):
-        return self._getHTMLMetaData('DC.description') or self.eurlexid
-
-    def _getsubj(self):
-        return self._getHTMLMetaData('DC.subject')
-
-    def _gettfidf(self):
-        return tfidf.get_doc_keywords(self)
-
-    def _getfrags(self):
-        return [Frag(frag=f) for f in self.getFrags(cutoff=1)]
-
-    def __hash__(self):
-        return hash(self._id)
-
-    def __eq__(self,other):
-        return self._id == other._id
-
-    def getRelatedDocIds(self, cutoff=7):
-        return set([doc
-                    for pippi in Pippies.find({'len': { '$gte': int(cutoff)},
-                                               'docs': self._id},
-                                              ['docs'])
-                    for doc in pippi['docs']
-                    if doc != self._id])
-
-    def getFrags(self, cutoff=7):
-        return Frags.find({'l': { '$gte': int(cutoff)},
-                           'doc': self._id,
-                           }).sort([('l', pymongo.DESCENDING)])
-
-    def addDoc(self,d):
-        if not d._id in self.pippiDocs:
-            self.pippiDocs.append(d._id)
-            self.pippiDocsLen=len(self.pippiDocs)
-
-    def _getExtField(self, field):
-        if field+"id" in self.__dict__:
-            res=self.fieldMap[field].find_one({'_id': self.__dict__[field+'id']})
-            if res: return res['value']
-
-    def _setExtField(self, field, data):
-        self.__dict__[field+'id']=self.fieldMap[field].save({'value': data})
-
-    def autoTags(self,l):
-        return sorted(tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in self.tfidf.items() if t not in stopwords.stopwords]),l=l),key=itemgetter('tag'))
 
 class TfIdf:
     def __init__(self, DEFAULT_IDF = 1.5):

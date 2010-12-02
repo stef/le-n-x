@@ -16,7 +16,8 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Doc, Frag, Location
+from lenx.view.models import Frag, Location
+from lenx.view.eurlex import Eurlex
 from django.core.management import setup_environ
 from lenx import settings
 from lenx.brain import lcs
@@ -25,7 +26,7 @@ import sys, os
 
 for doc in sys.stdin:
     try:
-        Doc(doc)
+        Eurlex(doc)
     except:
        print "!!!!PIPPI ERROR: load doc",doc
        raise
