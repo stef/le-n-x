@@ -184,6 +184,9 @@ def uploadDoc(request):
     else:
         return render_to_response('upload.html', { 'form': form, })
 
+def importDoc(request):
+        return render_to_response('import.html')
+
 def submitDoc(request):
     form = UploadForm(request.GET)
     if form.is_valid():

@@ -21,12 +21,18 @@
       {% block header %}
        <h1>Pippi Longstrings <small><i>(beta)</i></small></h1>
        <div id="menu">
-        <ul>
+        <ul class="dropdown dropdown-horizontal">
           <li><a href="{% root_url %}/all">Documents</a></li>
           <li><a href="{% root_url %}/pippies">Pippies</a></li>
-          <li><a href="http://flattr.com/thing/16236/Pippi-Longstrings" target="_blank"><img src="{% media_url %}/images/flattrbutton.png" title="Flattr this" border="0" alt="flattr" /></a></li>
+          <li><a href="{% root_url %}/upload">Create document</a>
+            <ul>
+                <li><a href="{% root_url %}/upload">Upload</a></li>
+                <li><a href="{% root_url %}/import">Import</a></li>
+            </ul>
+          </li>
+          <li><a href="http://flattr.com/thing/16236/Pippi-Longstrings"><img src="{% media_url %}/images/flattrbutton.png" title="Flattr this" alt="flattr" /></a></li>
         </ul>
-        <div id="searchBar"><form action="{% root_url %}/search"><input type="text" name="q"/><input type="submit" value="search" class="sbutton"/> </form></div>
+        <form action="{% root_url %}/search"><div id="searchBar"><input type="text" name="q"/><input type="submit" value="search" class="sbutton"/></div> </form>
        </div>
       {% endblock %}
     </div>
