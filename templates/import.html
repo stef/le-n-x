@@ -3,4 +3,18 @@
 
 {% block main %}
 <h1>Import documents from other websites</h1>
+<form action="{% root_url %}/import" method="post">
+<table>
+{% for field in form %}
+<tr>
+    <td>{{ field.label_tag }}:
+        {{ field.errors }}</td>
+    <td>
+        {{ field }}
+    </td>
+</tr>
+{% endfor %}
+<tr><td /><td><input type="submit" value="submit" /></td></tr>
+</table>
+</form>
 {% endblock %}

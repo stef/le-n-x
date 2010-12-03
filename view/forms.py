@@ -16,3 +16,7 @@ class UploadForm(forms.Form):
    docid =forms.CharField(required=False, label="Document identifier")
    doc = forms.CharField(widget=AdvancedEditor(), label="Document")
 
+class ImportForm(forms.Form):
+   docid =forms.CharField(required=False, label="Document identifier")
+   url = forms.CharField(label="Document URL")
+

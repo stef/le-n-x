@@ -24,12 +24,14 @@ setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from lenx.view.models import Pippi, Pippies, Frags, TfIdf, tfidf
 from lenx.view.doc import Doc, Docs
-from lenx.view.forms import UploadForm
+from lenx.view.forms import UploadForm, ImportForm
 from operator import itemgetter
 import re, pymongo, cgi
 import tidy
 import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
+import httplib
+import re, htmlentitydefs
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -37,6 +39,27 @@ def htmlPippi(doc,matches,frag):
 
 def index(request):
     return render_to_response('index.html')
+
+def unescape(text):
+    def fixup(m):
+        text = m.group(0)
+        if text[:2] == "&#":
+            # character reference
+            try:
+                if text[:3] == "&#x":
+                    return unichr(int(text[3:-1], 16))
+                else:
+                    return unichr(int(text[2:-1]))
+            except ValueError:
+                pass
+        else:
+            # named entity
+            try:
+                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+            except KeyError:
+                pass
+        return text # leave as is
+    return re.sub("&#?\w+;", fixup, text)
 
 def anchorArticles(txt):
     # find all textnodes starting with Article, wrapping this in a named <a> and prepending a hoverable link to this anchor
@@ -187,7 +210,37 @@ def uploadDoc(request):
         return render_to_response('upload.html', { 'form': form, })
 
 def importDoc(request):
-        return render_to_response('import.html')
+    if request.method == 'POST':
+        form = ImportForm(request.POST)
+        if form.is_valid():
+            url=form.cleaned_data['url']
+            docid=form.cleaned_data['docid']
+            hostValidator = re.compile('^\W*https?:\/\/(.+\.co-ment.com)(\/text\/[a-zA-Z0-9]+\/).+\/?\W*$', re.I | re.U).search(url)
+            if not hostValidator or hostValidator.group(0) != url:
+                return render_to_response('error.html', {'error': 'Wrong co-ment URL: %s!' % (url)})
+            HOSTNAME = hostValidator.group(1)
+            # /text/JplAuXN9be2/comments
+            try:
+                conn = httplib.HTTPSConnection(HOSTNAME)
+                conn.putrequest('GET', hostValidator.group(2)+'comments/')
+                conn.endheaders()
+                response = conn.getresponse()
+                html = response.read()
+                soup = BeautifulSoup(html)
+            except:
+                return render_to_response('error.html', {'error': 'Cannot download URL, please try again!'})
+            #print unicode(unescape(''.join(soup.find(attrs={'id' : 'textcontainer'}))))
+            # TODO DC.subject parse
+            raw = u'<html><head><title>%s</title><meta name="DC.subject" content="%s" /> <meta http-equiv="content-type" content="text/html; charset=utf-8" /> </head><body>%s</body></html>' % (docid, url, unescape(unicode(soup.find(attrs={'id' : 'textcontainer'}))))
+            d=Doc(raw=raw.encode('utf8'),docid=docid.encode('utf8'))
+            if not 'stems' in d.__dict__ or not d.stems:
+                # let's calculate and cache the results
+                tfidf.add_input_document(d.termcnt.keys())
+                d.save()
+            return HttpResponseRedirect('/doc/%s' % (d.title))
+    else:
+        form = ImportForm()
+    return render_to_response('import.html', { 'form': form, })
 
 def submitDoc(request):
     form = UploadForm(request.POST)
