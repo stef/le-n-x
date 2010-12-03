@@ -16,7 +16,7 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from lenx.view.models import Pippi, Frag,
+from lenx.view.models import Pippi, Frag
 from lenx.view.db import Pippies, Frags, Docs
 from lenx.view.doc import Doc
 
