@@ -7,18 +7,28 @@ Stats: <ul id="stats">
 <li>{{stat.text}}</li>
 {% endfor %}
 </ul>
-<ul>
+<table class="listing">
+  <thead>
+  <tr><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
+  </thead>
 {% for doc in docs %}
-    <li>
+    <tr>
+    <td>
+       {{doc.dist}} <a href="{% root_url %}/doc/{{doc.id}}">{{doc.title}}</a>
+    </td><td>
+       {{doc.docs}}/{{doc.indexed}}
+    </td><td>
+       <a href='{%root_url%}/pippies?doc={{doc.oid}}'>{{doc.pippies}}</a>
+    </td><td>
+       <a href='{%root_url%}/frags?doc={{doc.oid}}'>{{doc.frags}}</a>
+    </td><td>
        <div class="tagcloud">
             {% for tag in doc.tags %}
             <span class="size{{tag.weight}}">{{tag.tag}}</span>
             {% endfor %}
        </div>
-       <a href="{% root_url %}/doc/{{doc.id}}">{{doc.title}}</a>
-       {{doc.docs}}/{{doc.indexed}} documents (related/indexed), <a href='{%root_url%}/pippies?doc={{doc.oid}}'>{{doc.pippies}} pippies</a>, <a href='{%root_url%}/frags?doc={{doc.oid}}'>{{doc.frags}} frags</a>.
-       <br style="clear: both;" />
-    </li>
+    </td>
+    </tr>
 {% endfor %}
-</ul>
+</table>
 {% endblock %}

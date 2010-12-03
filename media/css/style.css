@@ -31,7 +31,7 @@ div.rel { float: right; max-width: 350px; }
 .pippi { background-color: #ddddaa;}
 .highlight, .highlight * { background: rgba(0, 120, 240, 0.2); position: relative;}
 .hovered { background: rgba(0, 240, 120, 0.8); } 
-.tagcloud { float: right; width: 400px; border: 1px solid blue; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; margin: 4px; padding: 0.2em; }
+.tagcloud { width: 400px; border: 1px solid blue; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; margin: 4px; padding: 0.2em;}
 .size0 { font-size: .4em; }
 .size1 { font-size: .5em }
 .size2 { font-size: .6em }
