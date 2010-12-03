@@ -8,7 +8,7 @@
 
 {% block main %}
 <h1>Create a new document</h1>
-<form action="/submit" method="post">
+<form action="{% root_url %}/submit" method="post">
 <table>
 {% for field in form %}
 <tr>
