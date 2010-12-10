@@ -30,6 +30,7 @@ import re, pymongo, cgi
 import tidy
 import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
+from lenx.brain import lcs
 import httplib
 import re, htmlentitydefs
 
@@ -195,19 +196,28 @@ def listDocs(request):
            'frags': doc.getFrags().count(),
            'pippies': len(doc.pippies),
            'docs': len(doc.getRelatedDocIds()),
-           'subject': doc.subject or "",
            'tags': doc.autoTags(25) }
           for doc in (Doc(d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
-def uploadDoc(request):
+def createDoc(request):
     form = UploadForm(request.POST)
-    return render_to_response('upload.html', { 'form': form, })
-    if form.is_valid():
-        doc=form.cleaned_data['doc']
-        return HttpResponse('%s' % (unicode(doc,'utf8')))
-    else:
+    if not form.is_valid():
         return render_to_response('upload.html', { 'form': form, })
+    doc=form.cleaned_data['doc']
+    docid=form.cleaned_data['docid']
+    raw=unicode(str(tidy.parseString(doc, **{'output_xhtml' : 1,
+                                  'add_xml_decl' : 0,
+                                  'indent' : 0,
+                                  'tidy_mark' : 0,
+                                  'doctype' : "strict",
+                                  'wrap' : 0})),'utf8')
+    d=Doc(raw=raw.encode('utf8'),docid=docid.encode('utf8'))
+    if not 'stems' in d.__dict__ or not d.stems:
+        # let's calculate and cache the results
+        tfidf.add_input_document(d.termcnt.keys())
+        d.save()
+    return HttpResponseRedirect('/doc/%s' % (d.docid))
 
 def importDoc(request):
     if request.method == 'POST':
@@ -242,23 +252,38 @@ def importDoc(request):
         form = ImportForm()
     return render_to_response('import.html', { 'form': form, })
 
-def submitDoc(request):
-    form = UploadForm(request.POST)
-    if form.is_valid():
-        doc=form.cleaned_data['doc']
-        docid=form.cleaned_data['docid']
-        raw=unicode(str(tidy.parseString(doc, **{'output_xhtml' : 1,
-                                      'add_xml_decl' : 0,
-                                      'indent' : 0,
-                                      'tidy_mark' : 0,
-                                      'doctype' : "strict",
-                                      'wrap' : 0})),'utf8')
-        d=Doc(raw=raw.encode('utf8'),docid=docid.encode('utf8'))
-        if not 'stems' in d.__dict__ or not d.stems:
-            # let's calculate and cache the results
-            tfidf.add_input_document(d.termcnt.keys())
-            d.save()
-        return HttpResponseRedirect('/doc/%s' % (d.title))
+def job(request):
+    d1=request.GET.get('d1','')
+    d2=request.GET.get('d2','')
+    try:
+        D1=Doc(docid=d1)
+    except:
+        return render_to_response('error.html', {'error': 'wrong document: "%s"!' % d1})
+    try:
+        D2=Doc(docid=d2)
+    except:
+        return render_to_response('error.html', {'error': 'specify document: "%s"!' % d2})
+    lcs.pippi(D1,D2)
+    return HttpResponseRedirect('/doc/%s' % (d1))
+
+def pippi(request):
+    refdoc=request.GET.get('doc','')
+    if not refdoc:
+        return render_to_response('error.html', {'error': 'specify document: %s!' % refdoc})
+    refdoc=Doc(docid=refdoc)
+    docs=sorted([(doc['docid'],doc['_id']) for doc in Docs.find({},['_id','docid'])])
+    docslen=Docs.count()
+    docs=[{'id': doc.docid,
+           'oid': doc._id,
+           'indexed': doc.pippiDocsLen,
+           'title': doc.title,
+           'frags': doc.getFrags().count(),
+           'pippies': len(doc.pippies),
+           'job': not doc._id in refdoc.pippiDocs,
+           'docs': len(doc.getRelatedDocIds()),
+           'tags': doc.autoTags(25) }
+          for doc in (Doc(oid=oid) for d,oid in docs if not oid == refdoc._id)]
+    return render_to_response('pippi.html', { 'docs': docs, 'stats': getOverview(), 'refdoc': refdoc.docid })
 
 def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })
@@ -351,7 +376,7 @@ def frags(request):
 
     template_vars['pippi']=pippifilter
     template_vars['doc']=docfilter
-    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['docid', 'title'])['docid']
+    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['docid'])['docid']
     if pippifilter: template_vars['pippiFilter']=1 #" ".join(Pippies.find_one({'_id': pippifilter},['pippi'])['pippi'])
     return render_to_response('frags.html', template_vars)
 
@@ -387,7 +412,9 @@ def pippies(request):
                                'relevance':pippi.get('relevance',0),}
                                for pippi in template_vars['data']]
     template_vars['doc']=docfilter
-    if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['docid', 'title'])['title']
+    if docfilter:
+        doc=Docs.find_one({'_id': docfilter},['docid', 'title'])
+        template_vars['docTitle']=doc['title'] if 'title' in doc else doc['docid']
     return render_to_response('pippies.html', template_vars)
 
 def search(request):
