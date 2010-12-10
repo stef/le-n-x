@@ -22,8 +22,9 @@ setup_environ(settings)
 from lenx.brain import cache as Cache
 CACHE=Cache.Cache(settings.CACHE_PATH)
 from BeautifulSoup import BeautifulSoup
-import re
+import re, urllib2
 from lenx.view.doc import Doc
+from datetime import date
 
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
@@ -189,14 +190,43 @@ class Eurlex(Doc):
 
     def extractMetadata(self):
         raw = urllib2.urlopen("%s%s%s" % (EURLEXURL, self.celexid, ':NOT')).read()
-        soup = BeautifulSoup(unicode(raw))
-        return {
-            'dates' : fltr(soup.find(text="Dates").findNext('ul').findAll(text=True)),
-            'class' : fltr(soup.find(text="Classifications").findNext('ul').findAll(text=True)),
-            'misc'  : fltr(soup.find(text="Miscellaneous information").findNext('ul').findAll(text=True)),
-            'proc'  : fltr(soup.find(text="Procedure").findNext('ul').findAll(text=True)),
-            'rels'  : fltr(soup.find(text="Relationship between documents").findNext('ul').findAll(text=True)),
-            }
+        soup = BeautifulSoup(raw.decode('utf8'))
+        result={}
+        print soup
+        eurovocs=soup.find('strong', text="EUROVOC descriptor:")
+        if eurovocs:
+            result['eurovocs']=fltr([''.join(x.findAll(text=True)).strip() for x in eurovocs.parent.parent.findAll('a')])
+        dates=soup.find('h2',text="Dates")
+        if dates:
+            result['dates']={}
+            for (k,v) in [y.split(": ") for y in fltr([x.strip() for x in dates.parent.findNextSibling('ul').findAll(text=True) if x.strip()])]:
+                note=''
+                dte=None
+                try:
+                    (dte, note) = v.split("; ")
+                except:
+                    dte=v
+                if not dte == '99/99/9999':
+                    (d,m,y)=[int(e) for e in dte.split('/')]
+                    dte=date(y,m,d)
+                result['dates'][k]={'date': dte, 'note': note}
+        return result
+        #cls=soup.h2(text="Classifications")
+        #print cls
+        #if cls:
+        #    print 'class', fltr(cls.ul.findAll(text=True)),
+        #misc=soup.h2(text="Miscellaneous information")
+        #print misc
+        #if misc:
+        #    print 'misc', fltr(misc.ul.findAll(text=True)),
+        #proc=soup.h2(text="Procedure")
+        #print proc
+        #if proc:
+        #    print 'proc', fltr(proc.ul.findAll(text=True)),
+        #rels=soup.h2(text="Relationship between documents")
+        #print rels
+        #if rels:
+        #    print 'rels', fltr(rels.ul.findAll(text=True)),
 
 def fltr(lst):
     return [x for x in lst if not re.search(r"\s*\\n',\s*'\s*",x)]
@@ -207,7 +237,6 @@ if __name__ == "__main__":
     print Eurlex("CELEX:51994XP006:EN:HTML")
 
     # test metadata extraction
-    #import urllib2
     #EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
     #text = urllib2.urlopen(url).read()
     import pprint
