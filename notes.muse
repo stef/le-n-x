@@ -63,10 +63,11 @@
  - http://docs.python.org/library/shelve.html
 
 ** LCS
- - python difflib is buggy: http://bugs.python.org/issue2986, http://bugs.python.org/issue4622, http://bugs.python.org/issue1528074, http://bytes.com/topic/python/answers/802008-bug-difflib-module-find_longest_match, 
+ - python difflib is buggy: http://bugs.python.org/issue2986, http://bugs.python.org/issue4622, http://bugs.python.org/issue1528074, http://bytes.com/topic/python/answers/802008-bug-difflib-module-find_longest_match,
 
  - wtf suffix tree: http://en.wikipedia.org/wiki/Suffix_tree
  - http://wordaligned.org/articles/longest-common-subsequence
+ - c-based suffixtree: http://www.icir.org/christian/libstree/
 
 ** lsa & lda
  - http://www.mblondel.org/journal/2010/08/21/latent-dirichlet-allocation-in-python/
@@ -76,3 +77,4 @@
  - http://www.csie.ntu.edu.tw/~cjlin/libsvm/
  - http://tfinley.net/software/svmpython2/
  - http://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cosine.html#scipy.spatial.distance.cosine
+
