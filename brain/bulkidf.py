@@ -48,7 +48,7 @@ def main():
     sys.stdout.flush()
 
     print "updateing docs.idf"
-    docs=Docs.find({},['termcnt','docid','stemsid'])
+    docs=Docs.find({},['termcnt','docid','stemsid','rawid'])
     docslen=docs.count()
     i=1
     for dd in docs:
