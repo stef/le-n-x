@@ -31,7 +31,7 @@ import pymongo, hashlib
 import models
 from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 
-SLUGCHARS='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+'
+SLUGCHARS='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-'
 def str_base(num, base=len(SLUGCHARS), numerals = SLUGCHARS):
     # src: http://code.activestate.com/recipes/65212/
     if base < 2 or base > len(numerals):
