@@ -267,15 +267,12 @@ def job(request):
     lcs.pippi(D1,D2)
     return HttpResponseRedirect('/doc/%s' % (d1))
 
-def pippi(request):
-    refdoc=request.GET.get('doc','')
+def pippi(request,refdoc=None):
     if not refdoc:
         return render_to_response('error.html', {'error': 'specify document: %s!' % refdoc})
     refdoc=Doc(docid=refdoc)
     docs=sorted([(doc['docid'],doc['_id']) for doc in Docs.find({},['_id','docid'])])
     docslen=Docs.count()
-    for doc in (Doc(oid=oid) for d,oid in docs if not oid == refdoc._id):
-        print doc
     docs=[{'id': doc.docid,
            'oid': doc._id,
            'indexed': doc.pippiDocsLen,
