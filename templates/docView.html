@@ -20,7 +20,7 @@
     <fieldset> <legend>Related docs</legend>
         <ul>
         {% for dd in related %}
-            <li><a href="/doc/{{ dd.eurlexid }}?cutoff={{cutoff}}">{{dd.title|safe}}</a><hr /></li>
+  <li><a href="/doc/{{ dd.docid }}?cutoff={{cutoff}}">{% if dd.title %}{{dd.title|safe}}{%else%}{{dd.docid|safe}}{%endif%}</a><hr /></li>
         {% endfor %}
         </ul>
     </fieldset>
