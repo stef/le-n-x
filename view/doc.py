@@ -16,19 +16,6 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from django.core.management import setup_environ
-from lenx import settings
-setup_environ(settings)
-from lenx.brain import cache as Cache
-CACHE=Cache.Cache(settings.CACHE_PATH)
-from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
-from lenx.brain import tagcloud, stopwords
-
-import nltk.tokenize # get this from http://www.nltk.org/
-from BeautifulSoup import BeautifulSoup # apt-get?
-from operator import itemgetter
-import pymongo, hashlib
-import models
 from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 
 SLUGCHARS='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-'
@@ -49,8 +36,20 @@ def str_base(num, base=len(SLUGCHARS), numerals = SLUGCHARS):
         num //= base
     return sign + result
 
+
+def Doc(*args, **kwargs):
+    if 'd' in kwargs and re.match(CELEXRE,kwargs['d']['docid']):
+        return Eurlex(kwargs['d']['docid'])
+    if 'oid' in kwargs:
+        did=Docs.find_one({"_id": kwargs['oid']},['docid'])['docid']
+        if re.match(CELEXRE,did):
+            return Eurlex(did)
+    if 'docid' in kwargs and re.match(CELEXRE,kwargs['docid']):
+        return Eurlex(kwargs['docid'])
+    return DOC(*args,**kwargs)
+
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
-class Doc(object):
+class DOC(object):
     computed_attrs = [ 'raw', 'body', 'text', 'tokens', 'stems', 'termcnt', 'tfidf', 'frags']
     fieldMap = {'raw': None, 'text': DocTexts, 'stems':  DocStems, 'tokens': DocTokens, }
     metafields = ['subject']
@@ -64,6 +63,7 @@ class Doc(object):
             d=Docs.find_one({"docid": docid})
         if d:
             # load the values
+            # TODO if d is eurlex instantiate that instead
             self.__dict__.update(d)
         elif raw:
             # create a new document
@@ -75,6 +75,8 @@ class Doc(object):
                 'rawid' : None,
                 'metadata' : {},
                 })
+            if not 'type' in self.__dict__:
+                self.__dict__['type']='raw'
             if raw:
                 self.raw=raw
             self.save()
@@ -220,3 +222,19 @@ class Doc(object):
 
     def autoTags(self,l):
         return sorted(tagcloud.logTags('',tags=dict([(t,w*100000) for (t, w) in self.tfidf.items() if t not in stopwords.stopwords]),l=l),key=itemgetter('tag'))
+
+from django.core.management import setup_environ
+from lenx import settings
+setup_environ(settings)
+from lenx.brain import cache as Cache
+CACHE=Cache.Cache(settings.CACHE_PATH)
+from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
+from lenx.brain import tagcloud, stopwords
+
+import nltk.tokenize # get this from http://www.nltk.org/
+from BeautifulSoup import BeautifulSoup # apt-get?
+from operator import itemgetter
+import pymongo, hashlib, re
+import models
+from lenx.view.eurlex import CELEXRE, Eurlex
+

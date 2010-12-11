@@ -16,17 +16,11 @@
 
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-from django.core.management import setup_environ
-from lenx import settings
-setup_environ(settings)
-from lenx.brain import cache as Cache
-CACHE=Cache.Cache(settings.CACHE_PATH)
-from BeautifulSoup import BeautifulSoup
-import re, urllib2
-from lenx.view.doc import Doc
-from datetime import date
+import re
 
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
+CELEXRE=re.compile(r'CELEX:[0-9A-Z:()]*:HTML')
+from lenx.view.doc import DOC
 
 CELEXCODES={
     "1": { "Sector": "Treaties",
@@ -130,7 +124,7 @@ CELEXCODES={
                                 "X":"EFTA - Other Acts",},},
     }
 
-class Eurlex(Doc):
+class Eurlex(DOC):
     def __init__(self, celexid,*args,**kwargs):
         (code,lang)=celexid.split(":")[1:3]
         st=7 if code[6].isalpha() else 6
@@ -139,8 +133,11 @@ class Eurlex(Doc):
         self.__dict__['doctype'] = code[5:st]
         self.__dict__['refno'] = code[st:]
         self.__dict__['lang'] = lang
+        self.__dict__['type'] = 'eurlex'
         raw=CACHE.fetchUrl(EURLEXURL+self.celexid+":HTML")
-        super(Eurlex,self).__init__(raw=raw, docid=self.celexid, *args, **kwargs)
+        if not 'docid' in kwargs:
+            kwargs['docid']=self.celexid
+        super(Eurlex,self).__init__(raw=raw, *args, **kwargs)
 
     def _getbody(self):
         return unicode(str(BeautifulSoup(self.raw).find(id='TexteOnly')), 'utf8')
@@ -251,3 +248,12 @@ if __name__ == "__main__":
     html=f.readlines()
     f.close()
     pprint.pprint(ecom.extractMetadata(html))
+
+from django.core.management import setup_environ
+from lenx import settings
+setup_environ(settings)
+from lenx.brain import cache as Cache
+CACHE=Cache.Cache(settings.CACHE_PATH)
+from BeautifulSoup import BeautifulSoup
+from datetime import date
+import urllib2

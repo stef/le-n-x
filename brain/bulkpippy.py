@@ -28,7 +28,7 @@ docs={}
 tfidf=TfIdf()
 def getDoc(doc):
     if doc in docs: return docs[doc]
-    d=Doc(doc)
+    d=Doc(docid=doc)
     if not 'stems' in d.__dict__ or not d.stems:
         # let's calculate and cache the results
         d.title

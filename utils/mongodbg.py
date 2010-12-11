@@ -28,7 +28,7 @@ Pippies=db.pippies
 MiscDb=db.miscdb
 
 def getRelatedDocs(_id,cutoff=7):
-    return [Doc('',oid=oid)
+    return [Doc(oid=oid)
             for oid in set([doc['doc']
                             for frag in Pippies.find({'docs.doc' : _id,
                                                       'len' : { '$gte' : int(cutoff) }},
@@ -38,7 +38,7 @@ def getRelatedDocs(_id,cutoff=7):
 
 #for p in Pippi('',oid=pippi['frag']).docs
 
-doc=Doc('CELEX:32003L0098:EN:HTML')
+doc=Doc(docid='CELEX:32003L0098:EN:HTML')
 pprint.pprint(doc.__dict__)
 print 'asdf'
 #pprint.pprint(getRelatedDocs(doc._id))

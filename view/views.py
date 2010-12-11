@@ -22,8 +22,9 @@ from django.core.management import setup_environ
 from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
-from lenx.view.models import Pippi, Pippies, Frags, TfIdf, tfidf
-from lenx.view.doc import Doc, Docs
+from lenx.view.models import Pippi, TfIdf, tfidf
+from lenx.view.doc import Doc
+from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 from lenx.view.forms import UploadForm, ImportForm
 from operator import itemgetter
 import re, pymongo, cgi
@@ -273,6 +274,8 @@ def pippi(request):
     refdoc=Doc(docid=refdoc)
     docs=sorted([(doc['docid'],doc['_id']) for doc in Docs.find({},['_id','docid'])])
     docslen=Docs.count()
+    for doc in (Doc(oid=oid) for d,oid in docs if not oid == refdoc._id):
+        print doc
     docs=[{'id': doc.docid,
            'oid': doc._id,
            'indexed': doc.pippiDocsLen,
@@ -280,6 +283,7 @@ def pippi(request):
            'frags': doc.getFrags().count(),
            'pippies': len(doc.pippies),
            'job': not doc._id in refdoc.pippiDocs,
+           'type': doc.type,
            'docs': len(doc.getRelatedDocIds()),
            'tags': doc.autoTags(25) }
           for doc in (Doc(oid=oid) for d,oid in docs if not oid == refdoc._id)]

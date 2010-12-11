@@ -166,15 +166,15 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
 
 if __name__ == "__main__":
     #from lenx.view.Eurlex import Doc
-    from lenx.view.eurlex import Eurlex as Doc
+    from lenx.view.doc import Doc
     import pprint
     import sys
     #frag=LCS(doc1,doc2)
     #pprint.pprint(frag.root)
 
-    d1=Doc(sys.argv[1].strip('\t\n'))
+    d1=Doc(docid=sys.argv[1].strip('\t\n'))
     pprint.pprint(d1.extractMetadata())
-    d2=Doc(sys.argv[2].strip('\t\n'))
+    d2=Doc(docid=sys.argv[2].strip('\t\n'))
     pprint.pprint(d2.extractMetadata())
     #pips=pippi(Doc(docid=sys.argv[1].strip('\t\n')),Doc(docid=sys.argv[2].strip('\t\n')))
     #print len(pips)

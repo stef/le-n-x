@@ -18,7 +18,6 @@
 
 from lenx.view.models import Pippi, Frag
 from lenx.view.db import Pippies, Frags, Docs
-from lenx.view.doc import Doc
 
 def lcsPkt(p1,p2,l,stem,d1,d2):
     if l>1:
