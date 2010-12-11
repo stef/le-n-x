@@ -6,10 +6,11 @@
 <script type="text/javascript" src="{%media_url%}/js/docView.js"></script>
 {% endblock %}
 
+{% block menu %}
+  <li><a href="/pippi/{{doc.docid}}">Pippify</a></li>
+{% endblock %}
+
 {% block main %}
-
-<h2>docView for {{ doc.title|safe }} ({{ doc.docid }})</h2>
-
 <div class="rel">
     <fieldset><legend>Statistics</legend>
         <h4>Cutoff: {{ cutoff }}</h4>
@@ -25,6 +26,7 @@
     </fieldset>
 </div>
 
+<h2>{{ doc.title|safe }} ({{ doc.docid }})</h2>
 
 {{ content|safe }}
 
