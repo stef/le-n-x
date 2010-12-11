@@ -19,7 +19,7 @@
 import re
 
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
-CELEXRE=re.compile(r'CELEX:[0-9A-Z:()]*:HTML')
+CELEXRE=re.compile(r'CELEX:[0-9A-Z:()]*(:HTML)?')
 from lenx.view.doc import DOC
 
 CELEXCODES={
