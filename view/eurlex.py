@@ -21,6 +21,7 @@ import re
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 CELEXRE=re.compile(r'CELEX:[0-9A-Z:()]*(:HTML)?')
 from lenx.view.doc import DOC
+from lenx.view.db import Docs
 
 CELEXCODES={
     "1": { "Sector": "Treaties",
@@ -125,19 +126,21 @@ CELEXCODES={
     }
 
 class Eurlex(DOC):
-    def __init__(self, celexid,*args,**kwargs):
-        (code,lang)=celexid.split(":")[1:3]
-        st=7 if code[6].isalpha() else 6
-        self.__dict__['sector'] = code[0]
-        self.__dict__['year'] = code[1:5]
-        self.__dict__['doctype'] = code[5:st]
-        self.__dict__['refno'] = code[st:]
-        self.__dict__['lang'] = lang
-        self.__dict__['type'] = 'eurlex'
-        raw=CACHE.fetchUrl(EURLEXURL+self.celexid+":HTML")
-        if not 'docid' in kwargs:
-            kwargs['docid']=self.celexid
-        super(Eurlex,self).__init__(raw=raw, *args, **kwargs)
+    def __init__(self, docid=None, *args,**kwargs):
+        if docid:
+            (code,lang)=docid.split(":")[1:3]
+            st=7 if code[6].isalpha() else 6
+            self.__dict__['sector'] = code[0]
+            self.__dict__['year'] = code[1:5]
+            self.__dict__['doctype'] = code[5:st]
+            self.__dict__['refno'] = code[st:]
+            self.__dict__['lang'] = lang
+            self.__dict__['type'] = 'eurlex'
+            kwargs['docid']=self.docid
+            if not Docs.find_one({"docid": self.docid}):
+                raw=CACHE.fetchUrl(EURLEXURL+self.docid+":HTML")
+                kwargs['raw']=raw
+        super(Eurlex,self).__init__(*args, **kwargs)
 
     def _getbody(self):
         return unicode(str(BeautifulSoup(self.raw).find(id='TexteOnly')), 'utf8')
@@ -156,8 +159,8 @@ class Eurlex(DOC):
             return self.__dict__[name]
         if name == 'typeDesc':
             return CELEXCODES[self.sector]['Document Types'][self.doctype] if self.doctype != 'C' else CELEXCODES[self.sector]['Sector']
-        if name == 'celexid':
-            return "CELEX:%s%s%s%s:%s" % (self.sector, self.year,self.doctype,self.refno,self.lang)
+        if name == 'docid':
+            self.__dict__['docid']="CELEX:%s%s%s%s:%s" % (self.sector, self.year,self.doctype,self.refno,self.lang)
         if name == 'title':
             self.__dict__['title']=self._gettitle()
         if name == 'subject':
