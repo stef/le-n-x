@@ -69,6 +69,7 @@ class Coment(DOC):
                         models.tfidf.add_input_document(self.termcnt.keys())
                         self.save()
                     return
+            kwargs['docid']=docid
         super(Coment,self).__init__(*args, **kwargs)
 
     def __unicode__(self):
