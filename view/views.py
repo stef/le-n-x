@@ -26,6 +26,7 @@ from lenx.view.models import Pippi, TfIdf, tfidf
 from lenx.view.doc import Doc
 from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 from lenx.view.forms import UploadForm, ImportForm
+from lenx.view.cmt import unescape
 from operator import itemgetter
 import re, pymongo, cgi
 import tidy
@@ -41,27 +42,6 @@ def htmlPippi(doc,matches,frag):
 
 def index(request):
     return render_to_response('index.html')
-
-def unescape(text):
-    def fixup(m):
-        text = m.group(0)
-        if text[:2] == "&#":
-            # character reference
-            try:
-                if text[:3] == "&#x":
-                    return unichr(int(text[3:-1], 16))
-                else:
-                    return unichr(int(text[2:-1]))
-            except ValueError:
-                pass
-        else:
-            # named entity
-            try:
-                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
-            except KeyError:
-                pass
-        return text # leave as is
-    return re.sub("&#?\w+;", fixup, text)
 
 def anchorArticles(txt):
     # find all textnodes starting with Article, wrapping this in a named <a> and prepending a hoverable link to this anchor
