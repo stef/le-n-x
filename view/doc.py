@@ -36,16 +36,20 @@ def str_base(num, base=len(SLUGCHARS), numerals = SLUGCHARS):
         num //= base
     return sign + result
 
-
 def Doc(*args, **kwargs):
-    if 'd' in kwargs and re.match(CELEXRE,kwargs['d']['docid']):
-        return Eurlex(kwargs['d']['docid'])
+    if 'docid' in kwargs:
+        for (t,c,r) in DOCTYPES:
+            if re.match(r,kwargs['docid']):
+                return c(*args,**kwargs)
+    if 'd' in kwargs:
+        for (t,c,r) in DOCTYPES:
+            if kwargs['d'].get('type','') == t or re.match(r,kwargs['d'].get('docid','')):
+                return c(*args,**kwargs)
     if 'oid' in kwargs:
-        did=Docs.find_one({"_id": kwargs['oid']},['docid'])['docid']
-        if re.match(CELEXRE,did):
-            return Eurlex(did)
-    if 'docid' in kwargs and re.match(CELEXRE,kwargs['docid']):
-        return Eurlex(kwargs['docid'])
+        dt=Docs.find_one({"_id": kwargs['oid']},['type'])['type']
+        for (t,c,r) in DOCTYPES:
+            if dt == t:
+                return c(*args,**kwargs)
     return DOC(*args,**kwargs)
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
@@ -237,4 +241,7 @@ from operator import itemgetter
 import pymongo, hashlib, re
 import models
 from lenx.view.eurlex import CELEXRE, Eurlex
+from lenx.view.cmt import CMTRE, Coment
 
+DOCTYPES=(('eurlex',Eurlex,CELEXRE),
+         ('co-ment',Coment,CMTRE))

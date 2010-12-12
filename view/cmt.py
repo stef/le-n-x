@@ -18,9 +18,9 @@
 
 import re, urllib2, htmlentitydefs
 
-CMTRE = re.compile('^\W*(https?:\/\/)(.+\.co-ment.com)\/text(\/[a-zA-Z0-9]+\/).+\/?\W*$', re.I | re.U)
+CMTRE = re.compile(r'^\W*(https?:\/\/)?(.+\.co-ment.com)(/text)?(\/[a-zA-Z0-9]+)(/.+/?)?\W*$', re.I | re.U)
 from lenx.view.doc import DOC, Doc
-from lenx.view.models import tfidf
+from lenx.view.db import Docs
 
 def unescape(text):
     def fixup(m):
@@ -44,26 +44,32 @@ def unescape(text):
     return re.sub("&#?\w+;", fixup, text)
 
 class Coment(DOC):
-    def __init__(self, url,*args,**kwargs):
+    def __init__(self, docid=None, *args,**kwargs):
         self.__dict__['type'] = 'co-ment'
-        hostValidator = CMTRE.search(url)
-        if hostValidator and hostValidator.group(0) == url:
-            context = urllib2.urlopen(url).read()
-            soup = BeautifulSoup(context)
-            title=''.join(soup.title.findAll(text=True)).strip().encode('utf8')
-            docid=kwargs.get('docid',"%s%s" % (hostValidator.group(2), hostValidator.group(3))).encode('utf8')
+        if docid:
+            hostValidator = CMTRE.search(docid)
+            if hostValidator and hostValidator.group(0) == docid and hostValidator.group(1):
+                url=docid
+                if hostValidator.group(1) or hostValidator.group(3) or hostValidator.group(5):
+                    docid=("%s%s" % (hostValidator.group(2), hostValidator.group(4))).encode('utf8')
+                    kwargs['docid']=docid
+                if  not Docs.find_one({"docid": docid}):
+                    context = urllib2.urlopen(url).read()
+                    soup = BeautifulSoup(context)
+                    self.__dict__['title']=''.join(soup.title.findAll(text=True)).strip().encode('utf8')
 
-            dataurl = "%s%s/text%s%s" % (hostValidator.group(1), hostValidator.group(2), hostValidator.group(3), 'comments/')
-            data = urllib2.urlopen(dataurl).read()
-            soup = BeautifulSoup(data)
+                    dataurl = "%s%s/text%s%s" % (hostValidator.group(1), hostValidator.group(2), hostValidator.group(4), '/comments/')
+                    data = urllib2.urlopen(dataurl).read()
+                    soup = BeautifulSoup(data)
 
-            raw = '<html><head><title>%s</title><meta http-equiv="content-type" content="text/html; charset=utf-8" /></head><body>%s</body></html>' % (title, unescape(unicode(soup.find(attrs={'id' : 'textcontainer'}))).encode('utf8'))
-            d=Doc(raw=raw,docid=docid)
-            if not 'stems' in d.__dict__ or not d.stems:
-                # let's calculate and cache the results
-                tfidf.add_input_document(d.termcnt.keys())
-                d.save()
-        super(Coment,self).__init__(raw=raw, *args, **kwargs)
+                    kwargs['raw'] = '<html><head><title>%s</title><meta http-equiv="content-type" content="text/html; charset=utf-8" /></head><body>%s</body></html>' % (self.title, unescape(unicode(soup.find(attrs={'id' : 'textcontainer'}))).encode('utf8'))
+                    super(Coment,self).__init__(*args, **kwargs)
+                    if not 'stems' in self.__dict__ or not self.stems:
+                        # let's calculate and cache the results
+                        models.tfidf.add_input_document(self.termcnt.keys())
+                        self.save()
+                    return
+        super(Coment,self).__init__(*args, **kwargs)
 
     def __unicode__(self):
         return unicode(self.title)
@@ -76,7 +82,8 @@ CACHE=Cache.Cache(settings.CACHE_PATH)
 from BeautifulSoup import BeautifulSoup
 from datetime import date
 import urllib2
+import models
 
 if __name__ == "__main__":
     url='https://actamotion.co-ment.com/text/LbtpIg2HWfs/view/'
-    Coment(url)
+    Coment(url=url)
