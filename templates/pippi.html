@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load lenx %}
+{% block main %}
+<h1>Related to {{refdoc}}</h1>
+Stats: <ul id="stats">
+{% for stat in stats %}
+<li>{{stat.text}}</li>
+{% endfor %}
+</ul>
+<table class="listing">
+  <thead>
+  <tr><td>Type</td><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
+  </thead>
+{% for doc in docs %}
+    <tr>
+    <td>
+      {{doc.type}}
+    </td>
+    <td>
+       <a href="{% root_url %}/doc/{{doc.id}}">{{doc.title}}</a>
+    </td>
+    <td>
+       {{doc.docs}}/{{doc.indexed}}
+    </td>
+    {% if doc.job %}
+    <td colspan="2">
+       <a href='{%root_url%}/job?d1={{refdoc}}&d2={{doc.id}}'>Find pippies</a>
+    </td>
+    {% else %}
+    <td>
+       <a href='{%root_url%}/pippies?doc={{doc.oid}}'>{{doc.pippies}}</a>
+    </td>
+    <td>
+       <a href='{%root_url%}/frags?doc={{doc.oid}}'>{{doc.frags}}</a>
+    </td>
+    {% endif %}
+    <td>
+       <div class="tagcloud">
+            {% for tag in doc.tags %}
+            <span class="size{{tag.weight}}">{{tag.tag}}</span>
+            {% endfor %}
+       </div>
+    </td>
+    </tr>
+{% endfor %}
+</table>
+{% endblock %}
