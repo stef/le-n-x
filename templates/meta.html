@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load lenx %}
+{% block main %}
+<div class="rel">
+    <fieldset> <legend>Related docs</legend>
+        <ul>
+        {% for dd in related %}
+        <li><a href="/doc/{{ dd.docid }}?cutoff={{cutoff}}">{% if dd.title %}{{dd.title|safe}}{%else%}{{dd.docid|safe}}{%endif%}</a><hr /></li>
+        {% endfor %}
+        </ul>
+    </fieldset>
+</div>
+<h1>Metadata for {{ doc.title|safe }} ({{ doc.docid }})</h1>
+<div class="metadata">
+  {% for class, items in metadata.items %}
+     <div id="{{class}}"><h2>{{class}}</h2>
+     {% for k,v in items.items %}
+         <div id="{{class}}/{{k}}"><h3>{{k}}</h3>
+         <ul>
+         {% for i in v %}
+             <li>{{i|safe}}</li>
+         {% endfor %}
+         </ul>
+         </div>
+     {% endfor %}
+     </div>
+  {% endfor %}
+</div>
+{% endblock %}

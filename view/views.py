@@ -428,3 +428,19 @@ def search(request):
     template_vars['getparams']=request.GET.urlencode()
     template_vars['q']=q
     return render_to_response('search.html', template_vars)
+
+def metaView(request,doc=None):
+    if not doc:
+        return render_to_response('error.html', {'error': 'Missing document!'})
+    try:
+        d = Doc(docid=doc)
+    except:
+        form = UploadForm({'docid': doc})
+        return render_to_response('upload.html', { 'form': form, })
+
+    relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=5))} }, ['docid','title'])
+    return render_to_response('meta.html', {'doc': d,
+                                            'related': relDocs,
+                                            'metadata': d.metadata,
+                                            })
+
