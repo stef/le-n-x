@@ -140,7 +140,7 @@ class Eurlex(DOC):
             if not Docs.find_one({"docid": self.docid}):
                 raw=CACHE.fetchUrl(EURLEXURL+self.docid+":HTML")
                 kwargs['raw']=raw
-                self.__dict__['metada'] = self.extractMetadata()
+                self.__dict__['metadata'] = self.extractMetadata()
         super(Eurlex,self).__init__(*args, **kwargs)
 
     def _getbody(self):
@@ -216,13 +216,7 @@ class Eurlex(DOC):
         if dates:
             result['dates']={}
             for (k,v) in [y.split(": ") for y in fltr([x.strip() for x in dates.parent.findNextSibling('ul').findAll(text=True) if x.strip()])]:
-                note=''
-                dte=None
-                try:
-                    (dte, note) = v.split("; ")
-                except:
-                    dte=v
-                result['dates'][k]={'date': dte, 'note': note}
+                result['dates'][k]=[v]
         for t,l in [("Classifications",
                      ["EUROVOC descriptor:", "Subject matter:"]),
                     ("Miscellaneous information",
@@ -247,12 +241,14 @@ class Eurlex(DOC):
                 self.fetchMeta(s,k,result[t])
 
         # classification
+        # TODO see http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX:32001D0148:EN:NOT
+        # BUG: it has multiple dircodes!!!
         key=soup.find('strong', text="Directory code:")
         dircodes=None
         if key:
             dircodes=[str(x).strip() for x in key.findParent('li').contents if x and str(x).strip() and not x == key.parent and (not 'name' in dir(x) or not x.name=='br')]
         if dircodes:
-            result.get('Classifications',{})['Directory Code']=str(dircodes[0]).strip()
+            result.get('Classifications',{})['Directory Code']=[str(dircodes[0]).strip()]
             result.get('Classifications',{})['Directories']=[x for x in dircodes[1:] if not str(x).strip() == '/']
         # classification
         return result
