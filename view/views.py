@@ -178,7 +178,8 @@ def listDocs(request):
            'pippies': len(doc.pippies),
            'docs': len(doc.getRelatedDocIds()),
            'tags': doc.autoTags(25) }
-          for doc in (Doc(d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
+          #for doc in (Doc(d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
+          for doc in (Doc(d=data) for data in Docs.find({}))]
     return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
 
 def createDoc(request):
