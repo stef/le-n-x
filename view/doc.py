@@ -77,10 +77,11 @@ class DOC(object):
                 'pippiDocs' : [],
                 'pippiDocsLen' : 0,
                 'rawid' : None,
-                'metadata' : {},
                 })
             if not 'type' in self.__dict__:
                 self.__dict__['type']='raw'
+            if not 'metadata' in self.__dict__:
+                self.__dict__['metadata']={}
             if raw:
                 self.raw=raw
             self.save()
