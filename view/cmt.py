@@ -48,17 +48,17 @@ class Coment(DOC):
         self.__dict__['type'] = 'co-ment'
         if docid:
             hostValidator = CMTRE.search(docid)
-            if hostValidator and hostValidator.group(0) == docid and hostValidator.group(1):
-                url=docid
+            if hostValidator and hostValidator.group(0) == docid:
                 if hostValidator.group(1) or hostValidator.group(3) or hostValidator.group(5):
                     docid=("%s%s" % (hostValidator.group(2), hostValidator.group(4))).encode('utf8')
                     kwargs['docid']=docid
-                if  not Docs.find_one({"docid": docid}):
+                url="https://%s/text/%s/view/" % (hostValidator.group(2), hostValidator.group(4))
+                if not Docs.find_one({"docid": docid}):
                     context = urllib2.urlopen(url).read()
                     soup = BeautifulSoup(context)
-                    self.__dict__['title']=''.join(soup.title.findAll(text=True)).strip().encode('utf8')
+                    self.__dict__['title']=unescape(unicode(''.join(soup.title.findAll(text=True)))).strip().encode('utf8')
 
-                    dataurl = "%s%s/text%s%s" % (hostValidator.group(1), hostValidator.group(2), hostValidator.group(4), '/comments/')
+                    dataurl = "https://%s/text%s/comments/" % (hostValidator.group(2), hostValidator.group(4))
                     data = urllib2.urlopen(dataurl).read()
                     soup = BeautifulSoup(data)
 
