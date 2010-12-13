@@ -140,6 +140,7 @@ class Eurlex(DOC):
             if not Docs.find_one({"docid": self.docid}):
                 raw=CACHE.fetchUrl(EURLEXURL+self.docid+":HTML")
                 kwargs['raw']=raw
+                self.__dict__['metada'] = self.extractMetadata()
         super(Eurlex,self).__init__(*args, **kwargs)
 
     def _getbody(self):
@@ -165,6 +166,8 @@ class Eurlex(DOC):
             self.__dict__['title']=self._gettitle()
         if name == 'subject':
             self.__dict__['subject']=self._getsubj()
+        if name == 'metadata':
+            self.__dict__['metadata']=self.extractMetadata()
         return super(Eurlex,self).__getattr__(name)
 
     def __unicode__(self):
@@ -188,14 +191,27 @@ class Eurlex(DOC):
     def _getsubj(self):
         return self._getHTMLMetaData('DC.subject')
 
+    def fetchMeta(self,soup,name,result):
+        key=soup.find('strong', text=name)
+        if key:
+            res=[[]]
+            for line in key.findParent('li').contents:
+                if line and str(line).strip() and not line == key.parent:
+                    if (not 'name' in dir(line) or not line.name=='br'):
+                        res[-1].append(str(line).strip())
+                    elif res[-1]:
+                        res[-1]=' '.join(res[-1])
+                        res.append([])
+            if isinstance(res[-1],list):
+                res[-1]=' '.join(res[-1])
+            if res[0]:
+                result[name] = res
+
     def extractMetadata(self):
-        raw = urllib2.urlopen("%s%s%s" % (EURLEXURL, self.celexid, ':NOT')).read()
+        raw=CACHE.fetchUrl(EURLEXURL+self.docid+":NOT")
         soup = BeautifulSoup(raw.decode('utf8'))
         result={}
-        print soup
-        eurovocs=soup.find('strong', text="EUROVOC descriptor:")
-        if eurovocs:
-            result['eurovocs']=fltr([''.join(x.findAll(text=True)).strip() for x in eurovocs.parent.parent.findAll('a')])
+        # dates
         dates=soup.find('h2',text="Dates")
         if dates:
             result['dates']={}
@@ -206,30 +222,52 @@ class Eurlex(DOC):
                     (dte, note) = v.split("; ")
                 except:
                     dte=v
-                if not dte == '99/99/9999':
-                    (d,m,y)=[int(e) for e in dte.split('/')]
-                    dte=date(y,m,d)
                 result['dates'][k]={'date': dte, 'note': note}
+        for t,l in [("Classifications",
+                     ["EUROVOC descriptor:", "Subject matter:"]),
+                    ("Miscellaneous information",
+                     ["Author:","Form:","Addressee:","Additional information:"]),
+                    ("Procedure",
+                     ["Procedure number:","Legislative history:"]),
+                    ("Relationship between documents",
+                     ["Treaty:",
+                      "Legal basis:",
+                      "Amendment to:",
+                      "Amended by:",
+                      "Consolidated versions:",
+                      "Subsequent related instruments:",
+                      "Affected by case:",
+                      "Instruments cited:"])]:
+            s=soup.find('h2',text=t)
+            if not s: continue
+            s=s.findNext('ul')
+            if not s: continue
+            result[t]={}
+            for k in l:
+                self.fetchMeta(s,k,result[t])
+
+        # classification
+        key=soup.find('strong', text="Directory code:")
+        dircodes=None
+        if key:
+            dircodes=[str(x).strip() for x in key.findParent('li').contents if x and str(x).strip() and not x == key.parent and (not 'name' in dir(x) or not x.name=='br')]
+        if dircodes:
+            result.get('Classifications',{})['Directory Code']=str(dircodes[0]).strip()
+            result.get('Classifications',{})['Directories']=[x for x in dircodes[1:] if not str(x).strip() == '/']
+        # classification
         return result
-        #cls=soup.h2(text="Classifications")
-        #print cls
-        #if cls:
-        #    print 'class', fltr(cls.ul.findAll(text=True)),
-        #misc=soup.h2(text="Miscellaneous information")
-        #print misc
-        #if misc:
-        #    print 'misc', fltr(misc.ul.findAll(text=True)),
-        #proc=soup.h2(text="Procedure")
-        #print proc
-        #if proc:
-        #    print 'proc', fltr(proc.ul.findAll(text=True)),
-        #rels=soup.h2(text="Relationship between documents")
-        #print rels
-        #if rels:
-        #    print 'rels', fltr(rels.ul.findAll(text=True)),
 
 def fltr(lst):
     return [x for x in lst if not re.search(r"\s*\\n',\s*'\s*",x)]
+
+from django.core.management import setup_environ
+from lenx import settings
+setup_environ(settings)
+from lenx.brain import cache as Cache
+CACHE=Cache.Cache(settings.CACHE_PATH)
+from BeautifulSoup import BeautifulSoup
+from datetime import date
+import urllib2
 
 if __name__ == "__main__":
     print Eurlex("CELEX:31994D0006:EN:HTML")
@@ -251,12 +289,3 @@ if __name__ == "__main__":
     html=f.readlines()
     f.close()
     pprint.pprint(ecom.extractMetadata(html))
-
-from django.core.management import setup_environ
-from lenx import settings
-setup_environ(settings)
-from lenx.brain import cache as Cache
-CACHE=Cache.Cache(settings.CACHE_PATH)
-from BeautifulSoup import BeautifulSoup
-from datetime import date
-import urllib2
