@@ -51,8 +51,9 @@ div.rel { float: right; max-width: 350px; }
 .msgbox_close { position: absolute; right: 10px; top: 2px; color:red; font-size: 12pt; font-weight: bold; cursor: pointer; }
 small {font-size: 0.5em}
 table.listing { width: 95%; margin-left: auto; margin-right: auto;}
-table.listing thead { color: #ffffff ; background-color: #0088DD; border: white 1px solid; }
+table.listing thead { font-weight: bold; color: #ffffff ; background-color: #0088DD; border: white 1px solid; }
 table.listing thead a {color: #ffffff;}
+table.listing thead td { padding-right: 6px; padding-left: 6px; }
 table.listing tr td { border-bottom: #0088dd 1px solid; }
 .hilite-query{background: rgba(0, 120, 240, 0.05); position: relative;}
 input[disabled] {border: 1px solid grey;font-color:grey; background-color:#eeeeee;}
@@ -67,3 +68,6 @@ ul.dropdown ul li a { font-size: 0.8em; }
 ul.dropdown ul ul { top: 1px; left: 99%; }
 ul.dropdown li:hover > ul { visibility: visible; }
 ul.dropdown li { padding: 10px; border-style: solid; border-width: 1px; border-color: #22AAFF; background-color: #0088DD; }
+.metaclass { width: 20%; display: table-cell; font-size: 0.8em; margin-bottom: 14px; border: 1px solid #0088DD; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; margin: 15px; padding: 5px;}
+.metadata fieldset { border: None; }
+.metadata legend { font-weight: bold; }
