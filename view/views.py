@@ -451,7 +451,7 @@ def starred(request):
            'pippies': len(doc.pippies),
            'docs': len(doc.getRelatedDocIds()),
            'tags': doc.autoTags(25) }
-          for doc in (Doc(oid=pymongo.objectid.ObjectId(oid)) for oid in request.session['starred'])]
+          for doc in (Doc(oid=pymongo.objectid.ObjectId(oid)) for oid in request.session.get('starred',()))]
     return render_to_response('corpus.html', { 'docs': docs,
                                                'stats': getOverview(),
                                                'starred': request.session['starred'],
