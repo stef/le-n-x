@@ -178,7 +178,7 @@ def listDocs(request):
           for doc in (Doc(d=data) for data in Docs.find({}))]
     return render_to_response('corpus.html', { 'docs': docs,
                                                'stats': getOverview(),
-                                               'starred': request.session['starred'],
+                                               'starred': request.session.get('starred', ()),
                                                'title': 'Complete Corpus of pippi longstrings'})
 
 def createDoc(request):
