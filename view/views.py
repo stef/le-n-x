@@ -28,6 +28,7 @@ from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 from lenx.view.forms import UploadForm
 from operator import itemgetter
 import re, pymongo, cgi
+from pymongo.objectid import ObjectId
 import tidy
 import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
@@ -80,6 +81,7 @@ def annotatePippi(d,pippi,cutoff=7):
         ])
 
 def docView(request,doc=None,cutoff=20):
+    doc=request.META['REQUEST_URI'][5:]   # workaround for https://issues.apache.org/bugzilla/show_bug.cgi?id=20036
     if request.GET.get('cutoff', 0):
         cutoff = int(request.GET['cutoff'])
     if not doc or not cutoff:
@@ -299,13 +301,13 @@ def frags(request):
     cutoff=None
     pippifilter=None
     try:
-        docfilter =  pymongo.objectid.ObjectId(cgi.escape(request.GET.get('doc','')))
+        docfilter = ObjectId(cgi.escape(request.GET.get('doc','')))
     except:
         pass
     if docfilter:
         filtr['doc']=docfilter
     try:
-        pippifilter = pymongo.objectid.ObjectId(cgi.escape(request.GET.get('pippi','')))
+        pippifilter = ObjectId(cgi.escape(request.GET.get('pippi','')))
     except:
         pass
     if pippifilter:
@@ -354,7 +356,7 @@ def pippies(request):
         pass
     if cutoff: filtr['len']={ '$gte': cutoff }
     try:
-        docfilter =  pymongo.objectid.ObjectId(cgi.escape(request.GET.get('doc','')))
+        docfilter = ObjectId(cgi.escape(request.GET.get('doc','')))
     except:
         pass
     if docfilter:
@@ -451,7 +453,7 @@ def starred(request):
            'pippies': len(doc.pippies),
            'docs': len(doc.getRelatedDocIds()),
            'tags': doc.autoTags(25) }
-          for doc in (Doc(oid=pymongo.objectid.ObjectId(oid)) for oid in request.session.get('starred',()))]
+          for doc in (Doc(oid=ObjectId(oid)) for oid in request.session.get('starred',()))]
     return render_to_response('corpus.html', { 'docs': docs,
                                                'stats': getOverview(),
                                                'starred': request.session.get('starred',()),
