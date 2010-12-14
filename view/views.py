@@ -454,5 +454,5 @@ def starred(request):
           for doc in (Doc(oid=pymongo.objectid.ObjectId(oid)) for oid in request.session.get('starred',()))]
     return render_to_response('corpus.html', { 'docs': docs,
                                                'stats': getOverview(),
-                                               'starred': request.session['starred'],
+                                               'starred': request.session.get('starred',()),
                                                'title': 'Your starred documents'})
