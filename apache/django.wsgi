@@ -1,4 +1,8 @@
 import os, sys
+os.environ['PYTHON_EGG_CACHE'] = '/tmp'
+import site
+site.addsitedir('/root/lenx/virtualenv/lib/python2.6/site-packages')
+
 
 apache_configuration= os.path.dirname(__file__)
 project = os.path.dirname(apache_configuration)

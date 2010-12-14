@@ -106,3 +106,5 @@ try:
     from lenx.local_settings import *
 except:
     pass
+
+MEDIA_URL = ROOT_URL+'/media'
