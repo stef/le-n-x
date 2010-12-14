@@ -24,13 +24,13 @@
         <ul class="dropdown dropdown-horizontal">
           {% block menu %}
           {% endblock %}
-          <li><a href="{% root_url %}/create">Create</a>
+          <li><a href="{% root_url %}/create">Create</a></li>
           <li>Browse
-          <ul>
+           <ul>
             <li><a href="{% root_url %}/all">All Documents</a></li>
             <li><a href="{% root_url %}/starred">Starred Documents</a></li>
             <li><a href="{% root_url %}/pippies">Pippies</a></li>
-          </ul></li>
+           </ul>
           </li>
         </ul>
         <form action="{% root_url %}/search"><div id="searchBar"><input type="text" name="q"/><input type="submit" value="search" class="sbutton"/></div> </form>
