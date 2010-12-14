@@ -14,3 +14,5 @@ The django backend has some dependencies:
  * "pyhunspell":http://code.google.com/p/pyhunspell
  * "beautifulsoup":http://www.crummy.com/software/BeautifulSoup/
  * "nltk":http://www.nltk.org/
+ * psyco
+ * pymongo
