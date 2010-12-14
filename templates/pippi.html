@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% load lenx %}
+
+{% block menu %}
+  <li><a href="/meta/{{doc.docid}}">Metadata</a></li>
+{% endblock %}
+
 {% block main %}
-<h1>Related to {{refdoc}}</h1>
+<h2 title="{{refdoc.title|safe}}">Related to {{refdoc|safe|truncatewords:10}}</h2>
 Stats: <ul id="stats">
 {% for stat in stats %}
 <li>{{stat.text}}</li>
@@ -9,15 +14,18 @@ Stats: <ul id="stats">
 </ul>
 <table class="listing">
   <thead>
-  <tr><td>Type</td><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
+   <tr><td>&#x2605;</td><td>Type</td><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
   </thead>
 {% for doc in docs %}
-    <tr>
+    <tr id="{{doc.oid}}" class="{% if doc.oid in starred %}starred{%endif%}">
+    <td>
+      <a href="{% root_url %}/toggle_star/{{ doc.oid }}">{% if doc.oid in starred %}&#x2605;{%else%}&#x2606;{%endif%}</a>
+    </td>
     <td>
       {{doc.type}}
     </td>
     <td>
-       <a href="{% root_url %}/doc/{{doc.id}}">{{doc.title}}</a>
+       <a title="{{doc.title|safe}}" href="{% root_url %}/doc/{{doc.id}}">{{doc.title|safe|truncatewords:30}}</a>
     </td>
     <td>
        {{doc.docs}}/{{doc.indexed}}

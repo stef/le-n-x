@@ -25,16 +25,14 @@ from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from lenx.view.models import Pippi, TfIdf, tfidf
 from lenx.view.doc import Doc
 from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
-from lenx.view.forms import UploadForm, ImportForm
-from lenx.view.cmt import unescape
+from lenx.view.forms import UploadForm
 from operator import itemgetter
 import re, pymongo, cgi
 import tidy
 import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 from lenx.brain import lcs
-import httplib
-import re, htmlentitydefs
+import re
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -169,18 +167,19 @@ def getOverview():
     return stats
 
 def listDocs(request):
-    docslen=Docs.count()
     docs=[{'id': doc.docid,
-           'oid': doc._id,
+           'oid': str(doc._id),
            'indexed': doc.pippiDocsLen,
            'title': doc.title,
            'frags': doc.getFrags().count(),
            'pippies': len(doc.pippies),
            'docs': len(doc.getRelatedDocIds()),
            'tags': doc.autoTags(25) }
-          #for doc in (Doc(d=data) for data in Docs.find({ "pippiDocsLen" : {"$gt": docslen/10 }}))]
           for doc in (Doc(d=data) for data in Docs.find({}))]
-    return render_to_response('corpus.html', { 'docs': docs, 'stats': getOverview(), })
+    return render_to_response('corpus.html', { 'docs': docs,
+                                               'stats': getOverview(),
+                                               'starred': request.session['starred'],
+                                               'title': 'Complete Corpus of pippi longstrings'})
 
 def createDoc(request):
     form = UploadForm(request.POST)
@@ -201,42 +200,23 @@ def createDoc(request):
         d.save()
     return HttpResponseRedirect('/doc/%s' % (d.docid))
 
-def importDoc(request):
-    if request.method == 'POST':
-        form = ImportForm(request.POST)
-        if form.is_valid():
-            url=form.cleaned_data['url']
-            docid=form.cleaned_data['docid']
-            hostValidator = re.compile('^\W*https?:\/\/(.+\.co-ment.com)(\/text\/[a-zA-Z0-9]+\/).+\/?\W*$', re.I | re.U).search(url)
-            if not hostValidator or hostValidator.group(0) != url:
-                return render_to_response('error.html', {'error': 'Wrong co-ment URL: %s!' % (url)})
-            HOSTNAME = hostValidator.group(1)
-            # /text/JplAuXN9be2/comments
-            try:
-                conn = httplib.HTTPSConnection(HOSTNAME)
-                conn.putrequest('GET', hostValidator.group(2)+'comments/')
-                conn.endheaders()
-                response = conn.getresponse()
-                html = response.read()
-                soup = BeautifulSoup(html)
-            except:
-                return render_to_response('error.html', {'error': 'Cannot download URL, please try again!'})
-            #print unicode(unescape(''.join(soup.find(attrs={'id' : 'textcontainer'}))))
-            # TODO DC.subject parse
-            raw = u'<html><head><title>%s</title><meta name="DC.subject" content="%s" /> <meta http-equiv="content-type" content="text/html; charset=utf-8" /> </head><body>%s</body></html>' % (docid, url, unescape(unicode(soup.find(attrs={'id' : 'textcontainer'}))))
-            d=Doc(raw=raw.encode('utf8'),docid=docid.encode('utf8'))
-            if not 'stems' in d.__dict__ or not d.stems:
-                # let's calculate and cache the results
-                tfidf.add_input_document(d.termcnt.keys())
-                d.save()
-            return HttpResponseRedirect('/doc/%s' % (d.title))
-    else:
-        form = ImportForm()
-    return render_to_response('import.html', { 'form': form, })
-
 def job(request):
     d1=request.GET.get('d1','')
     d2=request.GET.get('d2','')
+    try:
+        D1=Doc(docid=d1)
+    except:
+        return render_to_response('error.html', {'error': 'wrong document: "%s"!' % d1})
+    try:
+        D2=Doc(docid=d2)
+    except:
+        return render_to_response('error.html', {'error': 'specify document: "%s"!' % d2})
+    lcs.pippi(D1,D2)
+    return HttpResponseRedirect('/doc/%s' % (d1))
+
+def jobs(request):
+    d1=request.POST.get('refdoc','')
+    d2=request.POST.get('otherdocs','')
     try:
         D1=Doc(docid=d1)
     except:
@@ -255,7 +235,7 @@ def pippi(request,refdoc=None):
     docs=sorted([(doc['docid'],doc['_id']) for doc in Docs.find({},['_id','docid'])])
     docslen=Docs.count()
     docs=[{'id': doc.docid,
-           'oid': doc._id,
+           'oid': str(doc._id).encode('utf8'),
            'indexed': doc.pippiDocsLen,
            'title': doc.title,
            'frags': doc.getFrags().count(),
@@ -265,7 +245,7 @@ def pippi(request,refdoc=None):
            'docs': len(doc.getRelatedDocIds()),
            'tags': doc.autoTags(25) }
           for doc in (Doc(oid=oid) for d,oid in docs if not oid == refdoc._id)]
-    return render_to_response('pippi.html', { 'docs': docs, 'stats': getOverview(), 'refdoc': refdoc.docid })
+    return render_to_response('pippi.html', { 'docs': docs, 'stats': getOverview(), 'refdoc': refdoc.docid, 'starred': request.session.get('starred',set()) })
 
 def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })
@@ -444,3 +424,35 @@ def metaView(request,doc=None):
                                             'metadata': d.metadata,
                                             })
 
+
+def toggle_star(request,id=None):
+    if not id:
+        return render_to_response('error.html', {'error': 'Missing id!'})
+    print request.session.items()
+    if not 'starred' in request.session or not request.session['starred']:
+        request.session['starred']=set([])
+    if id in request.session['starred']:
+        s=request.session['starred']
+        s.remove(id)
+        request.session['starred']=s
+        return HttpResponse('False')
+    else:
+        s=request.session['starred']
+        s.add(id)
+        request.session['starred']=s
+        return HttpResponse('True')
+
+def starred(request):
+    docs=[{'id': doc.docid,
+           'oid': str(doc._id),
+           'indexed': doc.pippiDocsLen,
+           'title': doc.title,
+           'frags': doc.getFrags().count(),
+           'pippies': len(doc.pippies),
+           'docs': len(doc.getRelatedDocIds()),
+           'tags': doc.autoTags(25) }
+          for doc in (Doc(oid=pymongo.objectid.ObjectId(oid)) for oid in request.session['starred'])]
+    return render_to_response('corpus.html', { 'docs': docs,
+                                               'stats': getOverview(),
+                                               'starred': request.session['starred'],
+                                               'title': 'Your starred documents'})

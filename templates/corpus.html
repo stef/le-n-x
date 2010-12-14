@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load lenx %}
 {% block main %}
-<h1>Complete Corpus of pippi longstrings</h1>
+<h1>{{title}}</h1>
 Stats: <ul id="stats">
 {% for stat in stats %}
 <li>{{stat.text}}</li>
@@ -9,12 +9,15 @@ Stats: <ul id="stats">
 </ul>
 <table class="listing">
   <thead>
-  <tr><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
+  <tr><td>&#x2605;</td><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
   </thead>
 {% for doc in docs %}
-    <tr>
+    <tr id="{{doc.oid}}" class="{% if doc.oid in starred %}starred{%endif%}">
     <td>
-       {{doc.dist}} <a href="{% root_url %}/doc/{{doc.id}}">{{doc.title}}</a>
+      <a href="{% root_url %}/toggle_star/{{ doc.oid }}">{% if doc.oid in starred %}&#x2605;{%else%}&#x2606;{%endif%}</a>
+    </td>
+    <td>
+       <a title="{{doc.title|safe}}" href="{% root_url %}/doc/{{doc.id}}">{{doc.title|safe|truncatewords:30}}</a>
     </td><td>
        {{doc.docs}}/{{doc.indexed}}
     </td><td>
