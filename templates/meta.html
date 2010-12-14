@@ -1,28 +1,39 @@
 {% extends "base.html" %}
 {% load lenx %}
+
+{% block scripts %}
+<script type="text/javascript" src="{%media_url%}/js/jquery.1.4.2.min.js"></script>
+{% endblock %}
+
+{% block menu %}
+  <li><a href="/pippi/{{doc.docid}}">Pippify</a></li>
+{% endblock %}
+
+{% load lenx %}
 {% block main %}
-<div class="rel">
-    <fieldset> <legend>Related docs</legend>
-        <ul>
-        {% for dd in related %}
-        <li><a href="/doc/{{ dd.docid }}?cutoff={{cutoff}}">{% if dd.title %}{{dd.title|safe}}{%else%}{{dd.docid|safe}}{%endif%}</a><hr /></li>
-        {% endfor %}
-        </ul>
-    </fieldset>
-</div>
-<h1>Metadata for {{ doc.title|safe }} ({{ doc.docid }})</h1>
+<h2 title="{{doc.title|safe}}">Metadata for {{ doc.title|safe|truncatewords:10  }} ({{ doc.docid }})</h2>
 <div class="metadata">
   {% for class, items in metadata.items %}
-     <div id="{{class}}"><h2>{{class}}</h2>
-     {% for k,v in items.items %}
-         <div id="{{class}}/{{k}}"><h3>{{k}}</h3>
-         <ul>
-         {% for i in v %}
-             <li>{{i|safe}}</li>
+     <div class="metaclass" id="{{class}}"><h3>{{class}}</h3>
+         {% for k,v in items.items %}
+             <fieldset id="{{class}}/{{k}}"><legend>{{k}}</legend>
+                 <ul>
+                 {% for i in v %}
+                     <li>{{i|safe}}</li>
+                 {% endfor %}
+                 </ul>
+             </fieldset>
          {% endfor %}
-         </ul>
-         </div>
-     {% endfor %}
+         {% if related.len %}
+         <br style="clear: both;" />
+         <fieldset><legend>Related docs</legend>
+             <ul>
+             {% for dd in related %}
+             <li><a href="/doc/{{ dd.docid }}?cutoff={{cutoff}}">{% if dd.title %}{{dd.title|safe}}{%else%}{{dd.docid|safe}}{%endif%}</a><hr /></li>
+             {% endfor %}
+             </ul>
+         </fieldset>
+         {% endif %}
      </div>
   {% endfor %}
 </div>
