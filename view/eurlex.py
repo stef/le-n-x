@@ -197,15 +197,17 @@ class Eurlex(DOC):
             res=[[]]
             for line in key.findParent('li').contents:
                 if line and str(line).strip() and not line == key.parent:
-                    if (not 'name' in dir(line) or not line.name=='br'):
+                    if not 'name' in dir(line):
                         res[-1].append(str(line).strip())
+                    elif not line.name=='br':
+                        res[-1].append(' '.join(line.findAll(text=True)).strip())
                     elif res[-1]:
                         res[-1]=' '.join(res[-1])
                         res.append([])
             if isinstance(res[-1],list):
                 res[-1]=' '.join(res[-1])
             if res[0]:
-                result[name] = res
+                result[name.strip(':')] = res
 
     def extractMetadata(self):
         raw=CACHE.fetchUrl(EURLEXURL+self.docid+":NOT")
@@ -218,7 +220,7 @@ class Eurlex(DOC):
             for (k,v) in [y.split(": ") for y in fltr([x.strip() for x in dates.parent.findNextSibling('ul').findAll(text=True) if x.strip()])]:
                 result['dates'][k]=[v]
         for t,l in [("Classifications",
-                     ["EUROVOC descriptor:", "Subject matter:"]),
+                     ["Subject matter:","Directory code:"]),
                     ("Miscellaneous information",
                      ["Author:","Form:","Addressee:","Additional information:"]),
                     ("Procedure",
@@ -231,7 +233,7 @@ class Eurlex(DOC):
                       "Consolidated versions:",
                       "Subsequent related instruments:",
                       "Affected by case:",
-                      "Instruments cited:"])]:
+                      "Instruments bited:"])]:
             s=soup.find('h2',text=t)
             if not s: continue
             s=s.findNext('ul')
@@ -241,16 +243,15 @@ class Eurlex(DOC):
                 self.fetchMeta(s,k,result[t])
 
         # classification
+        eurovocs=soup.find('strong', text="EUROVOC descriptor:")
+        if eurovocs:
+            result.get('Classifications',{})["EUROVOC descriptor:"]=[str(x.string).strip() for x in eurovocs.findParent('li').findAll('a')]
         # TODO see http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX:32001D0148:EN:NOT
         # BUG: it has multiple dircodes!!!
-        key=soup.find('strong', text="Directory code:")
-        dircodes=None
-        if key:
-            dircodes=[str(x).strip() for x in key.findParent('li').contents if x and str(x).strip() and not x == key.parent and (not 'name' in dir(x) or not x.name=='br')]
-        if dircodes:
-            result.get('Classifications',{})['Directory Code']=[str(dircodes[0]).strip()]
-            result.get('Classifications',{})['Directories']=[x for x in dircodes[1:] if not str(x).strip() == '/']
-        # classification
+        dc=result.get('Classifications',{}).get('Directory code',[])
+        if dc:
+            result['Classifications']['Directory code']=[dircode.split(' ',1)[0] for dircode in dc if dircode]
+            result['Classifications']['Directories']=[dircode.split(' ',1)[1].split(' / ') for dircode in dc if dircode]
         return result
 
 def fltr(lst):
