@@ -27,7 +27,7 @@
     </fieldset>
 </div>
 
-<h2>{{ doc.title|safe }} ({{ doc.docid }})</h2>
+<h2 title="{{doc.title|safe}}">{{ doc.title|safe|truncatewords:10 }} ({{ doc.docid }})</h2>
 
 {{ content|safe }}
 
