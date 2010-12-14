@@ -45,6 +45,8 @@ div.rel { float: right; max-width: 350px; }
 .hover { width: auto; }
 .anchorLink { color: white; }
 .hover:hover .anchorLink { color: blue; }
+.star { font-size: 1.6em; }
+a.star:hover { text-decoration: none; }
 .pippiNote{display:none;max-width:400px;margin:0.9em;padding:4px;font-size:0.7em;background:rgba(239,239,239,0.9);border:3px solid #0088DD;-moz-border-radius:1em;-webkit-border-radius:1em;overflow:auto;}
 .msgbox { position: fixed; bottom: 8px;  right: 16px; width: 300px; padding: 5px; background: #000000; color: #FFFFFF; min-height: 40px; border: solid 1px #0088DD; opacity: .40; filter: alpha(opacity='40'); z-index: 200; overflow: hidden; overflow-y: auto; display: none; font-size: 0.8em; }
 .msgbox:hover { lightgray; opacity: .90; filter: alpha(opacity='90'); }

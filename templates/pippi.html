@@ -1,6 +1,29 @@
 {% extends "base.html" %}
 {% load lenx %}
 
+{% block scripts %}
+<script type="text/javascript" src="/site_media/js/jquery.1.4.2.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+    $(".star").focus( function(event) { $(this).blur(); return false; });
+    $(".star").click( function(event) {
+        var id = $(this).attr('id');
+        $.ajax({
+          url: "{% root_url %}/toggle_star/"+id.substr(2),
+          cache: false,
+          success: function(html){
+            if(html == 'True') {
+                $('#'+id).html('&#x2605;');
+            } else {
+                $('#'+id).html('&#x2606;');
+            }
+        }
+      });
+    return false;
+    });
+});
+</script>
+{% endblock %}
 {% block menu %}
   <li><a href="/meta/{{doc.docid}}">Metadata</a></li>
 {% endblock %}
@@ -19,7 +42,7 @@ Stats: <ul id="stats">
 {% for doc in docs %}
     <tr id="{{doc.oid}}" class="{% if doc.oid in starred %}starred{%endif%}">
     <td>
-      <a href="{% root_url %}/toggle_star/{{ doc.oid }}">{% if doc.oid in starred %}&#x2605;{%else%}&#x2606;{%endif%}</a>
+      <a href="{% root_url %}/toggle_star/{{ doc.oid }}" class="star" id="id{{ doc.oid }}">{% if doc.oid in starred %}&#x2605;{%else%}&#x2606;{%endif%}</a>
     </td>
     <td>
       {{doc.type}}
