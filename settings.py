@@ -100,6 +100,8 @@ INSTALLED_APPS = (
 
 TINYMCE_COMPRESSOR = True
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+
 try:
     from lenx.local_settings import *
 except:
