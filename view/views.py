@@ -75,7 +75,7 @@ def annotatePippi(d,pippi,cutoff=7):
         '<div class="pippiNote" id="%s">' % pippi['pippi'],
         '<b>also appears in</b>',
         '<ul>',
-        '\n'.join([(itemtpl % (doc.docid, cutoff, doc.title)) for doc in docs]).encode('utf8'),
+        '\n'.join([(itemtpl % (doc.docid, cutoff, doc.title.decode('utf8'))) for doc in docs]).encode('utf8'),
         '</ul>',
         '</div>',
         ])
@@ -217,18 +217,19 @@ def job(request):
     return HttpResponseRedirect('/doc/%s' % (d1))
 
 def jobs(request):
-    d1=request.POST.get('refdoc','')
-    d2=request.POST.get('otherdocs','')
+    rdoc=request.POST.get('doc')
     try:
-        D1=Doc(docid=d1)
+        refdoc=Doc(oid=ObjectId(rdoc))
     except:
-        return render_to_response('error.html', {'error': 'wrong document: "%s"!' % d1})
-    try:
-        D2=Doc(docid=d2)
-    except:
-        return render_to_response('error.html', {'error': 'specify document: "%s"!' % d2})
-    lcs.pippi(D1,D2)
-    return HttpResponseRedirect('/doc/%s' % (d1))
+        return render_to_response('error.html', {'error': 'wrong document: "%s"!' % rdoc})
+    failed=[]
+    for doc in request.POST.getlist('ids'):
+        try:
+            od=Doc(oid=ObjectId(doc))
+        except:
+            failed.append(doc)
+        lcs.pippi(refdoc,od)
+    return HttpResponseRedirect('/doc/%s' % (refdoc.docid))
 
 def pippi(request,refdoc=None):
     if not refdoc:
@@ -237,7 +238,7 @@ def pippi(request,refdoc=None):
     docs=sorted([(doc['docid'],doc['_id']) for doc in Docs.find({},['_id','docid'])])
     docslen=Docs.count()
     docs=[{'id': doc.docid,
-           'oid': str(doc._id).encode('utf8'),
+           'oid': str(doc._id),
            'indexed': doc.pippiDocsLen,
            'title': doc.title,
            'frags': doc.getFrags().count(),
@@ -247,7 +248,11 @@ def pippi(request,refdoc=None):
            'docs': len(doc.getRelatedDocIds()),
            'tags': doc.autoTags(25) }
           for doc in (Doc(oid=oid) for d,oid in docs if not oid == refdoc._id)]
-    return render_to_response('pippi.html', { 'docs': docs, 'stats': getOverview(), 'refdoc': refdoc.docid, 'starred': request.session.get('starred',set()) })
+    return render_to_response('pippi.html', { 'docs': docs,
+                                              'stats': getOverview(),
+                                              'refdoc': refdoc.docid,
+                                              'oid': str(refdoc._id),
+                                              'starred': request.session.get('starred',set()) })
 
 def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })

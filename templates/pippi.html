@@ -21,10 +21,21 @@ $(document).ready(function(){
       });
     return false;
     });
+    $("#jobsform").submit(function() {
+      //var ids = [];
+      var res = false;
+      $('.star:contains("★")').each(function (i) {
+        console.log(this);
+        res = true;
+        $('#jobsform').append('<input type="hidden" name="ids" value="' + $(this).attr('id').substr(2) +'" />');
+      });
+      return res;
+    });
 });
 </script>
 {% endblock %}
 {% block menu %}
+  <li><a href="/doc/{{refdoc}}">View</a></li>
   <li><a href="/meta/{{refdoc}}">Metadata</a></li>
 {% endblock %}
 
@@ -35,6 +46,10 @@ Stats: <ul id="stats">
 <li>{{stat.text}}</li>
 {% endfor %}
 </ul>
+<form id="jobsform" action="/jobs" method="post">
+<input type="hidden" name="doc" value="{{oid}}" />
+<input type="submit" id="jobs" value="Pippi starred" />
+</form>
 <table class="listing">
   <thead>
    <tr><td>&#x2605;</td><td>Type</td><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
