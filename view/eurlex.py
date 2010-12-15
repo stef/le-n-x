@@ -20,7 +20,12 @@ import re
 
 EURLEXURL="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri="
 
-CELEXRE=re.compile(r'CELEX:[0-9A-Z:()]*(:HTML)?')
+SHORTCUTRE=r'([Dd]irective|[Rr]egulation|[Dd]ecision)/([0-9]{4})/([0-9]{,4})/EC'
+CELEXRE=re.compile(r'(?:CELEX:[0-9A-Z:()]*(:HTML)?)|(?:'+SHORTCUTRE+r')')
+SHORTCUTMAP={'Directive': 'L', 'directive': 'L',
+             'Regulation': 'R', 'regulation': 'R',
+             'decision': 'D', 'Decision': 'D'}
+
 from lenx.view.doc import DOC
 from lenx.view.db import Docs
 
@@ -129,13 +134,21 @@ CELEXCODES={
 class Eurlex(DOC):
     def __init__(self, docid=None, *args,**kwargs):
         if docid:
-            (code,lang)=docid.split(":")[1:3]
-            st=7 if code[6].isalpha() else 6
-            self.__dict__['sector'] = code[0]
-            self.__dict__['year'] = code[1:5]
-            self.__dict__['doctype'] = code[5:st]
-            self.__dict__['refno'] = code[st:]
-            self.__dict__['lang'] = lang
+            alias=re.match(SHORTCUTRE,docid)
+            if alias:
+                self.__dict__['sector'] = '3'
+                self.__dict__['year'] = alias.group(2)
+                self.__dict__['doctype'] = SHORTCUTMAP[alias.group(1)]
+                self.__dict__['refno'] = "%04d" % int(alias.group(3))
+                self.__dict__['lang'] = 'EN' # assuming default
+            else:
+                (code,lang)=docid.split(":")[1:3]
+                st=7 if code[6].isalpha() else 6
+                self.__dict__['sector'] = code[0]
+                self.__dict__['year'] = code[1:5]
+                self.__dict__['doctype'] = code[5:st]
+                self.__dict__['refno'] = code[st:]
+                self.__dict__['lang'] = lang
             self.__dict__['type'] = 'eurlex'
             kwargs['docid']=self.docid
             if not Docs.find_one({"docid": self.docid}):
