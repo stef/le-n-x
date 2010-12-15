@@ -186,7 +186,7 @@ class Eurlex(DOC):
         return '|'.join(res).encode('utf-8')
 
     def _gettitle(self):
-        return self._getHTMLMetaData('DC.description') or self.celexid
+        return self._getHTMLMetaData('DC.description') or self.docid
 
     def _getsubj(self):
         return self._getHTMLMetaData('DC.subject')
