@@ -234,7 +234,7 @@ class Eurlex(DOC):
                       "Consolidated versions:",
                       "Subsequent related instruments:",
                       "Affected by case:",
-                      "Instruments bited:"])]:
+                      "Instruments cited:"])]:
             s=soup.find('h2',text=t)
             if not s: continue
             s=s.findNext('ul')
@@ -247,8 +247,6 @@ class Eurlex(DOC):
         eurovocs=soup.find('strong', text="EUROVOC descriptor:")
         if eurovocs:
             result.get('Classifications',{})["EUROVOC descriptor:"]=[str(x.string).strip() for x in eurovocs.findParent('li').findAll('a')]
-        # TODO see http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX:32001D0148:EN:NOT
-        # BUG: it has multiple dircodes!!!
         dc=result.get('Classifications',{}).get('Directory code',[])
         if dc:
             result['Classifications']['Directory code']=[dircode.split(' ',1)[0] for dircode in dc if dircode]
