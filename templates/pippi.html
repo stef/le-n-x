@@ -25,7 +25,6 @@ $(document).ready(function(){
       //var ids = [];
       var res = false;
       $('.star:contains("★")').each(function (i) {
-        console.log(this);
         res = true;
         $('#jobsform').append('<input type="hidden" name="ids" value="' + $(this).attr('id').substr(2) +'" />');
       });
