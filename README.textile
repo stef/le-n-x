@@ -16,3 +16,5 @@ The django backend has some dependencies:
  * "nltk":http://www.nltk.org/
  * psyco
  * pymongo
+ * django-tinymce
+ * utidylib
