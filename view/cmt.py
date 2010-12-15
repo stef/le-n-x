@@ -63,6 +63,7 @@ class Coment(DOC):
                     soup = BeautifulSoup(data)
 
                     kwargs['raw'] = '<html><head><title>%s</title><meta http-equiv="content-type" content="text/html; charset=utf-8" /></head><body>%s</body></html>' % (self.title, unescape(unicode(soup.find(attrs={'id' : 'textcontainer'}))).encode('utf8'))
+                    kwargs['docid']=docid
                     super(Coment,self).__init__(*args, **kwargs)
                     if not 'stems' in self.__dict__ or not self.stems:
                         # let's calculate and cache the results
