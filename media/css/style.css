@@ -74,6 +74,6 @@ ul.dropdown li { padding: 10px; border-style: solid; border-width: 1px; border-c
 .metaclass legend { font-weight: bold; }
 .docmenu { float: right; margin-top: 10px; margin-bottom: 10px; }
 .docmenu li, .docmenu form { display: inline; }
-.docmenu a, .docmenu input { border: 1px solid #0088DD; background: #fff; color: #000; padding: 3px; font-size: 16px; }
-.docmenu a:hover, .docmenu input:hover { border: 2px solid #0088DD; background: #eee; text-decoration: none; cursor: pointer; padding: 2px}
+.docmenu a, .docmenu input { border: 1px solid #0088DD; background: #fff; color: #000; padding: 3px; font-size: 16px; -moz-border-radius: 0.2em; -webkit-border-radius: 0.2em; }
+.docmenu a:hover, .docmenu input:hover { border: 2px solid #0088DD; background: #eee; text-decoration: none; cursor: pointer; padding: 2px; -moz-border-radius: 0.2em; -webkit-border-radius: 0.2em; }
 .centered { text-align: center; }
