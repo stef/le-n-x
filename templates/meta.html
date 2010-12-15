@@ -5,13 +5,12 @@
 <script type="text/javascript" src="{%media_url%}/js/jquery.1.4.2.min.js"></script>
 {% endblock %}
 
-{% block menu %}
-  <li><a href="/doc/{{refdoc}}">View</a></li>
-  <li><a href="/pippi/{{doc.docid}}">Pippify</a></li>
-{% endblock %}
-
 {% load lenx %}
 {% block main %}
+<ul class="docmenu">
+  <li><a href="/doc/{{refdoc}}">View</a></li>
+  <li><a href="/pippi/{{doc.docid}}">Pippify</a></li>
+</ul>
 <h2 title="{{doc.title|safe}}">Metadata for {{ doc.title|safe|truncatewords:10  }} ({{ doc.docid }})</h2>
 <div class="metadata">
   {% for class, items in metadata.items %}

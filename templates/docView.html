@@ -6,12 +6,16 @@
 <script type="text/javascript" src="{%media_url%}/js/docView.js"></script>
 {% endblock %}
 
-{% block menu %}
-  <li><a href="/pippi/{{doc.docid}}">Pippify</a></li>
-  <li><a href="/meta/{{doc.docid}}">Metadata</a></li>
-{% endblock %}
-
 {% block main %}
+<ul class="docmenu">
+   <li><a href="/pippi/{{doc.docid}}">Pippify</a></li>
+   <li><a href="/meta/{{doc.docid}}">Metadata</a></li>
+</ul>
+
+<h2 title="{{doc.title|safe}}">{{ doc.title|safe|truncatewords:10 }} ({{ doc.docid }})</h2>
+
+<br style="clear: both">
+
 <div class="rel">
     <fieldset><legend>Statistics</legend>
         <h4>Cutoff: {{ cutoff }}</h4>
@@ -26,9 +30,6 @@
         </ul>
     </fieldset>
 </div>
-
-<h2 title="{{doc.title|safe}}">{{ doc.title|safe|truncatewords:10 }} ({{ doc.docid }})</h2>
-
 {{ content|safe }}
 
 <div id='tooltips'>
