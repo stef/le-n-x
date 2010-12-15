@@ -136,6 +136,8 @@ def walkACS(i,j,s):
 def pippi(D1,D2,saver=bulksaver.Saver()):
     doc1=tuple(D1.stems+('zAq!2WsX',))
     doc2=tuple(D2.stems+('XsW@!qAz',))
+    if D2._id in D1.pippiDocs:
+        return None
     lcs=LCS(doc1,doc2)
 
     pips={}
