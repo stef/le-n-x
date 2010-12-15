@@ -33,33 +33,35 @@ $(document).ready(function(){
 });
 </script>
 {% endblock %}
-{% block menu %}
-  <li><a href="/doc/{{refdoc}}">View</a></li>
-  <li><a href="/meta/{{refdoc}}">Metadata</a></li>
-{% endblock %}
 
 {% block main %}
+<ul class="docmenu">
+   <li>
+   <form id="jobsform" action="/jobs" method="post">
+      <input type="hidden" name="doc" value="{{oid}}" />
+      <input type="submit" id="jobs" value="Pippi &#x2605;" />
+   </form>
+   </li>
+   <li><a href="/doc/{{refdoc}}">View</a></li>
+   <li><a href="/meta/{{refdoc}}">Metadata</a></li>
+</ul>
 <h2 title="{{refdoc.title|safe}}">Related to {{refdoc|safe|truncatewords:10}}</h2>
 Stats: <ul id="stats">
 {% for stat in stats %}
 <li>{{stat.text}}</li>
 {% endfor %}
 </ul>
-<form id="jobsform" action="/jobs" method="post">
-<input type="hidden" name="doc" value="{{oid}}" />
-<input type="submit" id="jobs" value="Pippi starred" />
-</form>
 <table class="listing">
   <thead>
    <tr><td>&#x2605;</td><td>Type</td><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
   </thead>
 {% for doc in docs %}
     <tr id="{{doc.oid}}" class="{% if doc.oid in starred %}starred{%endif%}">
-    <td>
+    <td class="centered">
       <a href="{% root_url %}/toggle_star/{{ doc.oid }}" class="star" id="id{{ doc.oid }}">{% if doc.oid in starred %}&#x2605;{%else%}&#x2606;{%endif%}</a>
     </td>
-    <td>
-      {{doc.type}}
+    <td class="centered">
+      <img src="{%media_url%}/images/{{doc.type}}.png" />
     </td>
     <td>
        <a title="{{doc.title|safe}}" href="{% root_url %}/doc/{{doc.id}}">{{doc.title|safe|truncatewords:30}}</a>

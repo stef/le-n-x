@@ -80,8 +80,7 @@ def annotatePippi(d,pippi,cutoff=7):
         '</div>',
         ])
 
-def docView(request,doc=None,cutoff=20):
-    doc=request.META['REQUEST_URI'][5:]   # workaround for https://issues.apache.org/bugzilla/show_bug.cgi?id=20036
+def docView(request,doc=None,cutoff=4):
     if request.GET.get('cutoff', 0):
         cutoff = int(request.GET['cutoff'])
     if not doc or not cutoff:
