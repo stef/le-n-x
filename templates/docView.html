@@ -23,11 +23,15 @@
         <h4>Highlights in text: {{ matches }}</h4>
     </fieldset>
     <fieldset> <legend>Related docs</legend>
-        <ul>
-        {% for dd in related %}
-  <li><a href="/doc/{{ dd.docid }}?cutoff={{cutoff}}">{% if dd.title %}{{dd.title|safe}}{%else%}{{dd.docid|safe}}{%endif%}</a><hr /></li>
-        {% endfor %}
-        </ul>
+       {% if related.len %}
+          <ul>
+           {% for dd in related %}
+              <li><a href="/doc/{{ dd.docid }}?cutoff={{cutoff}}">{% if dd.title %}{{dd.title|safe}}{%else%}{{dd.docid|safe}}{%endif%}</a><hr /></li>
+           {% endfor %}
+          </ul>
+       {% else %}
+              None yet, start <a href="/pippi/{{doc.docid}}">pippi here</a>
+       {% endif %}
     </fieldset>
 </div>
 {{ content|safe }}

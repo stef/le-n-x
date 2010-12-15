@@ -12,29 +12,28 @@
   <li><a href="/pippi/{{doc.docid}}">Pippify</a></li>
 </ul>
 <h2 title="{{doc.title|safe}}">Metadata for {{ doc.title|safe|truncatewords:10  }} ({{ doc.docid }})</h2>
-<div class="metadata">
-  {% for class, items in metadata.items %}
-     <div class="metaclass" id="{{class}}"><h3>{{class}}</h3>
-         {% for k,v in items.items %}
-             <fieldset id="{{class}}/{{k}}"><legend>{{k}}</legend>
-                 <ul>
-                 {% for i in v %}
-                     <li>{{i|safe}}</li>
-                 {% endfor %}
-                 </ul>
-             </fieldset>
-         {% endfor %}
-         {% if related.len %}
-         <br style="clear: both;" />
-         <fieldset><legend>Related docs</legend>
-             <ul>
-             {% for dd in related %}
-             <li><a href="/doc/{{ dd.docid }}?cutoff={{cutoff}}">{% if dd.title %}{{dd.title|safe}}{%else%}{{dd.docid|safe}}{%endif%}</a><hr /></li>
-             {% endfor %}
-             </ul>
-         </fieldset>
-         {% endif %}
-     </div>
-  {% endfor %}
+<div>
+{% for class, items in metadata.items %}
+   <fieldset class="metaclass" id="{{class}}"><legend>{{class}}</legend>
+       {% for k,v in items.items %}
+           <legend id="{{class}}/{{k}}">{{k}}</legend>
+               <ul>
+               {% for i in v %}
+                   <li>{{i|safe}}</li>
+               {% endfor %}
+               </ul>
+       {% endfor %}
+   </fieldset>
+{% endfor %}
+{% if related.len %}
+<br style="clear: both;" />
+<fieldset class="metaclass" id="RelatedDocs"><legend>Related docs</legend>
+    <ul>
+    {% for dd in related %}
+    <li><a href="/doc/{{ dd.docid }}?cutoff={{cutoff}}" {% if dd.title %}title="{{dd.title|safe}}">{{dd.title|safe|truncatewords:30}}{%else%}>{{dd.docid|safe}}{%endif%}</a><hr /></li>
+    {% endfor %}
+    </ul>
+</fieldset>
+{% endif %}
 </div>
 {% endblock %}

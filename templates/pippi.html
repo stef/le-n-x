@@ -57,11 +57,11 @@ Stats: <ul id="stats">
   </thead>
 {% for doc in docs %}
     <tr id="{{doc.oid}}" class="{% if doc.oid in starred %}starred{%endif%}">
-    <td>
+    <td class="centered">
       <a href="{% root_url %}/toggle_star/{{ doc.oid }}" class="star" id="id{{ doc.oid }}">{% if doc.oid in starred %}&#x2605;{%else%}&#x2606;{%endif%}</a>
     </td>
-    <td>
-      {{doc.type}}
+    <td class="centered">
+      <img src="{%media_url%}/images/{{doc.type}}.png" />
     </td>
     <td>
        <a title="{{doc.title|safe}}" href="{% root_url %}/doc/{{doc.id}}">{{doc.title|safe|truncatewords:30}}</a>

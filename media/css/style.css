@@ -3,7 +3,7 @@ img { border: 0; }
 h1, h2, h3, h4, div, ul { padding: 0; margin: 0; }
 input { border: 1px solid #0088DD; background: #FFFFFF; color: #666666; }
 fieldset { font-size: 0.8em; margin-bottom: 14px; border: 1px solid #0088DD; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em;}
-a { text-decoration: none; color: #444444; }
+a { text-decoration: none; color: #0088dd; }
 li { list-style: none; }
 a[href]:hover { text-decoration: underline; }
 div#footer p { text-align: center; margin: 4px; font-weight: bold;  }
@@ -70,10 +70,10 @@ ul.dropdown ul li a { font-size: 0.8em; }
 ul.dropdown ul ul { top: 1px; left: 99%; }
 ul.dropdown li:hover > ul { visibility: visible; }
 ul.dropdown li { padding: 10px; border-style: solid; border-width: 1px; border-color: #22AAFF; background-color: #0088DD; }
-.metaclass { width: 20%; display: table-cell; font-size: 0.8em; margin-bottom: 14px; border: 1px solid #0088DD; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; margin: 15px; padding: 5px;}
-.metaclass fieldset { border: None; }
+.metaclass { float: left; vertical-align: top; width: 20%; display: inline; font-size: 0.8em; margin-bottom: 14px; border: 1px solid #0088DD; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; margin: 15px; padding: 5px;}
 .metaclass legend { font-weight: bold; }
 .docmenu { float: right; margin-top: 10px; margin-bottom: 10px; }
 .docmenu li, .docmenu form { display: inline; }
 .docmenu a, .docmenu input { border: 1px solid #0088DD; background: #fff; color: #000; padding: 3px; font-size: 16px; }
 .docmenu a:hover, .docmenu input:hover { border: 2px solid #0088DD; background: #eee; text-decoration: none; cursor: pointer; padding: 2px}
+.centered { text-align: center; }
