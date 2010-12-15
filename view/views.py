@@ -434,7 +434,6 @@ def metaView(request,doc=None):
 def toggle_star(request,id=None):
     if not id:
         return render_to_response('error.html', {'error': 'Missing id!'})
-    print request.session.items()
     if not 'starred' in request.session or not request.session['starred']:
         request.session['starred']=set([])
     if id in request.session['starred']:
