@@ -8,7 +8,9 @@
 {% load lenx %}
 {% block main %}
 <ul class="docmenu">
-  <li><a href="/doc/{{refdoc}}">View</a></li>
+   <li><a href='{%root_url%}/pippies?doc={{doc.oid}}'>Pippies</a></li>
+   <li><a href='{%root_url%}/frags?doc={{doc.oid}}'>Frags</a></li>
+  <li><a href="/doc/{{doc.docid}}">View</a></li>
   <li><a href="/pippi/{{doc.docid}}">Pippify</a></li>
 </ul>
 <h2 title="{{doc.title|safe}}">Metadata for {{ doc.title|safe|truncatewords:10  }} ({{ doc.docid }})</h2>
