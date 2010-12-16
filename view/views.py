@@ -80,7 +80,7 @@ def annotatePippi(d,pippi,cutoff=7):
         '</div>',
         ])
 
-def docView(request,doc=None,cutoff=7):
+def docView(request,doc=None,cutoff=10):
     if request.GET.get('cutoff', 0):
         cutoff = int(request.GET['cutoff'])
     if not doc or not cutoff:
@@ -137,6 +137,7 @@ def docView(request,doc=None,cutoff=7):
                                                'content': cont,
                                                'related': relDocs,
                                                'cutoff': cutoff,
+                                               'cutoffs': ','.join(cutoffSL(d,cutoff)),
                                                'len': len(ls),
                                                'tooltips': '\n'.join(tooltips.values()),
                                                'matches': matches})
@@ -462,3 +463,9 @@ def starred(request):
                                                'stats': getOverview(),
                                                'starred': request.session.get('starred',()),
                                                'title': 'Your starred documents'})
+
+def cutoffSL(doc, cutoff):
+    m=pymongo.code.Code("function(){ emit( this.len , { count : 1 } );}")
+    r=pymongo.code.Code("function (key, values) { var count = 0; values.forEach(function (v) {count += v.count;}); return {count: count}; }")
+    lens=dict([(x['_id'],int(x['value']['count'])) for x in Pippies.map_reduce(m,r,query={'docs': doc._id }).find()])
+    return [str(lens[x]) if x in lens else '0' for x in xrange(max(lens.keys())+1)][4:cutoff]

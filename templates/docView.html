@@ -4,6 +4,16 @@
 {% block scripts %}
 <script type="text/javascript" src="{%media_url%}/js/jquery.1.4.2.min.js"></script>
 <script type="text/javascript" src="{%media_url%}/js/docView.js"></script>
+<script type="text/javascript" src="{%media_url%}/js/jquery.sparkline.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+   $(function() {
+      $('#cutoffs').sparkline([{{cutoffs}}], {type: 'bar',
+                               barColor: 'black',
+                               colorMap: { '{{cutoff}}': 'red' }}); 
+      });
+   });
+</script>
 {% endblock %}
 
 {% block main %}
@@ -18,6 +28,7 @@
 
 <div class="rel">
     <fieldset><legend>Statistics</legend>
+        <div id="cutoffs"></div>
         <h4>Cutoff: {{ cutoff }}</h4>
         <h4>Pippies: {{ len }}</h4>
         <h4>Highlights in text: {{ matches }}</h4>
