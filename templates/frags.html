@@ -28,7 +28,7 @@
 <table class="listing">
   <thead><tr><td>Text</td><td>Document</td><td>Score</td></tr></thead>
 {% for frag in frags %}
-<tr><td>{{frag.txt|safe}}</td><td><a href="{%root_url%}/doc/{{frag.doc.eurlexid}}">{{frag.doc.title}}</a></td><td>{{frag.score}}</td></tr>
+<tr><td>{{frag.txt|safe}}</td><td><a href="{%root_url%}/doc/{{frag.doc.docid}}">{{frag.doc.title}}</a></td><td>{{frag.score}}</td></tr>
 {% endfor %}
 </table>
 {% if totalinquery > limit%}
