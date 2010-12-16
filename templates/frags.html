@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% load lenx %}
 {% block main %}
+{%if doc %}
+<ul class="docmenu">
+  <li><a href="/doc/{{docTitle}}">View</a></li>
+  <li><a href="/meta/{{docTitle}}">Metadata</a></li>
+  <li><a href="/pippi/{{docTitle}}">Pippify</a></li>
+  <li><a href='{%root_url%}/pippies?doc={{doc}}'>Pippies</a></li>
+</ul>
+{%endif%}
 <h1>Frags {% if doc %}in {{docTitle}}{% else %}{%if pippiFilter %}for pippi{%else%}in database{%endif%}{%endif%}</h1>
 {% if totalinquery > limit%}
 <div class="pager-controls">
