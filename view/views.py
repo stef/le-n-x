@@ -80,7 +80,7 @@ def annotatePippi(d,pippi,cutoff=7):
         '</div>',
         ])
 
-def docView(request,doc=None,cutoff=4):
+def docView(request,doc=None,cutoff=7):
     if request.GET.get('cutoff', 0):
         cutoff = int(request.GET['cutoff'])
     if not doc or not cutoff:
