@@ -36,6 +36,27 @@ def str_base(num, base=len(SLUGCHARS), numerals = SLUGCHARS):
         num //= base
     return sign + result
 
+def unescape(text):
+    def fixup(m):
+        text = m.group(0)
+        if text[:2] == "&#":
+            # character reference
+            try:
+                if text[:3] == "&#x":
+                    return unichr(int(text[3:-1], 16))
+                else:
+                    return unichr(int(text[2:-1]))
+            except ValueError:
+                pass
+        else:
+            # named entity
+            try:
+                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+            except KeyError:
+                pass
+        return text # leave as is
+    return re.sub("&#?\w+;", fixup, text)
+
 def Doc(*args, **kwargs):
     if 'docid' in kwargs:
         for (t,c,r) in DOCTYPES:
@@ -239,10 +260,12 @@ from lenx.brain import tagcloud, stopwords
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
 from operator import itemgetter
-import pymongo, hashlib, re
+import pymongo, hashlib, re, htmlentitydefs
 import models
 from lenx.view.eurlex import CELEXRE, Eurlex
 from lenx.view.cmt import CMTRE, Coment
+from lenx.view.etherpad import PADRE, Etherpad
 
 DOCTYPES=(('eurlex',Eurlex,CELEXRE),
-         ('co-ment',Coment,CMTRE))
+          ('co-ment',Coment,CMTRE),
+          ('etherpad',Etherpad,PADRE))
