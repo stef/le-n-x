@@ -45,7 +45,7 @@ $(document).ready(function(){
    <li><a href="/doc/{{refdoc}}">View</a></li>
    <li><a href="/meta/{{refdoc}}">Metadata</a></li>
 </ul>
-<h2 title="{{refdoc.title|safe}}">Related to {{refdoc|safe|truncatewords:10}}</h2>
+<h2 title="{{reftitle|safe}}">Related to {{reftitle|safe|truncatewords:10}}</h2>
 Stats: <ul id="stats">
 {% for stat in stats %}
 <li>{{stat.text}}</li>

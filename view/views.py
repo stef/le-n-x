@@ -250,6 +250,7 @@ def pippi(request,refdoc=None):
     return render_to_response('pippi.html', { 'docs': docs,
                                               'stats': getOverview(),
                                               'refdoc': refdoc.docid,
+                                              'reftitle': refdoc.title,
                                               'oid': str(refdoc._id),
                                               'starred': request.session.get('starred',set()) })
 
