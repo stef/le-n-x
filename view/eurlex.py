@@ -152,7 +152,35 @@ class Eurlex(DOC):
             self.__dict__['type'] = 'eurlex'
             kwargs['docid']=self.docid
             if not Docs.find_one({"docid": self.docid}):
-                raw=CACHE.fetchUrl(EURLEXURL+self.docid+":HTML")
+                retries=4
+                while True:
+                    raw=CACHE.fetchUrl(EURLEXURL+self.docid+":HTML")
+                    soup=BeautifulSoup(raw)
+                    # TODO handle empty or invalid celex ids - also handle other languages besides english!!!
+                    # <TITLE>Request Error</TITLE>
+                    # <h1>The parameters of the link are incorrect.</h1>
+                    if soup.title and soup.title.string == "Request Error":
+                        if retries>0:
+                            retries=retries-1
+                            continue
+                        else:
+                            raise ValueError, "Request Error"
+                    if soup.h1 and soup.h1.string == 'The parameters of the link are incorrect.':
+                        if retries>0:
+                            retries=retries-1
+                            continue
+                        else:
+                            raise ValueError, "Parameter Error"
+                    # no errors found, continue, nothing to see here
+                    break
+                # > /* There is no English version of this document available since it was not included in the English Special Edition.
+                content=soup.find(id='TexteOnly')
+                if (content and
+                    content.findAll('p') and
+                    len(content.findAll('p'))>1 and
+                    string in dir(content.findAll('p')[1]) and
+                    content.findAll('p')[1].string.strip().startswith('/* There is no English version of this document available since it was not included in the English Special Edition.')):
+                    raise ValueError, "Language Error"
                 kwargs['raw']=raw
                 self.__dict__['metadata'] = self.extractMetadata()
         super(Eurlex,self).__init__(*args, **kwargs)
