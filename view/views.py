@@ -468,4 +468,7 @@ def cutoffSL(doc, cutoff):
     m=pymongo.code.Code("function(){ emit( this.len , { count : 1 } );}")
     r=pymongo.code.Code("function (key, values) { var count = 0; values.forEach(function (v) {count += v.count;}); return {count: count}; }")
     lens=dict([(x['_id'],int(x['value']['count'])) for x in Pippies.map_reduce(m,r,query={'docs': doc._id }).find()])
-    return [str(lens[x]) if x in lens else '0' for x in xrange(max(lens.keys())+1)][4:cutoff]
+    if lens.keys():
+        return [str(lens[x]) if x in lens else '0' for x in xrange(max(lens.keys())+1)][4:cutoff]
+    else:
+        return []
