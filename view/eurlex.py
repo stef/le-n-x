@@ -178,7 +178,7 @@ class Eurlex(DOC):
                 if (content and
                     content.findAll('p') and
                     len(content.findAll('p'))>1 and
-                    string in dir(content.findAll('p')[1]) and
+                    'string' in dir(content.findAll('p')[1]) and
                     content.findAll('p')[1].string.strip().startswith('/* There is no English version of this document available since it was not included in the English Special Edition.')):
                     raise ValueError, "Language Error"
                 kwargs['raw']=raw
