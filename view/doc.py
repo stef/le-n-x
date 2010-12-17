@@ -88,7 +88,6 @@ class DOC(object):
             d=Docs.find_one({"docid": docid})
         if d:
             # load the values
-            # TODO if d is eurlex instantiate that instead
             self.__dict__.update(d)
         elif raw:
             # create a new document

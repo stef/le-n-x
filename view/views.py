@@ -134,6 +134,7 @@ def docView(request,doc=None,cutoff=10):
     cont=anchorArticles(cont)
     #print "[!] Rendering\n\tContent length: %d" % len(cont)
     return render_to_response('docView.html', {'doc': d,
+                                               'oid': d._id,
                                                'content': cont,
                                                'related': relDocs,
                                                'cutoff': cutoff,
@@ -169,19 +170,23 @@ def getOverview():
     return stats
 
 def listDocs(request):
-    docs=[{'id': doc.docid,
-           'oid': str(doc._id),
-           'indexed': doc.pippiDocsLen,
-           'title': doc.title,
-           'frags': doc.getFrags().count(),
-           'pippies': len(doc.pippies),
-           'docs': len(doc.getRelatedDocIds()),
-           'tags': doc.autoTags(25) }
-          for doc in (Doc(d=data) for data in Docs.find({}))]
-    return render_to_response('corpus.html', { 'docs': docs,
-                                               'stats': getOverview(),
-                                               'starred': request.session.get('starred', ()),
-                                               'title': 'Complete Corpus of pippi longstrings'})
+    template_vars=pager(request,Docs.find({},['_id','docid']),'docid',False)
+    docs=[(doc['docid'],doc['_id']) for doc in template_vars['data']]
+    docslen=Docs.count()
+    template_vars['docs']=[{'id': doc.docid,
+                            'oid': str(doc._id),
+                            'indexed': doc.pippiDocsLen,
+                            'title': doc.title,
+                            'frags': doc.getFrags().count(),
+                            'pippies': len(doc.pippies),
+                            'type': doc.type,
+                            'docs': len(doc.getRelatedDocIds()),
+                            'tags': doc.autoTags(25) }
+                           for doc in (Doc(docid=d) for d,oid in docs)]
+    template_vars['stats']=getOverview()
+    template_vars['starred']=request.session.get('starred',set())
+    template_vars['title']='Complete Corpus of pippi longstrings'
+    return render_to_response('corpus.html', template_vars)
 
 def createDoc(request):
     form = UploadForm(request.POST)
@@ -235,25 +240,26 @@ def pippi(request,refdoc=None):
     if not refdoc:
         return render_to_response('error.html', {'error': 'specify document: %s!' % refdoc})
     refdoc=Doc(docid=refdoc)
-    docs=sorted([(doc['docid'],doc['_id']) for doc in Docs.find({},['_id','docid'])])
+    template_vars=pager(request,Docs.find({},['_id','docid']),'docid',False)
+    docs=sorted([(doc['docid'],doc['_id']) for doc in template_vars['data']])
     docslen=Docs.count()
-    docs=[{'id': doc.docid,
-           'oid': str(doc._id),
-           'indexed': doc.pippiDocsLen,
-           'title': doc.title,
-           'frags': doc.getFrags().count(),
-           'pippies': len(doc.pippies),
-           'job': not doc._id in refdoc.pippiDocs,
-           'type': doc.type,
-           'docs': len(doc.getRelatedDocIds()),
-           'tags': doc.autoTags(25) }
-          for doc in (Doc(oid=oid) for d,oid in docs if not oid == refdoc._id)]
-    return render_to_response('pippi.html', { 'docs': docs,
-                                              'stats': getOverview(),
-                                              'refdoc': refdoc.docid,
-                                              'reftitle': refdoc.title,
-                                              'oid': str(refdoc._id),
-                                              'starred': request.session.get('starred',set()) })
+    template_vars['docs']=[{'id': doc.docid,
+                            'oid': str(doc._id),
+                            'indexed': doc.pippiDocsLen,
+                            'title': doc.title,
+                            'frags': doc.getFrags().count(),
+                            'pippies': len(doc.pippies),
+                            'job': not doc._id in refdoc.pippiDocs,
+                            'type': doc.type,
+                            'docs': len(doc.getRelatedDocIds()),
+                            'tags': doc.autoTags(25) }
+                           for doc in (Doc(docid=d) for d,oid in docs if not oid == refdoc._id)]
+    template_vars['stats']=getOverview()
+    template_vars['refdoc']=refdoc.docid
+    template_vars['reftitle']=refdoc.title
+    template_vars['oid']=str(refdoc._id)
+    template_vars['starred']=request.session.get('starred',set())
+    return render_to_response('pippi.html', template_vars)
 
 def stats(request):
     return render_to_response('stats.html', { 'stats': getOverview(), })
@@ -450,19 +456,23 @@ def toggle_star(request,id=None):
         return HttpResponse('True')
 
 def starred(request):
-    docs=[{'id': doc.docid,
-           'oid': str(doc._id),
-           'indexed': doc.pippiDocsLen,
-           'title': doc.title,
-           'frags': doc.getFrags().count(),
-           'pippies': len(doc.pippies),
-           'docs': len(doc.getRelatedDocIds()),
-           'tags': doc.autoTags(25) }
-          for doc in (Doc(oid=ObjectId(oid)) for oid in request.session.get('starred',()))]
-    return render_to_response('corpus.html', { 'docs': docs,
-                                               'stats': getOverview(),
-                                               'starred': request.session.get('starred',()),
-                                               'title': 'Your starred documents'})
+    template_vars=pager(request,Docs.find({'_id' : { '$in': [ObjectId(x) for x in request.session.get('starred',())] }},['_id','docid']),'docid',False)
+    docs=[(doc['docid'],doc['_id']) for doc in template_vars['data']]
+    docslen=Docs.count()
+    template_vars['docs']=[{'id': doc.docid,
+                            'oid': str(doc._id),
+                            'indexed': doc.pippiDocsLen,
+                            'title': doc.title,
+                            'frags': doc.getFrags().count(),
+                            'pippies': len(doc.pippies),
+                            'type': doc.type,
+                            'docs': len(doc.getRelatedDocIds()),
+                            'tags': doc.autoTags(25) }
+                           for doc in (Doc(docid=d) for d,oid in docs)]
+    template_vars['stats']=getOverview()
+    template_vars['starred']=request.session.get('starred',set())
+    template_vars['title']='Your starred documents'
+    return render_to_response('corpus.html', template_vars)
 
 def cutoffSL(doc, cutoff):
     m=pymongo.code.Code("function(){ emit( this.len , { count : 1 } );}")

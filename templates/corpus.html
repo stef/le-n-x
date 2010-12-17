@@ -30,6 +30,28 @@ Stats: <ul id="stats">
 <li>{{stat.text}}</li>
 {% endfor %}
 </ul>
+
+{% if totalinquery > limit%}
+<div class="pager-controls">
+   <form name="pagingtop">
+<input type="hidden" id="offset" name="offset" value="{{offset}}" />
+<input type="submit" name="firstpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingtop.pageaction.value='first'" value="FirstPage" />
+<input type="submit" name="backpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingtop.pageaction.value='prior'" value="PriorPage" />
+<SELECT name="limit">
+  <OPTION {% if limit == 10 %}selected{%endif%} value="10">10</OPTION>
+  <OPTION {% if limit == 50 %}selected{%endif%} value="50">50</OPTION>
+  <OPTION {% if limit == 100 %}selected{%endif%} value="100">100</OPTION>
+</SELECT>
+<input type="submit" name="nextpage" {%if page == totalpages %}disabled='disabled' {%endif%}onclick="document.pagingtop.pageaction.value='next'" value="NextPage" />
+<input type="submit" name="lastpage" {%if page == totalpages %}disabled='disabled' {%endif%}onclick="document.pagingtop.pageaction.value='last'" value="LastPage" />
+<input type="hidden" id="pageaction" name="pageaction" value="" />
+</form>
+</div>
+<p>Page {{page}}/{{totalpages}} - Showing {{totalitems}} of {{totalinquery}} results.</p>
+{%else%}
+<p>Showing {{totalitems}} of {{totalinquery}} results.</p>
+{%endif%}
+
 <table class="listing">
   <thead>
   <tr><td>&#x2605;</td><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
@@ -57,4 +79,22 @@ Stats: <ul id="stats">
     </tr>
 {% endfor %}
 </table>
+
+{% if totalinquery > limit%}
+<div class="pager-controls">
+   <form name="pagingbottom">
+<input type="hidden" id="offset" name="offset" value="{{offset}}" />
+<input type="submit" name="firstpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingbottom.pageaction.value='first'" value="FirstPage" />
+<input type="submit" name="backpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingbottom.pageaction.value='prior'" value="PriorPage" />
+<SELECT name="limit">
+  <OPTION {% if limit == 10 %}selected{%endif%} value="10">10</OPTION>
+  <OPTION {% if limit == 50 %}selected{%endif%} value="50">50</OPTION>
+  <OPTION {% if limit == 100 %}selected{%endif%} value="100">100</OPTION>
+</SELECT>
+<input type="submit" name="nextpage" {%if page == totalpages %}disabled='disabled' {%endif%}onclick="document.pagingbottom.pageaction.value='next'" value="NextPage" />
+<input type="submit" name="lastpage" {%if page == totalpages %}disabled='disabled' {%endif%}onclick="document.pagingbottom.pageaction.value='last'" value="LastPage" />
+<input type="hidden" id="pageaction" name="pageaction" value="" />
+</form>
+</div>
+{%endif%}
 {% endblock %}

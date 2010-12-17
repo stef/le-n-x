@@ -19,8 +19,8 @@ $(document).ready(function(){
 <ul class="docmenu">
    <li><a href="{%root_url%}/pippi/{{doc.docid}}">Pippify</a></li>
    <li><a href="{%root_url%}/meta/{{doc.docid}}">Metadata</a></li>
-   <li><a href='{%root_url%}/pippies?doc={{doc.oid}}'>Pippies</a></li>
-   <li><a href='{%root_url%}/frags?doc={{doc.oid}}'>Frags</a></li>
+   <li><a href='{%root_url%}/pippies?doc={{oid}}'>Pippies</a></li>
+   <li><a href='{%root_url%}/frags?doc={{oid}}'>Frags</a></li>
 </ul>
 
 <h2 title="{{doc.title|safe}}">{{ doc.title|safe|truncatewords:10 }} ({{ doc.docid }})</h2>
