@@ -28,7 +28,8 @@ from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 from lenx.view.forms import UploadForm
 from operator import itemgetter
 import re, pymongo, cgi
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
+from bson.code import Code
 import tidy
 import nltk.tokenize # get this from http://www.nltk.org/
 from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
@@ -75,7 +76,7 @@ def annotatePippi(d,pippi,cutoff=7):
         '<div class="pippiNote" id="%s">' % pippi['pippi'],
         '<b>also appears in</b>',
         '<ul>',
-        '\n'.join([(itemtpl % (doc.docid, cutoff, doc.title[:100].decode('utf8')+'...' if len(doc.title)>100 else '')) for doc in docs]).encode('utf8'),
+        '\n'.join([(itemtpl % (doc.docid, cutoff, doc.title[:100].decode('utf8')+'...' if len(doc.title)>100 else doc.title)) for doc in docs]).encode('utf8'),
         '</ul>',
         '</div>',
         ])
@@ -475,8 +476,8 @@ def starred(request):
     return render_to_response('corpus.html', template_vars)
 
 def cutoffSL(doc, cutoff):
-    m=pymongo.code.Code("function(){ emit( this.len , { count : 1 } );}")
-    r=pymongo.code.Code("function (key, values) { var count = 0; values.forEach(function (v) {count += v.count;}); return {count: count}; }")
+    m=Code("function(){ emit( this.len , { count : 1 } );}")
+    r=Code("function (key, values) { var count = 0; values.forEach(function (v) {count += v.count;}); return {count: count}; }")
     lens=dict([(x['_id'],int(x['value']['count'])) for x in Pippies.map_reduce(m,r,query={'docs': doc._id }).find()])
     if lens.keys():
         return [str(lens[x]) if x in lens else '0' for x in xrange(max(lens.keys())+1)][4:cutoff]
