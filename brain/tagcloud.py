@@ -71,6 +71,8 @@ def gentags(text):
 
 def logTags(stems,l=None,tags=None,classes=9):
     if not tags and stems: tags=stemFreq(stems)
+    if not tags:
+        return []
     pmax=max(tags.values())
 
     tags=sorted(
