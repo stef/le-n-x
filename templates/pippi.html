@@ -95,7 +95,7 @@ Stats: <ul id="stats">
     </td>
     {% if doc.job %}
     <td colspan="2">
-       <a href='{%root_url%}/job?d1={{refdoc}}&d2={{doc.id}}'>Find pippies</a>
+       <a href='{%root_url%}/job?d1={{refdoc|urlencode}}&d2={{doc.id|urlencode}}'>Find pippies</a>
     </td>
     {% else %}
     <td>
