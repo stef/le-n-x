@@ -193,7 +193,10 @@ class Eurlex(DOC):
         if res: return res
         soup = BeautifulSoup(self.raw)
         # TexteOnly is the id used on eur-lex pages containing docs
-        res = [unicode(x) for x in soup.find(id='TexteOnly').findAll(text=True)]
+        root=soup.find(id='TexteOnly')
+        if not root:
+            return []
+        res = [unicode(x) for x in root.findAll(text=True)]
         self._setExtField('text',res) # cache data
         return res
 
