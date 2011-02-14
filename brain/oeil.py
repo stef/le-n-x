@@ -29,7 +29,8 @@ def dumpAsJSON(data):
 
 def dumpToMongo(data):
     #Docs.ensure_index([('docid', pymongo.ASCENDING)])
-    print >> sys.stderr, '>', data.get('Identification procedure',data.get('Identification document'))['Title']
+    print >> sys.stderr, '>', data.get('Identification procedure',
+                                       data.get('Identification document'))['Title']
     docs.save(data)
 
 def fetch(url):
@@ -202,8 +203,7 @@ def scrape(url):
     try:
         _scrape(url)
     except:
-        print >>sys.stderr, url
-        raise
+        print >>sys.stderr, '[!] failed to scrape', url
 
 def _scrape(url):
     tree=fetch(url)
