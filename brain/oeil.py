@@ -33,7 +33,7 @@ def dumpToMongo(data):
                                        data.get('Identification document'))['Title']
     docs.save(data)
 
-cb = dumpToMongo # dumpAsJSON
+cb = dumpAsJSON # dumpToMongo 
 
 def fetch(url):
     # url to etree
