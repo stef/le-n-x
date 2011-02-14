@@ -32,8 +32,6 @@ def dumpToMongo(data):
     print >> sys.stderr, '>', data.get('Identification procedure',data.get('Identification document'))['Title']
     docs.save(data)
 
-cb = dumpToMongo
-
 def fetch(url):
     # url to etree
     f=urllib2.urlopen(url)
@@ -101,7 +99,7 @@ def toObj(table,fields):
         if value:
             res.append(value)
         else:
-            print >>sys.stderr, '[*] unparsed stage:', tostring(row)
+            print >>sys.stderr, '[*] unparsed row:', tostring(row)
     return res
 
 def dateJSONhandler(obj):
@@ -294,15 +292,25 @@ def crawl():
         result.extend(nextPage(req))
     return result
 
+# some config thingies hidden at the end of the file :)
+pool = Pool(8)   # reduce if less aggressive
+cb = dumpToMongo # dumpAsJSON
+
+# and some global objects
 base = 'http://www.europarl.europa.eu/oeil/file.jsp'
-cj = cookielib.CookieJar()
-opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.CookieJar()))
+
+# connect to  mongo
 conn = pymongo.Connection()
 db=conn.oeil
 docs=db.docs
-pool = Pool(8)
 
 if __name__ == "__main__":
+    crawl()
+    pool.close()
+    pool.join()
+
+    # some tests
     #import pprint
     #scrape("http://www.europarl.europa.eu/oeil/file.jsp?id=5872922")
     #pprint.pprint(scrape("http://www.europarl.europa.eu/oeil/file.jsp?id=5872922"))
@@ -318,6 +326,3 @@ if __name__ == "__main__":
     #print 'x'*80
     #scrape("http://www.europarl.europa.eu/oeil/file.jsp?id=5699432")
     #pprint.pprint(scrape("http://www.europarl.europa.eu/oeil/file.jsp?id=5699432"))
-    crawl()
-    pool.close()
-    pool.join()
