@@ -13,7 +13,7 @@ div#header h1 { color: #FFFFFF; line-height: 45px; }
 div#menu { clear: both; color: #FFFFFF; }
 div#searchBar { line-height: 24px; }
 div#searchBar input {  -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; padding: 2px 10px 2px 10px; font-size: 0.9em; }
-div#searchBar input.sbutton {  width: 50px; height: 22px; font-size: 0.8em; }
+div#searchBar input.sbutton { height: 22px; font-size: 0.8em; }
 div#menu ul { float: right; }
 div#menu li { float: left; padding: 0 10px 0 10px; font-weight: bold; }
 div#menu li a { color: white;}
