@@ -33,6 +33,8 @@ def dumpToMongo(data):
                                        data.get('Identification document'))['Title']
     docs.save(data)
 
+cb = dumpToMongo # dumpAsJSON
+
 def fetch(url):
     # url to etree
     f=urllib2.urlopen(url)
@@ -204,6 +206,7 @@ def scrape(url):
         _scrape(url)
     except:
         print >>sys.stderr, '[!] failed to scrape', url
+        raise
 
 def _scrape(url):
     tree=fetch(url)
@@ -292,18 +295,15 @@ def crawl():
         result.extend(nextPage(req))
     return result
 
-# some config thingies hidden at the end of the file :)
-pool = Pool(8)   # reduce if less aggressive
-cb = dumpToMongo # dumpAsJSON
 
 # and some global objects
 base = 'http://www.europarl.europa.eu/oeil/file.jsp'
 opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.CookieJar()))
-
 # connect to  mongo
 conn = pymongo.Connection()
 db=conn.oeil
 docs=db.docs
+pool = Pool(8)   # reduce if less aggressive
 
 if __name__ == "__main__":
     crawl()
