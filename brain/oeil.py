@@ -22,18 +22,48 @@ from lxml.etree import tostring
 from cStringIO import StringIO
 from urlparse import urljoin
 from multiprocessing import Pool
-import urllib2, urllib, cookielib, tidy, datetime, sys, json, pymongo
+from itertools import izip_longest
+import urllib2, urllib, cookielib, tidy, datetime, sys, json, pymongo, traceback
 
 def dumpAsJSON(data):
+    # concurrency corrupts completely
     print json.dumps(data,default=dateJSONhandler)
 
 def dumpToMongo(data):
-    #Docs.ensure_index([('docid', pymongo.ASCENDING)])
-    print >> sys.stderr, '>', data.get('Identification procedure',
-                                       data.get('Identification document'))['Title']
+    print >> sys.stderr, '>', data['Identification']['Title'].encode('utf8')
     docs.save(data)
 
-cb = dumpAsJSON # dumpToMongo 
+def diff(data):
+    k=data['source']
+    res=docs.find({ 'source' : k })
+    d=filter(None,[diffItem(data,x) for x in res])
+    if d:
+        print data['Identification']['Title']
+        print data['source']
+        print
+
+def diffItem(e1,e2):
+    if type(e1) == str:
+       e1=unicode(e1,'utf8')
+    if type(e1) == tuple:
+       e1=list(e1)
+    if type(e1) != type(e2):
+        return (e1,e2)
+    if type(e1) == list:
+        return filter(None,[diffItem(*k) for k in izip_longest(e1,e2)])
+    if type(e1) == dict:
+        res=[]
+        for k in set(e1.keys() + e2.keys()):
+            if k == '_id': continue
+            r=diffItem(e1.get(k),e2.get(k))
+            if r:
+                res.append((k,r))
+        return dict(res)
+    if e1 != e2:
+        return (e1,e2)
+    return
+
+cb = diff #dumpAsJSON # dumpToMongo
 
 def fetch(url):
     # url to etree
@@ -70,7 +100,7 @@ def toText(node):
 
     links=node.xpath('a')
     if not links: return text
-    return (text, urljoin(base,links[0].get('href')))
+    return (unicode(text,'utf8'), unicode(urljoin(base,links[0].get('href')),'utf8'))
 
 def toLines(node):
     text=toText(node).split('\n')
@@ -138,8 +168,8 @@ def links(table):
     res={}
     for row in table.xpath('tr'):
         items=row.xpath('td')
-        key=tostring(items[0],method="text",encoding='utf8').strip()
-        value=tostring(items[1],method="text",encoding='utf8').strip()
+        key=unicode(tostring(items[0],method="text",encoding='utf8').strip(),'utf8')
+        value=unicode(tostring(items[1],method="text",encoding='utf8').strip(),'utf8')
         url=items[1].xpath('a')[0].get('href')
         if key and value:
             res[key]=(value, url)
@@ -206,6 +236,8 @@ def scrape(url):
         _scrape(url)
     except:
         print >>sys.stderr, '[!] failed to scrape', url
+        #print sys.exc_info()[0], str(sys.exc_info()[2])
+        traceback.print_exc(file=sys.stdout)
         raise
 
 def _scrape(url):
@@ -217,12 +249,12 @@ def _scrape(url):
         if section.text in ['Identification procedure',
                             'Identification resolution',
                             'Identification document']:
-            res[section.text]=identification(table)
+            res['Identification']=identification(table)
         elif section.text in ['Stages procedure',
                               'Stages resolution']:
-            res[section.text]=toObj(table,stageFields)
+            res['Stages']=toObj(table,stageFields)
         elif section.text == 'Forecasts procedure':
-            res['Forecasts procedure']=forecasts(table)
+            res['Forecasts']=forecasts(table)
         elif section.text in ['Agents procedure',
                               'Agents document',
                               'Agents resolution']:
@@ -233,8 +265,8 @@ def _scrape(url):
                     tmp1=commitee.split(' ')
                     row['Commitee']=' '.join(tmp1[:-1])
                     row['Commitee role']=tmp1[-1][1:-1]
-            res[section.text]=tmp
-            OtherAgents(table, res[section.text])
+            res['Agents']=tmp
+            OtherAgents(table, res['Agents'])
         elif section.text == 'Links to other sources procedure':
             res['Links to other sources procedure']=links(table)
         elif section.text == 'List of summaries':
@@ -267,6 +299,7 @@ def nextPage(req):
                             'wrap' : 0})
     tree=parse(StringIO(str(raw)))
     result.extend([pool.apply_async(scrape, [item])
+    #result.extend([scrape(item)
                    for item
                    in ['http://www.europarl.europa.eu/oeil/'+x.get('href')
                        for x
@@ -281,7 +314,7 @@ def nextPage(req):
 
 def crawl():
     result=[]
-    for (stageid, stage) in getStages(): # TODO remove this test limititation!
+    for (stageid, stage) in getStages():
         print >>sys.stderr, 'crawling:', stage
         data={'xpath': '/oeil/search/procstage/stage',
               'scope': 'stage',
