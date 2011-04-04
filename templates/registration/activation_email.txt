@@ -1,5 +1,5 @@
 {% load i18n %}
-{% load tagger %}
+{% load lenx %}
 
 {% trans "Here's your activation key" %}
 {{activation_key}}

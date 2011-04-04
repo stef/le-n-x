@@ -1,1 +1,1 @@
-{%load tagger%}{%root_url%} account registration
+{%load lenx%}{%root_url%} account registration
