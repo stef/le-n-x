@@ -78,3 +78,6 @@
  - http://tfinley.net/software/svmpython2/
  - http://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cosine.html#scipy.spatial.distance.cosine
 
+** similar projects
+ - http://epvote.eu/index.php
+ - http://www.votewatch.eu/static/about_us.php
