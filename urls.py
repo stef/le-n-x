@@ -19,6 +19,9 @@ urlpatterns = patterns('',
     (r'^toggle_star/(?P<id>.+)$', view.toggle_star),
     (r'^starred$', view.starred),
     (r'^search$', view.search),
+    (r'^accounts/logout/$', 'django.contrib.auth.views.logout', {'next_page' : '/all'}),
+    (r'^accounts/', include('registration.urls')),
+    url(r'^annotations/', include('lenx.notes.urls')),
 )
 
 if settings.DEV_SERVER:

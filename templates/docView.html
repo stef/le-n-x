@@ -1,21 +1,38 @@
 {% extends "base.html" %}
 {% load lenx %}
 
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{%media_url%}/css/annotator.css">
+{% endblock %}
+
 {% block scripts %}
-<script type="text/javascript" src="{%media_url%}/js/jquery.1.4.2.min.js"></script>
+<script src="{%media_url%}/js/notes/vendor/jquery.js"></script>
 <script type="text/javascript" src="{%media_url%}/js/docView.js"></script>
 <script type="text/javascript" src="{%media_url%}/js/jquery.sparkline.min.js"></script>
+<script src="{%media_url%}/js/notes/vendor/json2.js"></script>
+
+<script src="{%media_url%}/js/notes/console.js"></script>
+<script src="{%media_url%}/js/notes/class.js"></script>
+<script src="{%media_url%}/js/notes/extensions.js"></script>
+<script src="{%media_url%}/js/notes/range.js"></script>
+<script src="{%media_url%}/js/notes/annotator.js"></script>
+<script src="{%media_url%}/js/notes/plugins/store.js"></script>
+<script src="{%media_url%}/js/notes/plugins/user.js"></script>
+<script src="{%media_url%}/js/notes.js"></script>
+
 <script type="text/javascript">
 $(document).ready(function(){
    $(function() {
       $('#cutoffs').sparkline([{{cutoffs}}], {type: 'bar',
                                barColor: 'black'}); 
       });
+      var os = new Notes.Annotator($('#text-to-annotate'))
+      os.setCurrentUser({{user}})
    });
 </script>
 {% endblock %}
 
-{% block main %}
+{% block content %}
 <ul class="docmenu">
    <li><a href="{%root_url%}/pippi/{{doc.docid}}">Pippify</a></li>
    <li><a href="{%root_url%}/meta/{{doc.docid}}">Metadata</a></li>
@@ -43,7 +60,9 @@ $(document).ready(function(){
           </ul>
     </fieldset>
 </div>
+<div id="text-to-annotate">
 {{ content|safe }}
+</div>
 
 <div id='tooltips'>
 {{tooltips|safe }}
