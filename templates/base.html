@@ -29,6 +29,21 @@
             <li><a href="{% root_url %}/pippies">Pippies</a></li>
            </ul>
           </li>
+          <li>Info</a>
+           <ul>
+            <li><a href="http://www.ctrlc.hu/~stef/blog/posts/pippi_longstrings.html">Story</a></li>
+            <li><a href="https://github.com/stef/le-n-x">Code</a></li>
+           </ul>
+          </li>
+          {% if not user.is_authenticated %}
+          <li><a href="{% root_url %}/accounts/login">Login</a>
+           <ul>
+            <li><a href="{% root_url %}/accounts">Register</a></li>
+           </ul>
+          {%else%}
+          <li><a href="{% root_url %}/accounts/logout">Logout</a>
+          {%endif%}
+          </li>
         </ul>
         <form action="{% root_url %}/search"><div id="searchBar"><input type="text" name="q"/><input type="submit" value="search" class="sbutton"/></div> </form>
        </div>
