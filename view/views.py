@@ -138,6 +138,7 @@ def docView(request,doc=None,cutoff=10):
     #print "[!] Rendering\n\tContent length: %d" % len(cont)
     return render_to_response('docView.html', {'doc': d,
                                                'oid': d._id,
+                                               'user': request.user,
                                                'content': cont,
                                                'related': relDocs,
                                                'cutoff': cutoff,
