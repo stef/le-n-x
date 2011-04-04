@@ -19,6 +19,8 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.core.management import setup_environ
+from django.core.context_processors import csrf
+from django.template import RequestContext
 from lenx import settings
 setup_environ(settings)
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
@@ -41,7 +43,7 @@ def htmlPippi(doc,matches,frag):
     return u'<span class="doc">in %s</span>: <span class="pos">%s</span><div class="txt">%s</div>' % (doc, matches, frag)
 
 def index(request):
-    return render_to_response('index.html')
+    return render_to_response('index.html', context_instance=RequestContext(request))
 
 def anchorArticles(txt):
     # find all textnodes starting with Article, wrapping this in a named <a> and prepending a hoverable link to this anchor
@@ -85,12 +87,12 @@ def docView(request,doc=None,cutoff=10):
     if request.GET.get('cutoff', 0):
         cutoff = int(request.GET['cutoff'])
     if not doc or not cutoff:
-        return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'})
+        return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'}, context_instance=RequestContext(request))
     try:
         d = Doc(docid=doc)
     except:
         form = UploadForm({'docid': doc})
-        return render_to_response('upload.html', { 'form': form, })
+        return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
     tooltips={}
     cont = d.body
     relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=cutoff))} }, ['docid','title'])
@@ -142,7 +144,7 @@ def docView(request,doc=None,cutoff=10):
                                                'cutoffs': ','.join(cutoffSL(d,cutoff)),
                                                'len': len(ls),
                                                'tooltips': '\n'.join(tooltips.values()),
-                                               'matches': matches})
+                                               'matches': matches}, context_instance=RequestContext(request))
 
 def diffFrag(frag1,frag2):
     if not frag1 and frag2:
@@ -187,12 +189,12 @@ def listDocs(request):
     template_vars['stats']=getOverview()
     template_vars['starred']=request.session.get('starred',set())
     template_vars['title']='Complete Corpus of pippi longstrings'
-    return render_to_response('corpus.html', template_vars)
+    return render_to_response('corpus.html', template_vars, context_instance=RequestContext(request))
 
 def createDoc(request):
     form = UploadForm(request.POST)
     if not form.is_valid():
-        return render_to_response('upload.html', { 'form': form, })
+        return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
     doc=form.cleaned_data['doc']
     docid=form.cleaned_data['docid']
     raw=unicode(str(tidy.parseString(doc, **{'output_xhtml' : 1,
@@ -214,11 +216,11 @@ def job(request):
     try:
         D1=Doc(docid=d1)
     except:
-        return render_to_response('error.html', {'error': 'wrong document: "%s"!' % d1})
+        return render_to_response('error.html', {'error': 'wrong document: "%s"!' % d1}, context_instance=RequestContext(request))
     try:
         D2=Doc(docid=d2)
     except:
-        return render_to_response('error.html', {'error': 'specify document: "%s"!' % d2})
+        return render_to_response('error.html', {'error': 'specify document: "%s"!' % d2}, context_instance=RequestContext(request))
     lcs.pippi(D1,D2)
     return HttpResponseRedirect('/doc/%s' % (d1))
 
@@ -227,7 +229,7 @@ def jobs(request):
     try:
         refdoc=Doc(oid=ObjectId(rdoc))
     except:
-        return render_to_response('error.html', {'error': 'wrong document: "%s"!' % rdoc})
+        return render_to_response('error.html', {'error': 'wrong document: "%s"!' % rdoc}, context_instance=RequestContext(request))
     failed=[]
     for doc in request.POST.getlist('ids'):
         try:
@@ -239,7 +241,7 @@ def jobs(request):
 
 def pippi(request,refdoc=None):
     if not refdoc:
-        return render_to_response('error.html', {'error': 'specify document: %s!' % refdoc})
+        return render_to_response('error.html', {'error': 'specify document: %s!' % refdoc}, context_instance=RequestContext(request))
     refdoc=Doc(docid=refdoc)
     template_vars=pager(request,Docs.find({},['_id','docid']),'docid',False)
     docs=sorted([(doc['docid'],doc['_id']) for doc in template_vars['data']])
@@ -260,10 +262,10 @@ def pippi(request,refdoc=None):
     template_vars['reftitle']=refdoc.title
     template_vars['oid']=str(refdoc._id)
     template_vars['starred']=request.session.get('starred',set())
-    return render_to_response('pippi.html', template_vars)
+    return render_to_response('pippi.html', template_vars, context_instance=RequestContext(request))
 
 def stats(request):
-    return render_to_response('stats.html', { 'stats': getOverview(), })
+    return render_to_response('stats.html', { 'stats': getOverview(), }, context_instance=RequestContext(request))
 
 def pager(request,data, orderBy, orderDesc):
     limit = int(cgi.escape(request.GET.get('limit','10')))
@@ -355,7 +357,7 @@ def frags(request):
     template_vars['doc']=docfilter
     if docfilter: template_vars['docTitle']=Docs.find_one({'_id': docfilter},['docid'])['docid']
     if pippifilter: template_vars['pippiFilter']=1 #" ".join(Pippies.find_one({'_id': pippifilter},['pippi'])['pippi'])
-    return render_to_response('frags.html', template_vars)
+    return render_to_response('frags.html', template_vars, context_instance=RequestContext(request))
 
 def pippies(request):
     filtr={}
@@ -392,12 +394,12 @@ def pippies(request):
     if docfilter:
         doc=Docs.find_one({'_id': docfilter},['docid', 'title'])
         template_vars['docTitle']=doc['title'] if 'title' in doc else doc['docid']
-    return render_to_response('pippies.html', template_vars)
+    return render_to_response('pippies.html', template_vars, context_instance=RequestContext(request))
 
 def search(request):
     q = cgi.escape(request.GET.get('q',''))
     if not q:
-        return render_to_response('error.html', {'error': 'Missing search query!'})
+        return render_to_response('error.html', {'error': 'Missing search query!'}, context_instance=RequestContext(request))
 
     orderBy = cgi.escape(request.GET.get('orderby',''))
     # TODO also order by docslen (need to add that to bulksaver)
@@ -422,27 +424,27 @@ def search(request):
                                for pippi in template_vars['data']]
     template_vars['getparams']=request.GET.urlencode()
     template_vars['q']=q
-    return render_to_response('search.html', template_vars)
+    return render_to_response('search.html', template_vars, context_instance=RequestContext(request))
 
 def metaView(request,doc=None):
     if not doc:
-        return render_to_response('error.html', {'error': 'Missing document!'})
+        return render_to_response('error.html', {'error': 'Missing document!'}, context_instance=RequestContext(request))
     try:
         d = Doc(docid=doc)
     except:
         form = UploadForm({'docid': doc})
-        return render_to_response('upload.html', { 'form': form, })
+        return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
 
     relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=5))} }, ['docid','title'])
     return render_to_response('meta.html', {'doc': d,
                                             'related': relDocs,
                                             'metadata': d.metadata,
-                                            })
+                                            }, context_instance=RequestContext(request))
 
 
 def toggle_star(request,id=None):
     if not id:
-        return render_to_response('error.html', {'error': 'Missing id!'})
+        return render_to_response('error.html', {'error': 'Missing id!'}, context_instance=RequestContext(request))
     if not 'starred' in request.session or not request.session['starred']:
         request.session['starred']=set([])
     if id in request.session['starred']:
@@ -473,7 +475,7 @@ def starred(request):
     template_vars['stats']=getOverview()
     template_vars['starred']=request.session.get('starred',set())
     template_vars['title']='Your starred documents'
-    return render_to_response('corpus.html', template_vars)
+    return render_to_response('corpus.html', template_vars, context_instance=RequestContext(request))
 
 def cutoffSL(doc, cutoff):
     m=Code("function(){ emit( this.len , { count : 1 } );}")
