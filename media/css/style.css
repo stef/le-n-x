@@ -21,7 +21,7 @@ div#main { padding: 10px; padding-bottom: 50px; margin-top: 10px; background: tr
 div#loading { display: none; width: 32px; height: 32px; position: absolute; top: 0; right: 0; background: url('../images/loader.gif')}
 ul#stats { display: inline; }
 ul#stats li { display: inline; list-style: none; }
-div.rel { float: right; max-width: 350px; }
+div.rel { float: right; max-width: 350px; position: relative; z-index: 999; }
 .frag_item { display: inline-block;  padding-left: 10px; padding-top: 10px; width: 500px; white-space: nowrap; }
 .frag { clear: both; background: transparent; white-space: nowrap; }
 .frag:hover  { background: #CCCCFF; }
