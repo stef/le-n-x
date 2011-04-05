@@ -71,14 +71,15 @@ SECRET_KEY = 'xcd84-)g5$_vdvtc*3a7d_@71bz-riv%hnt#**c@*4$8bzcbk)'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.load_template_source',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 )
@@ -97,6 +98,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.messages',
     'tinymce',
     'view',
     'brain',
@@ -110,6 +112,7 @@ TINYMCE_COMPRESSOR = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 
 LOGIN_REDIRECT_URL = '/all'
+ACCOUNT_ACTIVATION_DAYS = 7
 
 try:
     from lenx.local_settings import *
