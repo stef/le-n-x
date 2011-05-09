@@ -181,17 +181,17 @@ class Eurlex(DOC):
                     'string' in dir(content.findAll('p')[1]) and
                     content.findAll('p')[1].string.strip().startswith('/* There is no English version of this document available since it was not included in the English Special Edition.')):
                     raise ValueError, "Language Error"
-                kwargs['raw']=raw
+                kwargs['raw']=anchorArticles(raw)
                 self.__dict__['metadata'] = self.extractMetadata()
         super(Eurlex,self).__init__(*args, **kwargs)
 
     def _getbody(self):
-        return unicode(str(BeautifulSoup(self.raw).find(id='TexteOnly')), 'utf8')
+        return unicode(str(BeautifulSoup(self.raw, convertEntities=BeautifulSoup.XHTML_ENTITIES).find(id='TexteOnly')), 'utf8')
 
     def _gettext(self):
         res=self._getExtField('text')
         if res: return res
-        soup = BeautifulSoup(self.raw)
+        soup = BeautifulSoup(self.raw, convertEntities=BeautifulSoup.XHTML_ENTITIES)
         # TexteOnly is the id used on eur-lex pages containing docs
         root=soup.find(id='TexteOnly')
         if not root:
@@ -226,7 +226,7 @@ class Eurlex(DOC):
         return self.__unicode__()
 
     def _getHTMLMetaData(self, attr):
-        soup = BeautifulSoup(self.raw)
+        soup = BeautifulSoup(self.raw,convertEntities=BeautifulSoup.XHTML_ENTITIES)
         res=map(lambda x: (x and x.has_key('content') and x['content']) or "", soup.findAll('meta',attrs={'name':attr}))
         return '|'.join(res).encode('utf-8')
 
@@ -256,7 +256,7 @@ class Eurlex(DOC):
 
     def extractMetadata(self):
         raw=CACHE.fetchUrl(EURLEXURL+self.docid+":NOT")
-        soup = BeautifulSoup(raw.decode('utf8'))
+        soup = BeautifulSoup(raw.decode('utf8'), convertEntities=BeautifulSoup.XHTML_ENTITIES)
         result={}
         # dates
         dates=soup.find('h2',text="Dates")
@@ -296,6 +296,33 @@ class Eurlex(DOC):
             result['Classifications']['Directory code']=[dircode.split(' ',1)[0] for dircode in dc if dircode]
             result['Classifications']['Directories']=[dircode.split(' ',1)[1].split(' / ') for dircode in dc if dircode]
         return result
+
+from BeautifulSoup import BeautifulSoup, Tag, NavigableString
+def anchorArticles(txt):
+    # find all textnodes starting with Article, wrapping this in a named <a> and prepending a hoverable link to this anchor
+    aregex=re.compile('^\s*Article\s+[0-9][0-9.,]*', re.I)
+    nsoup = BeautifulSoup(txt)
+    node=nsoup.find(text=aregex)
+    while node:
+        nodeidx=node.parent.contents.index(node)
+        match=str(re.match(aregex,node).group())
+        # create named <a>
+        name=match.replace(' ','_')
+        a=Tag(nsoup,'a',[('name',name)])
+        a.insert(0,match)
+        # create a link that is displayed if the <a> is hovered
+        link=Tag(nsoup,'a', [('class',"anchorLink"), ('href','#'+name)])
+        link.insert(0,"#")
+        # create a container for the a and the link
+        hover=Tag(nsoup,'span',[('class','hover')])
+        hover.insert(0,a)
+        hover.insert(0,link)
+        node.parent.insert(nodeidx,hover)
+        # cut the newly wrapped from the original node.
+        newNode=NavigableString(node[len(match):])
+        node.replaceWith(newNode)
+        node=newNode.findNext(text=aregex)
+    return str(nsoup)
 
 def fltr(lst):
     return [x for x in lst if not re.search(r"\s*\\n',\s*'\s*",x)]

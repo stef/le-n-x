@@ -7,10 +7,8 @@
 
 {% block scripts %}
 <script src="{%media_url%}/js/notes/vendor/jquery.js"></script>
-<script type="text/javascript" src="{%media_url%}/js/docView.js"></script>
 <script type="text/javascript" src="{%media_url%}/js/jquery.sparkline.min.js"></script>
 <script src="{%media_url%}/js/notes/vendor/json2.js"></script>
-
 <script src="{%media_url%}/js/notes/console.js"></script>
 <script src="{%media_url%}/js/notes/class.js"></script>
 <script src="{%media_url%}/js/notes/extensions.js"></script>
@@ -24,7 +22,7 @@
 $(document).ready(function(){
    $(function() {
       $('#cutoffs').sparkline([{{cutoffs}}], {type: 'bar',
-                               barColor: 'black'}); 
+                               barColor: 'black'});
       });
       var os = new Notes.Annotator($('#text-to-annotate'))
       os.setCurrentUser('{{user}}')
@@ -48,7 +46,6 @@ $(document).ready(function(){
     <fieldset><legend>Statistics</legend>
         <h4>Cutoff: {{ cutoff }} <span id="cutoffs"></span></h4>
         <h4>Pippies: {{ len }}</h4>
-        <h4>Highlights in text: {{ matches }}</h4>
     </fieldset>
     <fieldset> <legend>Related docs</legend>
           <ul>

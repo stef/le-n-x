@@ -23,7 +23,6 @@ from django.core.context_processors import csrf
 from django.template import RequestContext
 from lenx import settings
 setup_environ(settings)
-from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from lenx.view.models import Pippi, TfIdf, tfidf
 from lenx.view.doc import Doc
 from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
@@ -45,43 +44,6 @@ def htmlPippi(doc,matches,frag):
 def index(request):
     return render_to_response('index.html', context_instance=RequestContext(request))
 
-def anchorArticles(txt):
-    # find all textnodes starting with Article, wrapping this in a named <a> and prepending a hoverable link to this anchor
-    aregex=re.compile('^\s*Article\s+[0-9][0-9.,]*', re.I)
-    nsoup = BeautifulSoup(unicode(txt))
-    node=nsoup.find(text=aregex)
-    while node:
-        nodeidx=node.parent.contents.index(node)
-        match=str(re.match(aregex,node).group())
-        # create named <a>
-        name=match.replace(' ','_')
-        a=Tag(nsoup,'a',[('name',name)])
-        a.insert(0,match)
-        # create a link that is displayed if the <a> is hovered
-        link=Tag(nsoup,'a', [('class',"anchorLink"), ('href','#'+name)])
-        link.insert(0,"#")
-        # create a container for the a and the link
-        hover=Tag(nsoup,'span',[('class','hover')])
-        hover.insert(0,a)
-        hover.insert(0,link)
-        node.parent.insert(nodeidx,hover)
-        # cut the newly wrapped from the original node.
-        newNode=NavigableString(node[len(match):])
-        node.replaceWith(newNode)
-        node=newNode.findNext(text=aregex)
-    return unicode(str(nsoup),'utf8')
-
-def annotatePippi(d,pippi,cutoff=7):
-    itemtpl='<li><a href="/doc/%s?cutoff=%d">%s</a><hr /></li>'
-    docs=Pippi('',oid=pippi['pippi']).getDocs(d,cutoff=cutoff)
-    return '\n'.join([
-        '<div class="pippiNote" id="%s">' % pippi['pippi'],
-        '<b>also appears in</b>',
-        '<ul>',
-        '\n'.join([(itemtpl % (doc.docid, cutoff, doc.title[:100].decode('utf8')+'...' if len(doc.title)>100 else doc.title)) for doc in docs]).encode('utf8'),
-        '</ul>',
-        '</div>',
-        ])
 
 def docView(request,doc=None,cutoff=10):
     if request.GET.get('cutoff', 0):
@@ -93,49 +55,8 @@ def docView(request,doc=None,cutoff=10):
     except:
         form = UploadForm({'docid': doc})
         return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
-    tooltips={}
     cont = d.body
     relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=cutoff))} }, ['docid','title'])
-    ls = []
-    matches = 0
-    for l in d.getFrags(cutoff=cutoff):
-        if( l['l'] < cutoff): break
-        # for unique locset - optimalization?!
-        if l['txt'] in ls:
-            continue
-        ls.append(l['txt'])
-        t = l['txt']
-        # for valid matches
-        btxt = ''
-        etxt = ''
-        if t[0][0].isalnum():
-            btxt = '\W'
-        if t[-1][-1].isalnum():
-            etxt = '\W'
-        rtxt = btxt+'\s*(?:<[^>]*>\s*)*'.join([re.escape(x) for x in t])+etxt
-        regex=re.compile(rtxt, re.I | re.M | re.U)
-        i=0
-        offset = 0
-        #print "[!] Finding: %s\n\tPos: %s\n\t%s\n" % (' '.join(t), l['pos'], rtxt)
-        if not l['pippi'] in tooltips:
-            tooltips[l['pippi']]=annotatePippi(d,l,cutoff)
-        for r in regex.finditer(cont):
-            #print '[!] Match: %s\n\tStartpos: %d\n\tEndpos: %d' % (r.group(), r.start(), r.end())
-            span = (('<span class="highlight %s">') % l['pippi'], '</span>')
-            start = r.start()+offset
-            if btxt:
-                start += 1
-            end = r.end()+offset
-            if etxt:
-                end -= 1
-            match, n = re.compile(r'((?:\s*<[^>]+>)+)', re.M | re.U).subn(r'%s\1%s' % (span[1], span[0]), cont[start:end])
-            cont = cont[:start]+span[0]+match+span[1]+cont[end:]
-            offset += (n+1)*(len(span[0])+len(span[1]))
-            matches += 1
-            #print '_'*60
-        #print '-'*120
-    cont=anchorArticles(cont)
-    #print "[!] Rendering\n\tContent length: %d" % len(cont)
     return render_to_response('docView.html', {'doc': d,
                                                'oid': d._id,
                                                'user': request.user,
@@ -143,9 +64,7 @@ def docView(request,doc=None,cutoff=10):
                                                'related': relDocs,
                                                'cutoff': cutoff,
                                                'cutoffs': ','.join(cutoffSL(d,cutoff)),
-                                               'len': len(ls),
-                                               'tooltips': '\n'.join(tooltips.values()),
-                                               'matches': matches}, context_instance=RequestContext(request))
+                                               'len': d.getFrags(cutoff=cutoff).count()}, context_instance=RequestContext(request))
 
 def diffFrag(frag1,frag2):
     if not frag1 and frag2:

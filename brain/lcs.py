@@ -16,9 +16,10 @@
 
 # (C) 2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
-# src: http://chipsndips.livejournal.com/425.html
 from lenx.brain import bulksaver, stopwords
+from lenx.notes.pippinotes import saveNotes
 
+# src: http://chipsndips.livejournal.com/425.html
 # kludge: infinity is a very large number
 inf = 100000000
 
@@ -158,7 +159,11 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
         sel=((end-l)/ld)>0
         frags[stem][1+sel].append(end-l-(sel*ld))
 
-    if saver: saver.addDocs(D1,D2)
+    if saver:
+        saver.addDocs(D1,D2)
+        # also save as annotations
+        # TODO only save when saver is set!
+        saveNotes(D1,D2,frags)
     return [(saver.save(D1,D2,bulksaver.lcsPkt(sorted(a),sorted(b),l,stem,D1,D2))
              if saver
              else (l,stem,sorted(a),sorted(b)))
@@ -167,17 +172,16 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
             if a and b]
 
 if __name__ == "__main__":
-    #from lenx.view.Eurlex import Doc
+    #from lenx.view.eurlex import Doc
     from lenx.view.doc import Doc
-    import pprint
+    #import pprint
     import sys
     #frag=LCS(doc1,doc2)
     #pprint.pprint(frag.root)
 
     d1=Doc(docid=sys.argv[1].strip('\t\n'))
-    pprint.pprint(d1.extractMetadata())
+    #pprint.pprint(d1.extractMetadata())
     d2=Doc(docid=sys.argv[2].strip('\t\n'))
-    pprint.pprint(d2.extractMetadata())
-    #pips=pippi(Doc(docid=sys.argv[1].strip('\t\n')),Doc(docid=sys.argv[2].strip('\t\n')))
-    #print len(pips)
+    #pprint.pprint(d2.extractMetadata())
+    pips=pippi(d1,d2,None)
     #pprint.pprint(pips)
