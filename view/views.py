@@ -145,13 +145,13 @@ def job(request):
     return HttpResponseRedirect('/doc/%s' % (d1))
 
 def jobs(request):
-    rdoc=request.POST.get('doc')
+    rdoc=request.GET.get('doc')
     try:
         refdoc=Doc(oid=ObjectId(rdoc))
     except:
         return render_to_response('error.html', {'error': 'wrong document: "%s"!' % rdoc}, context_instance=RequestContext(request))
     failed=[]
-    for doc in request.POST.getlist('ids'):
+    for doc in request.GET.getlist('ids'):
         try:
             od=Doc(oid=ObjectId(doc))
         except:
