@@ -18,6 +18,7 @@
 
 from lenx.brain import bulksaver, stopwords
 from lenx.notes.pippinotes import saveNotes
+from lenx import settings
 
 # src: http://chipsndips.livejournal.com/425.html
 # kludge: infinity is a very large number
@@ -163,7 +164,7 @@ def pippi(D1,D2,saver=bulksaver.Saver()):
         saver.addDocs(D1,D2)
         # also save as annotations
         # TODO only save when saver is set!
-        saveNotes(D1,D2,frags)
+        saveNotes(D1,D2,frags,settings.ROOT_URL)
     return [(saver.save(D1,D2,bulksaver.lcsPkt(sorted(a),sorted(b),l,stem,D1,D2))
              if saver
              else (l,stem,sorted(a),sorted(b)))

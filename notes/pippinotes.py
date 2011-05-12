@@ -22,7 +22,7 @@ from lxml import etree
 from lxml.html.soupparser import parse
 from cStringIO import StringIO
 
-def saveNotes(D1,D2,frags,rooturl='http://localhost:8000/doc/%s'):
+def saveNotes(D1,D2,frags,rooturl='http://localhost:8000'):
     pa1=PippiAnnotator(D1)
     pa2=PippiAnnotator(D2)
     for stem, (l, a, b) in frags.items():
@@ -59,7 +59,7 @@ class PippiAnnotator:
     def pippies2xpaths(self,d2,pos,l,rooturl):
         for p in pos:
             Notes.save({ 'text' : u'also appearing in <a href="%s">%s</a>' % (rooturl, d2.title.strip().decode('utf8')),
-                  'uri' : rooturl % self.doc.docid,
+                  'uri' : '%s/doc/%s' % (rooturl, self.doc.docid),
                   'user' : 'Pippi Longstrings',
                   'ranges' : [ { 'start' :self.paths[p][0] ,
                                  'end' : self.paths[p+l][0],
