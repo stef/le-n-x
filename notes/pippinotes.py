@@ -22,13 +22,13 @@ from lxml import etree
 from lxml.html.soupparser import parse
 from cStringIO import StringIO
 
-def saveNotes(D1,D2,frags):
+def saveNotes(D1,D2,frags,rooturl='http://localhost:8000/doc/%s'):
     pa1=PippiAnnotator(D1)
     pa2=PippiAnnotator(D2)
     for stem, (l, a, b) in frags.items():
         if not(a and b) or l<7: continue
-        pa1.pippies2xpaths(D2,sorted(a),l)
-        pa2.pippies2xpaths(D1,sorted(b),l)
+        pa1.pippies2xpaths(D2,sorted(a),l,rooturl)
+        pa2.pippies2xpaths(D1,sorted(b),l,rooturl)
 
 class PippiAnnotator:
     def __init__(self,doc):
@@ -43,9 +43,7 @@ class PippiAnnotator:
         tree = parse(StringIO(self.doc.body))
         textnodes=tree.xpath('//div[@id="TexteOnly"]//text()')
         texts=[unicode(x) for x in textnodes]
-        while True:
-            if i>=len(texts) or pos>=len(self.doc.tokens):
-                break
+        while i<len(texts) and pos<len(self.doc.tokens):
             #print i,len(texts),len(self.doc.tokens),pos, self.doc.tokens[pos]
             offset=texts[i].find(self.doc.tokens[pos],offset)
             if offset==-1:
@@ -58,11 +56,10 @@ class PippiAnnotator:
             pos+=1
         return paths
 
-    def pippies2xpaths(self,d2,pos,l):
-        rooturl='http://localhost:8000/doc/%s' % self.doc.docid
+    def pippies2xpaths(self,d2,pos,l,rooturl):
         for p in pos:
             Notes.save({ 'text' : u'also appearing in <a href="%s">%s</a>' % (rooturl, d2.title.strip().decode('utf8')),
-                  'uri' : '%s' % rooturl,
+                  'uri' : rooturl % self.doc.docid,
                   'user' : 'Pippi Longstrings',
                   'ranges' : [ { 'start' :self.paths[p][0] ,
                                  'end' : self.paths[p+l][0],
