@@ -156,6 +156,7 @@ def jobs(request):
             od=Doc(oid=ObjectId(doc))
         except:
             failed.append(doc)
+            continue
         lcs.pippi(refdoc,od)
     return HttpResponseRedirect('/doc/%s' % (refdoc.docid))
 
