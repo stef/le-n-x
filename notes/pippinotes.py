@@ -42,6 +42,8 @@ class PippiAnnotator:
         paths={}
         tree = parse(StringIO(self.doc.body))
         textnodes=tree.xpath('//div[@id="TexteOnly"]//text()')
+        if not textnodes:
+            textnodes=tree.xpath('//text()')
         texts=[unicode(x) for x in textnodes]
         while i<len(texts) and pos<len(self.doc.tokens):
             #print i,len(texts),len(self.doc.tokens),pos, self.doc.tokens[pos]
@@ -58,11 +60,17 @@ class PippiAnnotator:
 
     def pippies2xpaths(self,d2,pos,l,rooturl):
         for p in pos:
-            Notes.save({ 'text' : u'also appearing in <a href="%s">%s</a>' % (rooturl, d2.title.strip().decode('utf8')),
-                  'uri' : '%s/doc/%s' % (rooturl, self.doc.docid),
-                  'user' : 'Pippi Longstrings',
-                  'ranges' : [ { 'start' :self.paths[p][0] ,
-                                 'end' : self.paths[p+l][0],
-                                 'startOffset' : self.paths[p][1],
-                                 'endOffset' : self.paths[p+l][1] + len(self.doc.tokens[p+l])}]})
+            title=d2.title.strip().decode('utf8')
+            #print title[:30], p, len(self.paths.keys()), self.paths[p+1][1],len(self.doc.tokens[p+l])
+            Notes.save({ 'text' : u'also appearing in <a title="%s" href="%s">%s</a>' % (title,
+                                                                                         rooturl,
+                                                                                         title if len(title)<100 else ("%s..." % title[:100])),
+                         'uri' : '%s/doc/%s' % (rooturl, self.doc.docid),
+                         'user' : 'Pippi Longstrings',
+                         'length' : int(l),
+                         'id': d2.docid,
+                         'ranges' : [ { 'start' :self.paths[p][0] ,
+                                        'end' : self.paths[p+l][0],
+                                        'startOffset' : self.paths[p][1],
+                                        'endOffset' : self.paths[p+l][1] + len(self.doc.tokens[p+l])}]})
 
