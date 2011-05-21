@@ -358,6 +358,7 @@ def metaView(request,doc=None):
 
     relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=5))} }, ['docid','title'])
     return render_to_response('meta.html', {'doc': d,
+                                            'oid': d._id,
                                             'related': relDocs,
                                             'metadata': d.metadata,
                                             }, context_instance=RequestContext(request))
