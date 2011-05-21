@@ -8,6 +8,7 @@ Notes.Annotator = function (element) {
 
   this.options = {
     user: { },
+    tags: { },
 
     store: {
       prefix: '/annotations',
@@ -23,6 +24,7 @@ Notes.Annotator = function (element) {
          search:  '/search'
        },
        annotationData: {
+         // TODO decouple from hostname! also in notes/pippinotes.py
          'uri': window.location.href
        }
     }
@@ -32,6 +34,7 @@ Notes.Annotator = function (element) {
   ;(function () {
      self.annotator.addPlugin("User", self.options.user);
      self.annotator.addPlugin("Store", self.options.store);
+     self.annotator.addPlugin("Tags", self.options.tags);
   })();
 
   this.setCurrentUser = function (user) {
