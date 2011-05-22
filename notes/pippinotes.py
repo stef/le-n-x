@@ -48,22 +48,33 @@ class PippiAnnotator:
             cut=10
         texts=[unicode(x) for x in textnodes]
         while i<len(texts) and pos<len(self.doc.tokens):
-            #print i,len(texts),len(self.doc.tokens),pos, self.doc.tokens[pos]
+            #print i,len(texts),len(self.doc.tokens),pos, self.doc.tokens[pos].encode('utf8')
             offset=texts[i].find(self.doc.tokens[pos],offset)
             if offset==-1:
                 i+=1
                 offset=0
                 continue
-            #print (tree.getpath(textnodes[i].getparent())[cut:], offset)
-            path=tree.getpath(textnodes[i].getparent())[cut:]
-            paths[pos]=(path, offset)
+            if textnodes[i].is_tail:
+                path=tree.getpath(textnodes[i].getparent().getparent())[cut:]
+                siblings=textnodes[i].getparent().getparent().xpath('text()')
+                adjust=sum([len(x) for x in siblings[:siblings.index(textnodes[i])]])
+                paths[pos]=(path, adjust+offset)
+            else:
+                path=tree.getpath(textnodes[i].getparent())[cut:]
+                paths[pos]=(path, offset)
+            #print paths[pos]
+            offset+=len(self.doc.tokens[pos])
+            if offset>=len(texts[i]):
+                i+=1
+                offset=0
             pos+=1
         return paths
 
     def pippies2xpaths(self,d2,pos,l,rooturl):
         for p in pos:
             title=d2.title.strip().decode('utf8')
-            #print title[:30], p, len(self.paths.keys()), self.paths[p+1][1],len(self.doc.tokens[p+l])
+            #print title[:30], p, len(self.paths.keys()), self.paths[p+l][1],len(self.doc.tokens[p+l])
+            print title[:30], p, l, len(self.paths), self.paths[p],self.paths[p+l]
             Notes.save({ 'text' : u'also appearing in <a title="%s" href="%s/doc/%s">%s</a>' % (title,
                                                                                          rooturl,
                                                                                          d2.docid,
@@ -71,9 +82,8 @@ class PippiAnnotator:
                          'uri' : '%s/doc/%s' % (rooturl, self.doc.docid),
                          'user' : 'Pippi Longstrings',
                          'length' : int(l),
-                         'docid': d2.docid,
+                         'tags': [d2.docid.replace(' ','-'), 'pippi'],
                          'ranges' : [ { 'start' :self.paths[p][0] ,
                                         'end' : self.paths[p+l][0],
                                         'startOffset' : self.paths[p][1],
                                         'endOffset' : self.paths[p+l][1] + len(self.doc.tokens[p+l])}]})
-
