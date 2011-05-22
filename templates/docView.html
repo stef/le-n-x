@@ -3,21 +3,21 @@
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="{%media_url%}/css/annotator.css">
+<link rel="stylesheet" type="text/css" href="{%media_url%}/css/annotator.min.css">
 {% endblock %}
 
 {% block scripts %}
 <script src="{%media_url%}/js/notes/vendor/jquery.js"></script>
-<script type="text/javascript" src="{%media_url%}/js/jquery.sparkline.min.js"></script>
 <script src="{%media_url%}/js/notes/vendor/json2.js"></script>
-<script src="{%media_url%}/js/notes/console.js"></script>
-<script src="{%media_url%}/js/notes/class.js"></script>
-<script src="{%media_url%}/js/notes/extensions.js"></script>
-<script src="{%media_url%}/js/notes/range.js"></script>
-<script src="{%media_url%}/js/notes/annotator.js"></script>
-<script src="{%media_url%}/js/notes/plugins/store.js"></script>
-<script src="{%media_url%}/js/notes/plugins/user.js"></script>
-<script src="{%media_url%}/js/notes/plugins/tags.js"></script>
+<script src="{%media_url%}/js/notes/annotator.min.js"></script>
+<script src="{%media_url%}/js/notes/annotator.store.min.js"></script>
+<script src="{%media_url%}/js/notes/annotator.auth.min.js"></script>
+<script src="{%media_url%}/js/notes/annotator.permissions.min.js"></script>
+<script src="{%media_url%}/js/notes/annotator.tags.min.js"></script>
+<script src="{%media_url%}/js/notes/annotator.filter.min.js"></script>
+<script src="{%media_url%}/js/notes/annotator.unsupported.min.js"></script>
 <script src="{%media_url%}/js/notes.js"></script>
+<script type="text/javascript" src="{%media_url%}/js/jquery.sparkline.min.js"></script>
 
 <script type="text/javascript">
 $(document).ready(function(){

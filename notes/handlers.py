@@ -57,5 +57,5 @@ class SearchHandler(AnonymousBaseHandler):
         query=dict([(k,v) for k,v in request.GET.items() if not k in non_query_args])
         notes = Notes.find(query).limit(limit).skip(offset) #.sort([(, pymongo.DESCENDING if orderDesc else pymongo.ASCENDING)])
 
-        return {'results': [dict([(k,v) if k!='_id' else ('id',v) for k,v in item.items()]) for item in notes],
+        return {'rows': [dict([(k,v) if k!='_id' else ('id',v) for k,v in item.items()]) for item in notes],
                 'total': notes.count()}

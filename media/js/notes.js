@@ -1,20 +1,16 @@
 Notes = ("Notes" in window) ? Notes : {};
 
 Notes.Annotator = function (element) {
-  var $ = jQuery, self = this;
-
-  this.annotator = $(element).annotator().data('annotator');
+  var self = this;
   this.currentUser = null;
-
   this.options = {
-    user: { },
-    tags: { },
-
+    permissions: { showEditPermissionsCheckbox: false },
     store: {
       prefix: '/annotations',
       loadFromSearch: {
-         'limit': 0,
-         'uri': window.location.href
+        'limit': 0,
+        'all_fields': 1,
+        'uri': window.location.href
        },
        urls: {
          create:  '/',
@@ -28,18 +24,19 @@ Notes.Annotator = function (element) {
          'uri': window.location.href
        }
     }
-  }
-
-  // Init
-  ;(function () {
-     self.annotator.addPlugin("User", self.options.user);
-     self.annotator.addPlugin("Store", self.options.store);
-     self.annotator.addPlugin("Tags", self.options.tags);
-  })();
+  };
 
   this.setCurrentUser = function (user) {
-    self.annotator.plugins["User"].setUser(user);
+    self.annotator.plugins["Permissions"].setUser(user);
   };
+
+  this.annotator = $(element).annotator().data('annotator')
+     //.addPlugin('Auth')
+     .addPlugin('Unsupported')
+     .addPlugin('Filter')
+     .addPlugin('Tags')
+     .addPlugin('Permissions')
+     .addPlugin('Store', self.options.store);
 
   return this;
 };
