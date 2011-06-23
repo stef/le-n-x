@@ -46,7 +46,7 @@ class PippiAnnotator:
         if not textnodes:
             textnodes=tree.xpath('//text()')
             cut=10
-        texts=[unicode(x) for x in textnodes]
+        texts=[unicode(x).replace(u'\xa0','&nbsp;') for x in textnodes]
         while i<len(texts) and pos<len(self.doc.tokens):
             #print i,len(texts),len(self.doc.tokens),pos, self.doc.tokens[pos].encode('utf8')
             offset=texts[i].find(self.doc.tokens[pos],offset)
@@ -74,7 +74,8 @@ class PippiAnnotator:
         for p in pos:
             title=d2.title.strip().decode('utf8')
             #print title[:30], p, len(self.paths.keys()), self.paths[p+l][1],len(self.doc.tokens[p+l])
-            #print title[:30], p, l, len(self.paths), self.paths[p],self.paths[p+l]
+            #print title[:30], p, l, len(self.paths)
+            #print self.paths[p],self.paths[p+l]
             Notes.save({ 'text' : u'also appearing in <a title="%s" href="%s/doc/%s">%s</a>' % (title,
                                                                                          rooturl,
                                                                                          d2.docid,
