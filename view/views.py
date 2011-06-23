@@ -402,7 +402,10 @@ def starred(request):
 def cutoffSL(doc, cutoff):
     m=Code("function(){ emit( this.len , { count : 1 } );}")
     r=Code("function (key, values) { var count = 0; values.forEach(function (v) {count += v.count;}); return {count: count}; }")
-    lens=dict([(x['_id'],int(x['value']['count'])) for x in Pippies.map_reduce(m,r,'cutoff sparkline', query={'docs': doc._id }).find()])
+    if Pippies.count()>0:
+        lens=dict([(x['_id'],int(x['value']['count'])) for x in Pippies.map_reduce(m,r,'cutoff sparkline', query={'docs': doc._id }).find()])
+    else:
+        lens={}
     if lens.keys():
         return [str(lens[x]) if x in lens else '0' for x in xrange(max(lens.keys())+1)][4:cutoff]
     else:
