@@ -74,7 +74,7 @@ class PippiAnnotator:
         for p in pos:
             title=d2.title.strip().decode('utf8')
             #print title[:30], p, len(self.paths.keys()), self.paths[p+l][1],len(self.doc.tokens[p+l])
-            print title[:30], p, l, len(self.paths), self.paths[p],self.paths[p+l]
+            #print title[:30], p, l, len(self.paths), self.paths[p],self.paths[p+l]
             Notes.save({ 'text' : u'also appearing in <a title="%s" href="%s/doc/%s">%s</a>' % (title,
                                                                                          rooturl,
                                                                                          d2.docid,
