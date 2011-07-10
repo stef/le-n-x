@@ -61,7 +61,7 @@ Stats: <ul id="stats">
     <td>
         <a href="{% root_url %}/toggle_star/{{ doc.oid }}" class="star" id="id{{ doc.oid }}">{% if doc.oid in starred %}&#x2605;{%else%}&#x2606;{%endif%}</a>
     </td>
-    <td>
+    <td class="title">
        <a title="{{doc.title|safe}}" href="{% root_url %}/doc/{{doc.id}}">{{doc.title|safe|truncatewords:30}}</a>
     </td><td>
        {{doc.docs}}/{{doc.indexed}}

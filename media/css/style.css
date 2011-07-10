@@ -30,7 +30,7 @@ div.rel { float: right; max-width: 350px; position: relative; z-index: 999; }
 .txt { width: 500px; padding-left: 10px; white-space: normal; }
 .pippi { background-color: #ddddaa;}
 .highlight, .highlight * { background: rgba(0, 120, 240, 0.2); position: relative;}
-.hovered { background: rgba(0, 240, 120, 0.8); } 
+.hovered { background: rgba(0, 240, 120, 0.8); }
 .tagcloud { width: 400px; border: 1px solid blue; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; margin: 4px; padding: 0.2em;}
 .size0 { font-size: .4em; }
 .size1 { font-size: .5em }
@@ -57,6 +57,7 @@ table.listing thead { font-weight: bold; color: #ffffff ; background-color: #008
 table.listing thead a {color: #ffffff;}
 table.listing thead td { padding-right: 6px; padding-left: 6px; }
 table.listing tr td { border-bottom: #0088dd 1px solid; }
+table.listing tr td.title { word-wrap:break-word; max-width: 15em; }
 .hilite-query{background: rgba(0, 120, 240, 0.05); position: relative;}
 input[disabled] {border: 1px solid grey;font-color:grey; background-color:#eeeeee;}
 thead td.orderedby{font-weight:bold;}
