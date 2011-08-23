@@ -1,3 +1,6 @@
+** links to parlament info
+ - list of parlamentary groups: http://www.europarl.europa.eu/parliament/public/staticDisplay.do?language=EN&id=45&pageRank=6
+ - good intro on parl workings http://www.europarl.europa.eu/parliament/public/staticDisplay.do?language=EN&id=45&pageRank=6
 ** how to annotate co-ment
  - http://www.co-ment.org/wiki/AnnotationInternals
 ** stet like javascript lib by okfn
