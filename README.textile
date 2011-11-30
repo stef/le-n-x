@@ -20,7 +20,7 @@ The django backend has some dependencies:
  * utidylib
 
 Installation
-
+@
     # install OS-level dependencies
     sudo aptitude install git libapache2-mod-wsgi mongodb-server mongodb-clients \
     python-virtualenv python-dev libhunspell-dev hunspell-en-us tidy libxslt1-dev
@@ -49,3 +49,4 @@ Installation
 
     # and finally
     python ./manage.py runserver
+@
