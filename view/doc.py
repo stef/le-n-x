@@ -253,7 +253,7 @@ from lenx import settings
 setup_environ(settings)
 from lenx.brain import cache as Cache
 CACHE=Cache.Cache(settings.CACHE_PATH)
-from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
+import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 from lenx.brain import tagcloud, stopwords
 
 import nltk.tokenize # get this from http://www.nltk.org/

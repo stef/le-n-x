@@ -33,7 +33,7 @@ from bson.objectid import ObjectId
 from bson.code import Code
 import tidy
 import nltk.tokenize # get this from http://www.nltk.org/
-from lenx.brain import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
+import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 from lenx.brain import lcs
 import re
 
