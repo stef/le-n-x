@@ -116,6 +116,8 @@ def createDoc(request):
     if not form.is_valid():
         return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
     doc=form.cleaned_data['doc']
+    if not "<html>" in doc:
+       doc="<html><head></head><body>%s</body></html>" % form.cleaned_data['doc']
     docid=form.cleaned_data['docid']
     raw=unicode(str(tidy.parseString(doc, **{'output_xhtml' : 1,
                                   'add_xml_decl' : 0,
