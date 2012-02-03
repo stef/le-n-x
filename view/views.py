@@ -409,6 +409,6 @@ def cutoffSL(doc, cutoff):
     else:
         lens={}
     if lens.keys():
-        return [str(lens[x]) if x in lens else '0' for x in xrange(max(lens.keys())+1)][4:cutoff]
+        return [str(lens[x]) if x in lens else '0' for x in xrange(int(max(lens.keys())+1))][4:cutoff]
     else:
         return []

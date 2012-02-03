@@ -75,7 +75,7 @@ def Doc(*args, **kwargs):
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class DOC(object):
-    computed_attrs = [ 'raw', 'body', 'text', 'tokens', 'stems', 'termcnt', 'tfidf', 'frags']
+    computed_attrs = [ 'raw', 'body', 'text', 'tokens', 'stems', 'termcnt', 'tfidf', 'frags', 'lang']
     fieldMap = {'raw': None, 'text': DocTexts, 'stems':  DocStems, 'tokens': DocTokens, }
     metafields = ['subject']
 
@@ -104,6 +104,7 @@ class DOC(object):
                 self.__dict__['metadata']={}
             if raw:
                 self.raw=raw
+                self.lang=guessLanguage(" ".join(self.text))
             self.save()
         else:
             raise KeyError('empty docid')
@@ -127,6 +128,8 @@ class DOC(object):
                 self.__dict__['title']=self.docid
             if name == 'frags':
                 return self._getfrags() # not cached at all
+            if name == 'lang' and 'lang' not in self.__dict__.keys():
+                return guessLanguage(" ".join(self._gettext()))
             if name == 'body':
                 return self._getbody() # not cached
             if name in self.metafields:
@@ -170,8 +173,7 @@ class DOC(object):
     def _gettext(self):
         res=self._getExtField('text')
         if res: return res
-        soup = BeautifulSoup(self.raw)
-        # TexteOnly is the id used on eur-lex pages containing docs
+        soup = BeautifulSoup(self.raw,convertEntities=BeautifulSoup.HTML_ENTITIES)
         res = [unicode(x) for x in soup.body.findAll(text=True)]
         self._setExtField('text',res) # cache data
         return res
@@ -188,17 +190,24 @@ class DOC(object):
         stems= self._getExtField('stems') or []
         if stems:
             return tuple(stems)
+        # lie about stems if we don't know how to
+        if self.lang not in stopstems.keys():
+            return self.tokens
 
-        engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
-        for word in self.tokens:
-            # stem each word
-            stem=engine.stem(word.encode('utf8'))
-            if stem:
-                stems.append(stem[0])
-            else:
-                stems.append('')
+        stems=tuple([self._stem(w,self.lang) for w in self.tokens])
+        # language aware stopwords removal
+        # result is a list of stems
         self._setExtField('stems',stems) # cache data
-        return tuple(stems)
+        return stems
+
+    def _stem(self, word, lang):
+        tmp=[x for x in word if x.isalpha()]
+        if len(tmp)<len(word)*0.8:
+             return ''
+        s=stemmers[lang].stem(word.encode('utf8'))
+        if s:
+            return s[0].decode('utf8')
+        return ''
 
     def _getstemcount(self):
         termcnt={}
@@ -255,6 +264,10 @@ from lenx.brain import cache as Cache
 CACHE=Cache.Cache(settings.CACHE_PATH)
 import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 from lenx.brain import tagcloud, stopwords
+from guess_language import guessLanguage
+from lenx.brain.stopmap import stopstems, lang_map
+
+stemmers=dict([(k,hunspell.HunSpell(settings.DICT_PATH+v+'.dic', settings.DICT_PATH+v+'.aff')) for k, v in lang_map.items()])
 
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?

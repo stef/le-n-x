@@ -3,9 +3,9 @@ import os.path
 
 BASE_PATH = os.path.dirname(__file__)
 CACHE_PATH = BASE_PATH+'/cache/'
-DICT_PATH = '/usr/share/hunspell'
+DICT_PATH = '/usr/share/hunspell/'
 LANG='en_US'
-DICT=DICT_PATH+'/'+LANG
+DICT=DICT_PATH+LANG
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
