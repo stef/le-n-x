@@ -191,11 +191,12 @@ class DOC(object):
         if stems:
             return tuple(stems)
         # lie about stems if we don't know how to
-        if self.lang not in stopstems.keys():
+        if self.lang not in stopmap.stopmap.keys():
             return self.tokens
 
         stems=tuple([self._stem(w,self.lang) for w in self.tokens])
         # language aware stopwords removal
+        stems=[x if x not in stopmap.stopmap[self.lang]and len(x)>1 else '' for x in stems]
         # result is a list of stems
         self._setExtField('stems',stems) # cache data
         return stems
@@ -265,9 +266,9 @@ CACHE=Cache.Cache(settings.CACHE_PATH)
 import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 from lenx.brain import tagcloud, stopwords
 from guess_language import guessLanguage
-from lenx.brain.stopmap import stopstems, lang_map
+from lenx.brain import stopmap
 
-stemmers=dict([(k,hunspell.HunSpell(settings.DICT_PATH+v+'.dic', settings.DICT_PATH+v+'.aff')) for k, v in lang_map.items()])
+stemmers=dict([(k,hunspell.HunSpell(settings.DICT_PATH+v+'.dic', settings.DICT_PATH+v+'.aff')) for k, v in stopmap.lang_map.items()])
 
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
