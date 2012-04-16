@@ -22,18 +22,17 @@ The django backend has some dependencies:
 Installation
 bc.
     # install OS-level dependencies
-    sudo aptitude install git mongodb-server mongodb-clients python-virtualenv
-    python-dev libhunspell-dev hunspell-en-us tidy libxslt1-dev
+    sudo aptitude install git mongodb-server mongodb-clients python-virtualenv python-dev libhunspell-dev hunspell-en-us tidy libxslt1-dev
     # clone pippi
     git clone git://github.com/stef/le-n-x.git pippi
-    cd lenx
+    cd pippi
     # create virtual environment
     virtualenv --no-site-packages env
     easy_install Django beautifulsoup pymongo django-tinymce pyyaml django-registration django-piston lxml
     easy_install 'http://download.berlios.de/utidylib/uTidylib-0.2.zip'
     easy_install 'http://nltk.googlecode.com/files/nltk-2.0.1rc1.zip'
     easy_install 'https://pyhunspell.googlecode.com/files/hunspell-0.1.tar.gz'
-    # on debian unstable this might work
+    # on debian unstable this might work (or you can modify pyhunspell to link against 1.3)
     ln -s /usr/lib/i386-linux-gnu/libhunspell-1.3.so /usr/lib/i386-linux-gnu/libhunspell-1.2.so
     # init the db
     python ./manage.py syncdb
