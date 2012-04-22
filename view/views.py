@@ -34,8 +34,10 @@ from bson.code import Code
 import tidy
 import nltk.tokenize # get this from http://www.nltk.org/
 import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
-from lenx.brain import lcs
-import re
+from lenx.brain import lcs, stopmap
+from guess_language import guessLanguage
+
+stemmers=dict([(k,hunspell.HunSpell(settings.DICT_PATH+v+'.dic', settings.DICT_PATH+v+'.aff')) for k, v in stopmap.lang_map.items()])
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -93,16 +95,19 @@ def getOverview():
     return stats
 
 def starred(request):
-    template_vars=pager(request,Docs.find({'_id' : { '$in': [ObjectId(x) for x in request.session.get('starred',())] }}),'docid',False)
+    template_vars=pager(request,
+                        Docs.find({'_id' : { '$in': [ObjectId(x) for x in request.session.get('starred',())] }},
+                                  sort=[('docid',pymongo.ASCENDING)]),
+                        'docid',False)
     template_vars['title']='Your starred documents'
     return _listDocs(request, template_vars)
 
 def listDocs(request):
-    template_vars=pager(request,Docs.find(),'docid',False)
+    template_vars=pager(request,Docs.find(sort=[('docid',pymongo.ASCENDING)]),'docid',False)
     template_vars['title']='Complete Corpus of pippi longstrings'
     return _listDocs(request, template_vars)
 
-def _listDocs(request, template_vars):
+def _listDocs(request, template_vars, tpl='corpus.html'):
     template_vars['docs']=[{'id': doc.docid,
                             'oid': str(doc._id),
                             'indexed': doc.pippiDocsLen,
@@ -115,7 +120,7 @@ def _listDocs(request, template_vars):
                            for doc in (Doc(d=d) for d in template_vars['data'])]
     template_vars['stats']=getOverview()
     template_vars['starred']=request.session.get('starred',set())
-    return render_to_response('corpus.html', template_vars, context_instance=RequestContext(request))
+    return render_to_response(tpl, template_vars, context_instance=RequestContext(request))
 
 def createDoc(request):
     form = UploadForm(request.POST)
@@ -330,29 +335,36 @@ def search(request):
     if not q:
         return render_to_response('error.html', {'error': 'Missing search query!'}, context_instance=RequestContext(request))
 
-    orderBy = cgi.escape(request.GET.get('orderby',''))
-    # TODO also order by docslen (need to add that to bulksaver)
-    if not orderBy in ['relevance', 'docslen', 'len', ]: orderBy='len'
-    # TODO also handle desc/asc via the tableheader on the web ui
-    orderDesc = True
-    engine = hunspell.HunSpell(settings.DICT+'.dic', settings.DICT+'.aff')
     filtr=[]
-    for word in [token for token in nltk.tokenize.wordpunct_tokenize(unicode(q))]:
+    lang=guessLanguage(q)
+    swords=stopmap.stopmap.get(lang,[])
+    for word in nltk.tokenize.wordpunct_tokenize(unicode(q)):
         # stem each word
-        stem=engine.stem(word.encode('utf8'))
-        if stem:
+        stem=stemmers[lang].stem(word.encode('utf8'))
+        if stem and stem[0] not in swords and len(stem[0])>1:
             filtr.append(stem[0])
         else:
             filtr.append('')
-    template_vars=pager(request,Pippies.find({'pippi': re.compile(' '.join(filtr))}),orderBy,orderDesc)
-    template_vars['pippies']=[{'id': pippi['_id'],
-                               'pippi':'%s<span class="hilite-query">%s</span>%s' % ' '.join([p if p else '*' for p in pippi['pippi'].split(' ')]).partition(' '.join([p if p else '*' for p in filtr])),
-                               'docslen':pippi['docslen'],
-                               'len':len(pippi['pippi'].split(' ')),
-                               'relevance':pippi.get('relevance',0),}
-                               for pippi in template_vars['data']]
+    #re.compile(' '.join(filtr))
+    matches=[x['_id'] for x in DocStems.find({'value': { '$all' : filtr }},['_id'])]
+    template_vars=pager(request,
+                        Docs.find({"stemsid": { '$in': matches}}),
+                        'docid',
+                        False)
     template_vars['getparams']=request.GET.urlencode()
     template_vars['q']=q
+    template_vars['stats']=getOverview()
+    template_vars['starred']=request.session.get('starred',set())
+    template_vars['docs']=[{'id': doc.docid,
+                            'oid': str(doc._id),
+                            'indexed': doc.pippiDocsLen,
+                            'title': doc.title,
+                            'frags': doc.getFrags().count(),
+                            'pippies': len(doc.pippies),
+                            'type': doc.type,
+                            'docs': len(doc.getRelatedDocIds()),
+                            'tags': doc.autoTags(25) }
+                           for doc in (Doc(d=d) for d in template_vars['data'])]
     return render_to_response('search.html', template_vars, context_instance=RequestContext(request))
 
 def metaView(request,doc=None):

@@ -1,16 +1,38 @@
 {% extends "base.html" %}
 {% load lenx %}
+{% block scripts %}
+<script type="text/javascript" src="/site_media/js/jquery.1.4.2.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+    $(".star").focus( function(event) { $(this).blur(); return false; });
+    $(".star").click( function(event) {
+        var id = $(this).attr('id');
+        $.ajax({
+          url: "{% root_url %}/toggle_star/"+id.substr(2),
+          cache: false,
+          success: function(html){
+            if(html == 'True') {
+                $('#'+id).html('&#x2605;');
+            } else {
+                $('#'+id).html('&#x2606;');
+            }
+        }
+      });
+    return false;
+    });
+});
+</script>
+{% endblock %}
 {% block content %}
 <h1>Search Results</h1>
 <p>query: <em>"{{q}}"<em></p>
 {% if totalinquery > 0%}
+
 {% if totalinquery > limit%}
 <div class="pager-controls">
 <form action="{%root_url%}/search" name="pagingtop">
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
 <input type="hidden" id="q" name="q" value="{{q}}" />
-<input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
-<input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
 <input type="submit" name="firstpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingtop.pageaction.value='first'" value="FirstPage" />
 <input type="submit" name="backpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingtop.pageaction.value='prior'" value="PriorPage" />
 <SELECT name="limit">
@@ -27,29 +49,39 @@
 {%else%}
 <p>Showing {{totalitems}} of {{totalinquery}} results.</p>
 {%endif%}
+
 <table class="listing">
-  <thead><tr>
-    <form action="{%root_url%}/search" name="orderby">
-      <input type="hidden" id="limit" name="limit" value="{{limit}}" />
-      <input type="hidden" id="offset" name="offset" value="{{offset}}" />
-      <input type="hidden" id="q" name="q" value="{{q}}" />
-      <input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
-      <input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
-      <td>Text</td>
-      <td {%if orderby == 'docslen'%}class="orderedby"{%endif%}>{% if orderby != '3'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='docslen'; return true; ">Also in</a>{%else%}Also in{%endif%}</td>
-      <td {%if orderby == 'relevance'%}class="orderedby"{%endif%}>{% if orderby != '4'%}<a href="javascript:document.orderby.submit()" onclick="document.orderby.orderby.value='relevance'; return true; ">Relevance</a>{%else%}Relevance{%endif%}</td>
-    </form>
-</tr></thead>
-{% for pippi in pippies %}
-<tr><td><a href="{%root_url%}/frags?pippi={{pippi.id}}">{{pippi.pippi|safe}}</a></td><td>{{pippi.docslen}}</td><td>{{pippi.relevance}}</td></tr>
+  <thead>
+  <tr><td>&#x2605;</td><td style="width: 100%;">Doc</td><td>Related/Indexed</td><td>Pippies</td><td>Frags</td><td>Tags</td></tr>
+  </thead>
+{% for doc in docs %}
+    <tr id="{{doc.oid}}" class="{% if doc.oid in starred %}starred{%endif%}">
+    <td>
+        <a href="{% root_url %}/toggle_star/{{ doc.oid }}" class="star" id="id{{ doc.oid }}">{% if doc.oid in starred %}&#x2605;{%else%}&#x2606;{%endif%}</a>
+    </td>
+    <td class="title">
+       <a title="{{doc.title|safe}}" href="{% root_url %}/doc/{{doc.id}}">{{doc.title|safe|truncatewords:30}}</a>
+    </td><td>
+       {{doc.docs}}/{{doc.indexed}}
+    </td><td>
+       <a href='{%root_url%}/pippies?doc={{doc.oid}}'>{{doc.pippies}}</a>
+    </td><td>
+       <a href='{%root_url%}/frags?doc={{doc.oid}}'>{{doc.frags}}</a>
+    </td><td>
+       <div class="tagcloud">
+            {% for tag in doc.tags %}
+            <span class="size{{tag.weight}}">{{tag.tag}}</span>
+            {% endfor %}
+       </div>
+    </td>
+    </tr>
 {% endfor %}
 </table>
+
 {% if totalinquery > limit%}
 <div class="pager-controls">
  <form action="{%root_url%}/search" name="pagingbottom">
 <input type="hidden" id="offset" name="offset" value="{{offset}}" />
-<input type="hidden" id="orderby" name="orderby" value="{{orderby}}" />
-<input type="hidden" id="desc" name="desc" value="{% if desc %}1{%endif%}" />
 <input type="hidden" id="q" name="q" value="{{q}}" />
 <input type="submit" name="firstpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingbottom.pageaction.value='first'" value="FirstPage" />
 <input type="submit" name="backpage" {%if page == 1 %}disabled='disabled' {%endif%}onclick="document.pagingbottom.pageaction.value='prior'" value="PriorPage" />

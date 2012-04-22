@@ -105,6 +105,7 @@ class DOC(object):
             if raw:
                 self.raw=raw
                 self.lang=guessLanguage(" ".join(self.text))
+                self.stems # for caching
             self.save()
         else:
             raise KeyError('empty docid')
