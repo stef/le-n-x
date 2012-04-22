@@ -38,6 +38,7 @@ from lenx.brain import lcs, stopmap
 from guess_language import guessLanguage
 
 stemmers=dict([(k,hunspell.HunSpell(settings.DICT_PATH+v+'.dic', settings.DICT_PATH+v+'.aff')) for k, v in stopmap.lang_map.items()])
+stemmers['UNKNOWN']=stemmers['en']
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
