@@ -29,6 +29,7 @@ Docs.ensure_index([('pippiDocsLen', pymongo.DESCENDING)])
 
 DocTexts=db.DocTexts
 DocStems=db.DocStems
+DocStems.ensure_index([('value', pymongo.ASCENDING)])
 DocTokens=db.DocTokens
 
 Pippies=db.pippies
