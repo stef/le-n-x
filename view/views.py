@@ -338,10 +338,11 @@ def search(request):
 
     filtr=[]
     lang=guessLanguage(q)
-    swords=stopmap.stopmap.get(lang,[])
+    swords=stopmap.stopmap.get(lang,stopmap.stopmap['en'])
+    engine=stemmers.get(lang,stemmers['en'])
     for word in nltk.tokenize.wordpunct_tokenize(unicode(q)):
         # stem each word
-        stem=stemmers[lang].stem(word.encode('utf8'))
+        stem=engine.stem(word.encode('utf8'))
         if stem and stem[0] not in swords and len(stem[0])>1:
             filtr.append(stem[0])
         else:
