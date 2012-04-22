@@ -92,10 +92,17 @@ def getOverview():
     stats.append({'title': 'Locations', 'value': Frags.count(), 'text': "in %s Locations" % Frags.count()})
     return stats
 
+def starred(request):
+    template_vars=pager(request,Docs.find({'_id' : { '$in': [ObjectId(x) for x in request.session.get('starred',())] }}),'docid',False)
+    template_vars['title']='Your starred documents'
+    return _listDocs(request, template_vars)
+
 def listDocs(request):
-    template_vars=pager(request,Docs.find({},['_id','docid']),'docid',False)
-    docs=[(doc['docid'],doc['_id']) for doc in template_vars['data']]
-    docslen=Docs.count()
+    template_vars=pager(request,Docs.find(),'docid',False)
+    template_vars['title']='Complete Corpus of pippi longstrings'
+    return _listDocs(request, template_vars)
+
+def _listDocs(request, template_vars):
     template_vars['docs']=[{'id': doc.docid,
                             'oid': str(doc._id),
                             'indexed': doc.pippiDocsLen,
@@ -105,10 +112,9 @@ def listDocs(request):
                             'type': doc.type,
                             'docs': len(doc.getRelatedDocIds()),
                             'tags': doc.autoTags(25) }
-                           for doc in (Doc(docid=d) for d,oid in docs)]
+                           for doc in (Doc(d=d) for d in template_vars['data'])]
     template_vars['stats']=getOverview()
     template_vars['starred']=request.session.get('starred',set())
-    template_vars['title']='Complete Corpus of pippi longstrings'
     return render_to_response('corpus.html', template_vars, context_instance=RequestContext(request))
 
 def createDoc(request):
@@ -381,25 +387,6 @@ def toggle_star(request,id=None):
         s.add(id)
         request.session['starred']=s
         return HttpResponse('True')
-
-def starred(request):
-    template_vars=pager(request,Docs.find({'_id' : { '$in': [ObjectId(x) for x in request.session.get('starred',())] }},['_id','docid']),'docid',False)
-    docs=[(doc['docid'],doc['_id']) for doc in template_vars['data']]
-    docslen=Docs.count()
-    template_vars['docs']=[{'id': doc.docid,
-                            'oid': str(doc._id),
-                            'indexed': doc.pippiDocsLen,
-                            'title': doc.title,
-                            'frags': doc.getFrags().count(),
-                            'pippies': len(doc.pippies),
-                            'type': doc.type,
-                            'docs': len(doc.getRelatedDocIds()),
-                            'tags': doc.autoTags(25) }
-                           for doc in (Doc(docid=d) for d,oid in docs)]
-    template_vars['stats']=getOverview()
-    template_vars['starred']=request.session.get('starred',set())
-    template_vars['title']='Your starred documents'
-    return render_to_response('corpus.html', template_vars, context_instance=RequestContext(request))
 
 def cutoffSL(doc, cutoff):
     m=Code("function(){ emit( this.len , { count : 1 } );}")
