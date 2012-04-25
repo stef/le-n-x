@@ -24,7 +24,7 @@ from django.template import RequestContext
 from lenx import settings
 setup_environ(settings)
 from lenx.view.models import Pippi, TfIdf, tfidf
-from lenx.view.doc import Doc
+from lenx.view.doc import Doc, getStemmer
 from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 from lenx.view.forms import UploadForm
 from operator import itemgetter
@@ -36,9 +36,6 @@ import nltk.tokenize # get this from http://www.nltk.org/
 import hunspell # get pyhunspell here: http://code.google.com/p/pyhunspell/
 from lenx.brain import lcs, stopmap
 from guess_language import guessLanguage
-
-stemmers=dict([(k,hunspell.HunSpell(settings.DICT_PATH+v+'.dic', settings.DICT_PATH+v+'.aff')) for k, v in stopmap.lang_map.items()])
-stemmers['UNKNOWN']=stemmers['en']
 
 """ template to format a pippi (doc, match_pos, text) """
 def htmlPippi(doc,matches,frag):
@@ -339,7 +336,7 @@ def search(request):
     filtr=[]
     lang=guessLanguage(q)
     swords=stopmap.stopmap.get(lang,stopmap.stopmap['en'])
-    engine=stemmers.get(lang,stemmers['en'])
+    engine=getStemmer(lang)
     for word in nltk.tokenize.wordpunct_tokenize(unicode(q)):
         # stem each word
         stem=engine.stem(word.encode('utf8'))
@@ -347,7 +344,6 @@ def search(request):
             filtr.append(stem[0])
         else:
             filtr.append('')
-    #re.compile(' '.join(filtr))
     matches=[x['_id'] for x in DocStems.find({'value': { '$all' : filtr }},['_id'])]
     template_vars=pager(request,
                         Docs.find({"stemsid": { '$in': matches}}),
