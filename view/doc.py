@@ -177,12 +177,12 @@ class DOC(object):
         f.close()
 
     def _getbody(self):
-        return unicode(str(BeautifulSoup(self.raw).body), 'utf8')
+        return unicode(str(BeautifulSoup(self.raw, convertEntities=BeautifulSoup.ALL_ENTITIES).body), 'utf8')
 
     def _gettext(self):
         res=self._getExtField('text')
         if res: return res
-        soup = BeautifulSoup(self.raw,convertEntities=BeautifulSoup.HTML_ENTITIES)
+        soup = BeautifulSoup(self.raw,convertEntities=BeautifulSoup.ALL_ENTITIES)
         res = [unicode(x) for x in soup.body.findAll(text=True)]
         self._setExtField('text',res) # cache data
         return res

@@ -186,12 +186,12 @@ class Eurlex(DOC):
         super(Eurlex,self).__init__(*args, **kwargs)
 
     def _getbody(self):
-        return unicode(str(BeautifulSoup(self.raw, convertEntities=BeautifulSoup.XHTML_ENTITIES).find(id='TexteOnly')), 'utf8')
+        return unicode(str(BeautifulSoup(self.raw, convertEntities=BeautifulSoup.ALL_ENTITIES).find(id='TexteOnly')), 'utf8')
 
     def _gettext(self):
         res=self._getExtField('text')
         if res: return res
-        soup = BeautifulSoup(self.raw, convertEntities=BeautifulSoup.XHTML_ENTITIES)
+        soup = BeautifulSoup(self.raw, convertEntities=BeautifulSoup.ALL_ENTITIES)
         # TexteOnly is the id used on eur-lex pages containing docs
         root=soup.find(id='TexteOnly')
         if not root:
@@ -226,7 +226,7 @@ class Eurlex(DOC):
         return self.__unicode__()
 
     def _getHTMLMetaData(self, attr):
-        soup = BeautifulSoup(self.raw,convertEntities=BeautifulSoup.XHTML_ENTITIES)
+        soup = BeautifulSoup(self.raw,convertEntities=BeautifulSoup.ALL_ENTITIES)
         res=map(lambda x: (x and x.has_key('content') and x['content']) or "", soup.findAll('meta',attrs={'name':attr}))
         return '|'.join(res).encode('utf-8')
 
@@ -256,7 +256,7 @@ class Eurlex(DOC):
 
     def extractMetadata(self):
         raw=CACHE.fetchUrl(EURLEXURL+self.docid+":NOT")
-        soup = BeautifulSoup(raw.decode('utf8'), convertEntities=BeautifulSoup.XHTML_ENTITIES)
+        soup = BeautifulSoup(raw.decode('utf8'), convertEntities=BeautifulSoup.ALL_ENTITIES)
         result={}
         # dates
         dates=soup.find('h2',text="Dates")
