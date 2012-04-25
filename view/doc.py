@@ -58,9 +58,11 @@ def unescape(text):
     return re.sub("&#?\w+;", fixup, text)
 
 def getStemmer(lang):
-    if lang=="UNKNOWN": lang="en"
+    if lang=="UNKNOWN": lang='en'
+    lang=stopmap.lang_map[lang]
     if not stemmers[lang]:
         stemmers[lang]=hunspell.HunSpell("%s%s.dic" % (settings.DICT_PATH, lang), "%s%s.aff" % (settings.DICT_PATH, lang))
+        print 'new stemmer', lang, stemmers[lang]
     return stemmers[lang]
 
 def Doc(*args, **kwargs):
@@ -276,7 +278,7 @@ from lenx.brain import tagcloud, stopwords
 from guess_language import guessLanguage
 from lenx.brain import stopmap
 
-stemmers=dict([(k, None) for k in stopmap.lang_map.keys()])
+stemmers=dict([(k, None) for k in stopmap.lang_map.values()])
 
 import nltk.tokenize # get this from http://www.nltk.org/
 from BeautifulSoup import BeautifulSoup # apt-get?
