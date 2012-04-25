@@ -60,7 +60,7 @@ def unescape(text):
 def getStemmer(lang):
     if lang=="UNKNOWN": lang="en"
     if not stemmers[lang]:
-        stemmers[lang]=hunspell.HunSpell("%s%s.dic" % (settings.DICT_PATH, lang), "%s%s.aff" % (settings.DICT_PATH, v))
+        stemmers[lang]=hunspell.HunSpell("%s%s.dic" % (settings.DICT_PATH, lang), "%s%s.aff" % (settings.DICT_PATH, lang))
     return stemmers[lang]
 
 def Doc(*args, **kwargs):
