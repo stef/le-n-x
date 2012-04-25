@@ -23,10 +23,15 @@ from lxml.html.soupparser import parse
 from cStringIO import StringIO
 import re, htmlentitydefs
 
+# debug
+#import difflib
+#import nltk.tokenize # get this from http://www.nltk.org/
+
 def saveNotes(D1,D2,frags,rooturl='http://localhost:8000'):
     pa1=PippiAnnotator(D1)
     pa2=PippiAnnotator(D2)
     for stem, (l, a, b) in frags.items():
+        #print len(a), len(b), stem
         if not(a and b) or l<7: continue
         pa1.pippies2xpaths(D2,sorted(a),l,rooturl)
         pa2.pippies2xpaths(D1,sorted(b),l,rooturl)
@@ -56,7 +61,7 @@ def unescape(text):
             except KeyError:
                 pass
         return text # leave as is
-    return re.sub("&#?\w+;", fixup, text)
+    return re.sub(u"&#?\w+;", fixup, text)
 
 class PippiAnnotator:
     def __init__(self,doc):
@@ -75,10 +80,24 @@ class PippiAnnotator:
             textnodes=tree.xpath('//text()')
             cut=10
         texts=[unescape(x) for x in textnodes]
+        #tmp = [token for frag in texts if frag for token in nltk.tokenize.wordpunct_tokenize(frag)]
+        #for line in difflib.context_diff(tmp, self.doc.tokens):
+        #    print repr(line)
         #print texts
         #print self.doc.tokens
-        while i<len(texts) and pos<len(self.doc.tokens):
-            #print i,len(texts),len(self.doc.tokens),pos, self.doc.tokens[pos].encode('utf8')
+        lastgood=(i,offset)
+        while pos<len(self.doc.tokens):
+            if i>=len(texts):
+                print "guessing frag: %s, reset to %s, %s" % (self.doc.tokens[pos].encode('utf8'), lastgood[0], lastgood[1])
+                (i, offset)=lastgood
+                path=tree.getpath(textnodes[i].getparent())[cut:]
+                paths[pos]=(path, offset)
+                offset+=len(self.doc.tokens[pos])
+                if offset>=len(texts[i]):
+                    i+=1
+                    offset=0
+                pos+=1
+                continue
             offset=texts[i].find(self.doc.tokens[pos],offset)
             if offset==-1:
                 i+=1
@@ -89,16 +108,18 @@ class PippiAnnotator:
                 siblings=textnodes[i].getparent().getparent().xpath('.//text()')
                 adjust=len(''.join(siblings[:siblings.index(textnodes[i])]))
                 paths[pos]=(path, adjust+offset)
-                #print 'asdf', self.doc.tokens[pos], ''.join(siblings)[adjust+offset:adjust+offset+len(self.doc.tokens[pos])], adjust+offset, offset
+                #print 'asdf', self.doc.tokens[pos:pos+l], ''.join(siblings)[adjust+offset:adjust+offset+len(self.doc.tokens[pos])], adjust+offset, offset
             else:
                 path=tree.getpath(textnodes[i].getparent())[cut:]
                 paths[pos]=(path, offset)
                 #print 'qwer', self.doc.tokens[pos], texts[i][offset:offset+len(self.doc.tokens[pos])], paths[pos], path, offset
+            #print "frag: %s(%s) @%s" % (i,len(texts), paths[pos][1]),"token: %s(%s)" % (pos, len(self.doc.tokens)), self.doc.tokens[pos].encode('utf8')
             #print paths[pos]
             offset+=len(self.doc.tokens[pos])
             if offset>=len(texts[i]):
                 i+=1
                 offset=0
+            lastgood=(i,offset)
             pos+=1
         #for pos, (path, offset) in sorted(paths.items()):
         #    print self.doc.tokens[pos], pos, path, offset
@@ -109,7 +130,7 @@ class PippiAnnotator:
     def pippies2xpaths(self,d2,pos,l,rooturl):
         title=d2.title.strip().decode('utf8')
         for p in pos:
-            #print title[:30], p, len(self.paths.keys()), self.paths[p+l][1],len(self.doc.tokens[p+l])
+            #print title[:30], p, len(self.paths.keys()), self.paths[p+l-1][1],len(self.doc.tokens[p+l])
             #print title[:30], p, l, len(self.paths)
             #print self.paths[p],self.paths[p+l]
             #print p, p+l, self.doc.tokens[p:p+l]
