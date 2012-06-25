@@ -2,6 +2,7 @@ from piston.handler import BaseHandler, AnonymousBaseHandler
 from piston.utils import rc, throttle
 import pymongo, json
 from bson.objectid import ObjectId
+from urllib import unquote
 
 conn = pymongo.Connection()
 db=conn.pippi
@@ -54,7 +55,7 @@ class SearchHandler(AnonymousBaseHandler):
         non_query_args = ['offset', 'limit', 'all_fields']
         offset = int(request.GET.get('offset', 0))
         limit = int(request.GET.get('limit', 20))
-        query=dict([(k,v) for k,v in request.GET.items() if not k in non_query_args])
+        query=dict([(k,unquote(v)) for k,v in request.GET.items() if not k in non_query_args])
         notes = Notes.find(query).limit(limit).skip(offset) #.sort([(, pymongo.DESCENDING if orderDesc else pymongo.ASCENDING)])
 
         return {'rows': [dict([(k,v) if k!='_id' else ('id',v) for k,v in item.items()]) for item in notes],
