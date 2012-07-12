@@ -133,6 +133,7 @@ CELEXCODES={
 
 class Eurlex(DOC):
     def __init__(self, docid=None, *args,**kwargs):
+        setTitle=False
         if docid:
             alias=re.match(SHORTCUTRE,docid)
             if alias:
@@ -183,7 +184,11 @@ class Eurlex(DOC):
                     raise ValueError, "Language Error"
                 kwargs['raw']=anchorArticles(raw)
                 self.__dict__['metadata'] = self.extractMetadata()
+                setTitle=True
         super(Eurlex,self).__init__(*args, **kwargs)
+        if setTitle:
+            self.__dict__['title']=self._gettitle()
+            self.save()
 
     def _getbody(self):
         return unicode(str(BeautifulSoup(self.raw, convertEntities=BeautifulSoup.ALL_ENTITIES).find(id='TexteOnly')), 'utf8')
@@ -207,8 +212,6 @@ class Eurlex(DOC):
             return CELEXCODES[self.sector]['Document Types'][self.doctype] if self.doctype != 'C' else CELEXCODES[self.sector]['Sector']
         if name == 'docid':
             self.__dict__['docid']="CELEX:%s%s%s%s:%s" % (self.sector, self.year,self.doctype,self.refno,self.lang)
-        if name == 'title':
-            self.__dict__['title']=self._gettitle()
         if name == 'subject':
             self.__dict__['subject']=self._getsubj()
         if name == 'metadata':
