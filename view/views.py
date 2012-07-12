@@ -141,6 +141,9 @@ def filterDocs(request):
     query={}
     if q:
         query={'title': re.compile(q, re.I)}
+    mine=request.GET.get('mine')
+    if mine=='true':
+        query['owner']=unicode(request.user)
     res=pager(request,Docs.find(query, sort=[('_id',pymongo.DESCENDING)]),'docid',False)
     starred=request.session.get('starred',set())
     res['docs']=[{'id': doc.docid,
@@ -156,7 +159,6 @@ def filterDocs(request):
                   }
                  for doc in (Doc(d=d) for d in res['data'])]
     return HttpResponse(jdump(res),mimetype="application/json")
-    #return HttpResponse("var omnom_posts = "+json.dumps(res)+";",mimetype="text/javascript")
 
 def createDoc(request):
     form = UploadForm(request.POST)
