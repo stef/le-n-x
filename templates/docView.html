@@ -38,7 +38,7 @@ $(document).ready(function(){
    <li><a href='{%root_url%}/frags?doc={{oid}}'>Frags</a></li>
 </ul>
 
-<h2 title="{{doc.title|safe}}">{{ doc.title|safe|truncatewords:10 }} ({{ doc.docid }})</h2>
+<h2 title="{{doc.title|safe}}">{{ doc.title|striptags }} <small>({{ doc.docid }})<small></h2>
 
 <br style="clear: both">
 
