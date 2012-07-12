@@ -8,6 +8,8 @@
 
 {% block content %}
 <h1>Create a new document</h1>
+<p>Here you can easily copy/paste texts. If you're logged they will be added to
+your collection.</p>
 <form action="{% root_url %}/create" method="post">
 <table>
 {% for field in form %}
