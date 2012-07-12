@@ -62,7 +62,7 @@ def getStemmer(lang):
     lang=stopmap.lang_map[lang]
     if not stemmers[lang]:
         stemmers[lang]=hunspell.HunSpell("%s%s.dic" % (settings.DICT_PATH, lang), "%s%s.aff" % (settings.DICT_PATH, lang))
-        print 'new stemmer', lang, stemmers[lang]
+        #print 'new stemmer', lang, stemmers[lang]
     return stemmers[lang]
 
 def Doc(*args, **kwargs):
@@ -83,11 +83,11 @@ def Doc(*args, **kwargs):
 
 """ class representing a distinct document, does stemming, some minimal nlp, can be saved and loaded """
 class DOC(object):
-    computed_attrs = [ 'raw', 'body', 'text', 'tokens', 'stems', 'termcnt', 'tfidf', 'frags', 'lang']
+    computed_attrs = [ 'raw', 'body', 'text', 'tokens', 'stems', 'termcnt', 'tfidf', 'frags']
     fieldMap = {'raw': None, 'text': DocTexts, 'stems':  DocStems, 'tokens': DocTokens, }
     metafields = ['subject']
 
-    def __init__(self,raw=None,docid=None,oid=None,d=None):
+    def __init__(self,raw=None,docid=None,oid=None,d=None,owner=None):
         if oid:
             # get by mongo oid
             d=Docs.find_one({"_id": oid})
@@ -101,6 +101,7 @@ class DOC(object):
             # create a new document
             self.__dict__.update({
                 'docid' : docid,
+                'owner': unicode(owner),
                 'pippies' : [],
                 'pippiDocs' : [],
                 'pippiDocsLen' : 0,
@@ -110,10 +111,9 @@ class DOC(object):
                 self.__dict__['type']='raw'
             if not 'metadata' in self.__dict__:
                 self.__dict__['metadata']={}
-            if raw:
-                self.raw=raw
-                self.lang=guessLanguage(" ".join(self.text))
-                self.stems # for caching
+            self.raw=raw
+            self.__dict__['lang']=guessLanguage(" ".join(self.text))
+            self.stems # for caching
             self.save()
         else:
             raise KeyError('empty docid')
