@@ -25,6 +25,7 @@ DocStore=conn.DocStore
 fs = gridfs.GridFS(DocStore)
 Docs=db.docs
 Docs.ensure_index([('docid', pymongo.ASCENDING)])
+Docs.ensure_index([('title', pymongo.ASCENDING)])
 Docs.ensure_index([('pippiDocsLen', pymongo.DESCENDING)])
 
 DocTexts=db.DocTexts
