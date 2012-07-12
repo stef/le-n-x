@@ -161,7 +161,7 @@ $(document).ready(function(){
 {% block content %}
 <div>
    <form name="filter">
-      Filter <input id="query" type="text"></input>{% if user.is_authenticated %} Only mine <input type="checkbox" id="minebox"></input>{% endif%}
+      Filter <input id="query" type="text"></input>{% if user.is_authenticated %} Only my collection <INPUT type="checkbox" id="minebox"></input>{% endif%}
       <div>(Found: <span id='total'></span>, showing <span id="offset"></span> - <span id="upbound"></span>)</div>
       </form>
 </div>
