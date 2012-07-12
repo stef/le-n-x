@@ -28,7 +28,7 @@ from lenx.view.doc import Doc, getStemmer
 from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
 from lenx.view.forms import UploadForm
 from operator import itemgetter
-import re, pymongo, cgi
+import re, pymongo, cgi, json
 from bson.objectid import ObjectId
 from bson.code import Code
 import tidy
@@ -101,7 +101,7 @@ def starred(request):
     return _listDocs(request, template_vars)
 
 def listDocs(request):
-    template_vars=pager(request,Docs.find(sort=[('docid',pymongo.ASCENDING)]),'docid',False)
+    template_vars=pager(request,Docs.find(sort=[('docid',pymongo.DESCENDING)]),'docid',False)
     template_vars['title']='Complete Corpus of pippi longstrings'
     return _listDocs(request, template_vars)
 
@@ -119,6 +119,44 @@ def _listDocs(request, template_vars, tpl='corpus.html'):
     template_vars['stats']=getOverview()
     template_vars['starred']=request.session.get('starred',set())
     return render_to_response(tpl, template_vars, context_instance=RequestContext(request))
+
+def browseDocs(request):
+    return render_to_response('browse.html', context_instance=RequestContext(request))
+
+from bson.objectid import ObjectId
+def jsonhandler(obj):
+    if hasattr(obj, 'isoformat'):
+        return unicode(obj.isoformat())
+    elif type(obj)==ObjectId:
+        return unicode(obj)
+    else:
+        raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(obj), repr(obj))
+
+def jdump(d):
+    # simple json dumper default for saver
+    return json.dumps(d, indent=0, default=jsonhandler, ensure_ascii=False)
+
+def filterDocs(request):
+    q=request.GET.get('q')
+    query={}
+    if q:
+        query={'title': re.compile(q, re.I)}
+    res=pager(request,Docs.find(query, sort=[('_id',pymongo.DESCENDING)]),'docid',False)
+    starred=request.session.get('starred',set())
+    res['docs']=[{'id': doc.docid,
+                  'starred': u'\u2605' if str(doc._id) in starred else u'\u2606',
+                  'starclass': 'starred' if str(doc._id) in starred else '',
+                  'title': doc.title,
+                  'meta': doc.metadata,
+                  'oid': str(doc._id),
+                  'indexed': doc.pippiDocs,
+                  'pippies': len(doc.pippies),
+                  'type': doc.type,
+                  'tags': doc.autoTags(25),
+                  }
+                 for doc in (Doc(d=d) for d in res['data'])]
+    return HttpResponse(jdump(res),mimetype="application/json")
+    #return HttpResponse("var omnom_posts = "+json.dumps(res)+";",mimetype="text/javascript")
 
 def createDoc(request):
     form = UploadForm(request.POST)

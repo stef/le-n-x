@@ -31,7 +31,7 @@ div.rel { float: right; max-width: 350px; position: relative; z-index: 999; }
 .pippi { background-color: #ddddaa;}
 .highlight, .highlight * { background: rgba(0, 120, 240, 0.2); position: relative;}
 .hovered { background: rgba(0, 240, 120, 0.8); }
-.tagcloud { width: 400px; border: 1px solid blue; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; margin: 4px; padding: 0.2em;}
+.tagcloud, #tagcloud { width: 400px; border: 1px solid blue; -moz-border-radius: 0.5em; -webkit-border-radius: 0.5em; margin: 4px; padding: 0.2em;}
 .size0 { font-size: .4em; }
 .size1 { font-size: .5em }
 .size2 { font-size: .6em }
@@ -78,3 +78,8 @@ ul.dropdown li { padding: 10px; border-style: solid; border-width: 1px; border-c
 .docmenu a, .docmenu input { border: 1px solid #0088DD; background: #fff; color: #000; padding: 3px; font-size: 16px; -moz-border-radius: 0.2em; -webkit-border-radius: 0.2em; }
 .docmenu a:hover, .docmenu input:hover { border: 2px solid #0088DD; background: #eee; text-decoration: none; cursor: pointer; padding: 2px; -moz-border-radius: 0.2em; -webkit-border-radius: 0.2em; }
 .centered { text-align: center; }
+table.browse { overflow: auto; max-height: 28em; display: inline-block; max-width: 64%; }
+#docdetails { width: 420px; float: right; }
+.dochighlight { background: rgba(0, 120, 240, 0.2); position: relative;}
+#docdetails #title { font-size: 1em; }
+#docdetails #docid { font-size: .8em; font-weight: normal; }

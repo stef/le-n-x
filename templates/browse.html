@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load lenx %}
+{% block scripts %}
+<script type="text/javascript" src="/site_media/js/jquery.js"></script>
+<script type="text/javascript" src="/site_media/js/jquery.jqote2.min.js"></script>
+<!--<script type="text/javascript" src="/site_media/js/browser.js"></script>-->
+<script type="text/x-jqote-template" id="template">
+    <![CDATA[
+    <tr id="<%= this.oid %>" class="<%= this.starclass %> docrow">
+    <td>
+        <a href="{% root_url %}/toggle_star/<%= this.oid %>" class="star" id="id<%= this.oid %>"><%= this.starred %></a>
+    </td>
+    <td class="title">
+       <a title="<%= this.title %>" href="{% root_url %}/doc/<%= this.id %>"><%= this.title %></a>
+    </td>
+    </tr>
+    ]]>
+</script>
+<script type="text/javascript">
+var limit=10;
+var offset=0;
+var totalitems=0;
+
+var displayDetails = function(row) {
+   $('#tagcloud').empty();
+   var tags=row.data('tags');
+   for(var i in row.data('tags')) {
+      $('#tagcloud').append($('<span class="size'+tags[i].weight+'">'+tags[i].tag+'</span> '));
+      $('#tagcloud').append(' ');
+   }
+   $('#title').empty();
+   $('#title').append(row.data('title'));
+   $('#docid').empty();
+   $('#docid').append(row.data('id'));
+   //replace donedoces with all these <li>indexed</li>
+   $('.docrow').removeClass('dochighlight');
+   row.addClass('dochighlight');
+}
+
+var redraw = function(msg) {
+  limit=msg.limit;
+  offset=msg.offset;
+  totalitems=msg.totalinquery;
+  $('#total').empty();
+  $('#total').append(msg.totalinquery);
+  $('#offset').empty();
+  $('#offset').append(msg.offset+1);
+  $('#upbound').empty();
+  $('#upbound').append(msg.offset+msg.limit);
+  $('#tbody').empty();
+  for(var i=0;i<msg.docs.length;i++) {
+     $('#tbody').append($($('#template').jqote(msg.docs[i])).data(msg.docs[i]));
+  }
+
+  $(".star").focus( function(event) { $(this).blur(); return false; });
+  $(".star").click( function(event) {
+      var id = $(this).attr('id');
+      $.ajax({
+        url: "{% root_url %}/toggle_star/"+id.substr(2),
+        cache: false,
+        success: function(html){
+          if(html == 'True') { $('#'+id).html('&#x2605;'); }
+          else { $('#'+id).html('&#x2606;'); }
+        }
+      });
+      return false;
+    });
+  var timer;
+  $('.docrow').hover(function() { 
+        if(timer) {
+            clearTimeout(timer);
+            timer = null
+         }
+         var row = $(this);
+         var displayDetails_ = function () {
+            return displayDetails(row);
+         }
+         timer = setTimeout(displayDetails_, 500)},
+     // mouse out
+     function() {clearTimeout(timer); timer=null;});
+  displayDetails($('.docrow').first());
+}
+
+var getPage = function() {
+   var pos=$('#pageaction').attr('value');
+   var ceil=Math.floor(totalitems/limit)*limit;
+   if (pos=="first") { offset=0; }
+   else if (pos=='last') { offset=ceil; }
+   else if (pos=='next') {
+      offset+=limit;
+      if(offset>ceil) offset=ceil; }
+   else if (pos=='prev') {
+      offset-=limit;
+      if(offset<0) offset=0;
+      };
+   $.ajax({
+     url: "/filter",
+     data: { q: $('#query').attr('value'),
+             limit: limit,
+             offset: offset,
+           }
+     }).done(redraw);
+}
+
+$(document).ready(function(){
+   $('form#pagingbottom').submit(function() {
+      getPage();
+      return false;
+   });
+
+   $.ajax({
+     url: "/filter",
+     }).done(redraw);
+
+     var qtimer;
+     $('#query').keyup(function() { 
+       if(qtimer) {
+           clearTimeout(qtimer);
+           qtimer = null
+        }
+        qtimer = setTimeout(function() {
+           // reload rows
+           $.ajax({
+             url: "/filter",
+             data: { q: $('#query').attr('value') }
+             }).done(redraw);
+        }, 700)});
+ });
+
+</script>
+{% endblock %}
+{% block content %}
+<div><form name="filter">Filter <input id="query" type="text"></input> (Found: <span id='total'></span>, showing <span id="offset"></span> - <span id="upbound"></span>)</form></div>
+<div class="pager-controls">
+   <form id="pagingbottom" name="pagingbottom" >
+      <input type="hidden" id="pageaction" name="pageaction" value="" />
+      <input type="submit" name="firstpage" onclick="document.pagingbottom.pageaction.value='first'" value="FirstPage" />
+      <input type="submit" name="backpage" onclick="document.pagingbottom.pageaction.value='prev'" value="PriorPage" />
+      <SELECT name="limit">
+        <OPTION {% if limit == 10 %}selected{%endif%} value="10">10</OPTION>
+        <OPTION {% if limit == 50 %}selected{%endif%} value="50">50</OPTION>
+        <OPTION {% if limit == 100 %}selected{%endif%} value="100">100</OPTION>
+      </SELECT>
+      <input type="submit" name="nextpage" onclick="document.pagingbottom.pageaction.value='next'" value="NextPage" />
+      <input type="submit" name="lastpage" onclick="document.pagingbottom.pageaction.value='last'" value="LastPage" />
+   </form>
+</div>
+<div id='browser'>
+   <div id='docdetails'>
+      <div id="tagcloud"></div>
+      <div><span id="title"></span></div>
+      <div><span id="docid"></span></div>
+      <ol id="donedocs"></ol>
+   </div>
+   <table class="listing browse">
+     <thead>
+     <tr><td>&#x2605;</td><td id="toggle_all" style="width: 100%;">Doc</td></tr>
+     </thead>
+     <tbody id="tbody">
+     </tbody>
+   </table>
+</div>
+{% endblock %}
