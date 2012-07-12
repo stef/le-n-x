@@ -14,6 +14,7 @@ The django backend has some dependencies:
  * "pyhunspell":http://code.google.com/p/pyhunspell
  * "beautifulsoup":http://www.crummy.com/software/BeautifulSoup/
  * "nltk":http://www.nltk.org/
+ * guess-language
  * psyco
  * pymongo
  * django-tinymce
@@ -29,7 +30,7 @@ bc.
     cd lenx
     # create virtual environment
     virtualenv --no-site-packages env
-    easy_install Django beautifulsoup pymongo django-tinymce pyyaml django-registration django-piston lxml
+    easy_install Django beautifulsoup pymongo django-tinymce pyyaml django-registration django-piston lxml guess-language
     easy_install 'http://download.berlios.de/utidylib/uTidylib-0.2.zip'
     easy_install 'http://nltk.googlecode.com/files/nltk-2.0.1rc1.zip'
     easy_install 'https://pyhunspell.googlecode.com/files/hunspell-0.1.tar.gz'
