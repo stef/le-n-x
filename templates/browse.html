@@ -169,7 +169,7 @@ $(document).ready(function(){
    <form id="pagingbottom" name="pagingbottom" >
       <input type="hidden" id="pageaction" name="pageaction" value="" />
       <input type="submit" name="firstpage" onclick="document.pagingbottom.pageaction.value='first'" value="FirstPage" />
-      <input type="submit" name="backpage" onclick="document.pagingbottom.pageaction.value='prev'" value="PriorPage" />
+      <input type="submit" name="backpage" onclick="document.pagingbottom.pageaction.value='prev'" value="PrevPage" />
       <SELECT name="limit" id='limit'>
         <OPTION {% if limit == 10 %}selected{%endif%} value="10">10</OPTION>
         <OPTION {% if limit == 50 %}selected{%endif%} value="50">50</OPTION>
