@@ -49,12 +49,16 @@ def docView(request,doc=None,cutoff=10):
     if request.GET.get('cutoff', 0):
         cutoff = int(request.GET['cutoff'])
     if not doc or not cutoff:
-        return render_to_response('error.html', {'error': 'Missing document or wrong cutoff!'}, context_instance=RequestContext(request))
+        return render_to_response('error.html',
+                                  {'error': 'Missing document or wrong cutoff!'},
+                                  context_instance=RequestContext(request))
     try:
         d = Doc(docid=doc, owner=request.user)
     except:
         form = UploadForm({'docid': doc})
-        return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
+        return render_to_response('upload.html',
+                                  { 'form': form, },
+                                  context_instance=RequestContext(request))
     cont = d.body
     relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=cutoff))} }, ['docid','title'])
     return render_to_response('docView.html', {'doc': d,
@@ -64,7 +68,8 @@ def docView(request,doc=None,cutoff=10):
                                                'related': relDocs,
                                                'cutoff': cutoff,
                                                'cutoffs': ','.join(cutoffSL(d,cutoff)),
-                                               'len': d.getFrags(cutoff=cutoff).count()}, context_instance=RequestContext(request))
+                                               'len': d.getFrags(cutoff=cutoff).count()},
+                              context_instance=RequestContext(request))
 
 def diffFrag(frag1,frag2):
     if not frag1 and frag2:
@@ -87,14 +92,23 @@ def diffFrag(frag1,frag2):
 
 def getOverview():
     stats=[]
-    stats.append({'title': 'Total documents', 'value': Docs.count(), 'text': "%s Documents" % Docs.count()})
-    stats.append({'title': 'Total Pippies', 'value': Pippies.count(), 'text': "with %s Pippies" % Pippies.count()})
-    stats.append({'title': 'Locations', 'value': Frags.count(), 'text': "in %s Locations" % Frags.count()})
+    stats.append({'title': 'Total documents',
+                  'value': Docs.count(),
+                  'text': "%s Documents" % Docs.count()})
+    stats.append({'title':
+                  'Total Pippies',
+                  'value': Pippies.count(),
+                  'text': "with %s Pippies" % Pippies.count()})
+    stats.append({'title': 'Locations',
+                  'value': Frags.count(),
+                  'text': "in %s Locations" % Frags.count()})
     return stats
 
 def starred(request):
     template_vars=pager(request,
-                        Docs.find({'_id' : { '$in': [ObjectId(x) for x in request.session.get('starred',())] }},
+                        Docs.find({'_id' :
+                                   { '$in': [ObjectId(x)
+                                             for x in request.session.get('starred',())] }},
                                   sort=[('docid',pymongo.ASCENDING)]),
                         'docid',False)
     template_vars['title']='Your starred documents'
@@ -159,6 +173,17 @@ def filterDocs(request):
                   }
                  for doc in (Doc(d=d) for d in res['data'])]
     return HttpResponse(jdump(res),mimetype="application/json")
+
+def setTitle(request, docid):
+    try:
+        d = Doc(docid=docid)
+    except:
+        return HttpResponse('')
+    if request.user.is_authenticated() and request.user.username==d.owner:
+        d.title=request.POST.get('value')
+        d.save()
+        return HttpResponse(d.title)
+    return HttpResponse(d.title)
 
 def createDoc(request):
     form = UploadForm(request.POST)

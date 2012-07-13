@@ -6,8 +6,10 @@
 {% endblock %}
 
 {% block scripts %}
+
 <script src="{%media_url%}/js/notes/vendor/jquery.js"></script>
 <script src="{%media_url%}/js/notes/vendor/json2.js"></script>
+<script src="{%media_url%}/js/jquery.jeditable.js"></script>
 <script src="{%media_url%}/js/notes/annotator.min.js"></script>
 <script src="{%media_url%}/js/notes/annotator.store.min.js"></script>
 <script src="{%media_url%}/js/notes/annotator.auth.min.js"></script>
@@ -20,6 +22,17 @@
 
 <script type="text/javascript">
 $(document).ready(function(){
+{% if user.is_authenticated and user.username == doc.owner %}
+   $('h2').editable('/title/{{doc.docid}}', {
+         indicator : 'Saving...',
+         tooltip   : 'Click to edit...',
+         type      : 'textarea',
+         submit    : 'OK',
+         cancel    : 'Cancel',
+         cols      : 80,
+         rows      : 3
+     });
+{%endif%}
    $(function() {
       $('#cutoffs').sparkline([{{cutoffs}}], {type: 'bar',
                                barColor: 'black'});
@@ -38,7 +51,8 @@ $(document).ready(function(){
    <li><a href='{%root_url%}/frags?doc={{oid}}'>Frags</a></li>
 </ul>
 
-<h2 title="{{doc.title|safe}}">{{ doc.title|striptags }} <small>({{ doc.docid }})</small></h2>
+<h2 title="{{doc.title|safe}}">{{ doc.title|striptags }}</h2>
+ <small>({{ doc.docid }})</small>
 
 <br style="clear: both">
 

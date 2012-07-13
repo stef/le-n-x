@@ -83,3 +83,4 @@ table.browse { overflow: auto; max-height: 28em; display: inline-block; max-widt
 .dochighlight { background: rgba(0, 120, 240, 0.2); position: relative;}
 #docdetails #title { font-size: 1em; }
 #docdetails #docid { font-size: .8em; font-weight: normal; }
+h2 textarea { display: block; }
