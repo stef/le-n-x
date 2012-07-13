@@ -479,6 +479,23 @@ def toggle_star(request,id=None):
         request.session['starred']=s
         return HttpResponse('True')
 
+def toggle_stars(request):
+    if not 'starred' in request.session or not request.session['starred']:
+        request.session['starred']=set([])
+    res=[]
+    for id in request.GET.getlist('ids[]'):
+        if id in request.session['starred']:
+            s=request.session['starred']
+            s.remove(id)
+            request.session['starred']=s
+            res.append(False)
+        else:
+            s=request.session['starred']
+            s.add(id)
+            request.session['starred']=s
+            res.append(True)
+    return HttpResponse(jdump(res),mimetype="application/json")
+
 def cutoffSL(doc, cutoff):
     m=Code("function(){ emit( this.len , { count : 1 } );}")
     r=Code("function (key, values) { var count = 0; values.forEach(function (v) {count += v.count;}); return {count: count}; }")

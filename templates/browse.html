@@ -16,33 +16,51 @@
     </tr>
     ]]>
 </script>
+<script type="text/x-jqote-template" id="details_template">
+    <![CDATA[
+      <h3>Document Details</h3>
+      <div id="tagcloud"></div>
+      <div><span id="title"><%= this.title %></span></div>
+      <div><span id="docid"><a href="/doc/<%= this.id %>"><%= this.id %></a></span></div>
+      <div>
+         <form id="jobsform" action="/jobs">
+            <input type="hidden" name="doc" value="{{this.oid}}" />
+            <input type="submit" id="jobs" value="Pippi &#x2605;" />
+         </form>
+      </div>
+    ]]>
+</script>
 <script type="text/javascript">
 var limit=10;
 var offset=0;
 var totalitems=0;
 
 var displayDetails = function(row) {
-   $('#tagcloud').empty();
+   $('#docdetails').empty().append($($('#details_template').jqote(row.data())));
    var tags=row.data('tags');
    for(var i in row.data('tags')) {
       $('#tagcloud').append($('<span class="size'+tags[i].weight+'">'+tags[i].tag+'</span> '));
       $('#tagcloud').append(' ');
    }
-   $('#title').empty();
-   $('#title').append(row.data('title'));
-   $('#docid').empty();
-   $('#docid').append(row.data('id'));
    //replace donedoces with all these <li>indexed</li>
    $('.docrow').removeClass('dochighlight');
    row.addClass('dochighlight');
+   $("#jobsform").submit(function() {
+     //var ids = [];
+     var res = false;
+     $('.star:contains("★")').each(function (i) {
+       res = true;
+       $('#jobsform').append('<input type="hidden" name="ids" value="' + $(this).attr('id').substr(2) +'" />');
+     });
+     return res;
+   });
 }
 
 var redraw = function(msg) {
   limit=msg.limit;
   offset=msg.offset;
   totalitems=msg.totalinquery;
-  $('#total').empty();
-  $('#total').append(msg.totalinquery);
+  $('#total').empty().append(msg.totalinquery);
   $('#offset').empty();
   $('#upbound').empty();
   if(totalitems>limit) {
@@ -69,6 +87,7 @@ var redraw = function(msg) {
       });
       return false;
     });
+
   var timer;
   $('.docrow').hover(function() { 
         if(timer) {
@@ -135,6 +154,29 @@ $(document).ready(function(){
         }).done(redraw);
    });
 
+   var allstates=["☆", "★"];
+   var allents=['&#x2606;', '&#x2605;'];
+   var allstatus=0;
+
+   $('#startoggle').click(function() {
+      var foo=$('.star:contains("'+allstates[allstatus]+'")').parent().parent().map(function() {
+         return $(this).attr('id'); 
+      }).get();
+      var cstate=allstatus;
+      $.ajax({
+         url: "{% root_url %}/toggle_stars/",
+         cache: false,
+         data: { ids: foo },
+         success: function(data) {
+            for(var i in data) {
+               if(data[i] == 'True') { $('#id'+foo[i]).html(allents[cstate]); }
+               else { $('#id'+foo[i]).html(allents[(cstate+1)%2]); }
+            }
+         }
+      });
+      allstatus=(allstatus+1)%2;
+   });
+
    $.ajax({
      url: "/filter",
      }).done(redraw);
@@ -180,15 +222,10 @@ $(document).ready(function(){
    </form>
 </div>
 <div id='browser'>
-   <div id='docdetails'>
-      <div id="tagcloud"></div>
-      <div><span id="title"></span></div>
-      <div><span id="docid"></span></div>
-      <ol id="donedocs"></ol>
-   </div>
+   <div id='docdetails'></div>
    <table class="listing browse">
      <thead>
-     <tr><td>&#x2605;</td><td id="toggle_all" style="width: 100%;">Doc</td></tr>
+     <tr><td id='startoggle' title='Toggle starred'>&#x2605;</td><td id="toggle_all" style="width: 100%;">Doc</td></tr>
      </thead>
      <tbody id="tbody">
      </tbody>
