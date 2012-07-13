@@ -49,6 +49,9 @@ $(document).ready(function(){
    <li><a href="{%root_url%}/meta/{{doc.docid}}">Metadata</a></li>
    <li><a href='{%root_url%}/pippies?doc={{oid}}'>Pippies</a></li>
    <li><a href='{%root_url%}/frags?doc={{oid}}'>Frags</a></li>
+   {% if user.is_authenticated and user.username == doc.owner %}
+      <li><a href="{%root_url%}/delete/{{doc.docid}}">Delete</a></li>
+   {% endif %}
 </ul>
 
 <h2 title="{{doc.title|safe}}">{{ doc.title|striptags }}</h2>

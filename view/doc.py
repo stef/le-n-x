@@ -158,6 +158,15 @@ class DOC(object):
     def __unicode__(self):
         return self.docid
 
+    def delete(self):
+        for key, col in self.fieldMap.items():
+            try:
+                col.remove({'_id': self.__dict__["%sid" % key]})
+            except:
+                pass
+        # TODO also remove pippies and other stuff cached after pippring
+        Docs.remove({'_id': self.__dict__['_id']})
+
     def save(self):
         tmp=[(i,self.__dict__[i]) for i in self.fieldMap if i in self.__dict__]
         for i in tmp: del self.__dict__[i[0]]

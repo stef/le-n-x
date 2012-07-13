@@ -185,6 +185,22 @@ def setTitle(request, docid):
         return HttpResponse(d.title)
     return HttpResponse(d.title)
 
+def delete(request, docid):
+    try:
+        d = Doc(docid=docid)
+    except:
+        return render_to_response('error.html',
+                                  {'error': 'no such document: "%s"!' % docid},
+                                  context_instance=RequestContext(request))
+    if len(d.pippies)>0 or len(d.pippiDocs)>0:
+        # TODO support cascade deletion in doc.py
+        return render_to_response('error.html',
+                                  {'error': 'This document has been pippied, and cannot be removed without causing missing references in the documents it has been pippied against!'},
+                                  context_instance=RequestContext(request))
+    if request.user.is_authenticated() and request.user.username==d.owner:
+        d.delete()
+    return HttpResponseRedirect('/browse')
+
 def createDoc(request):
     form = UploadForm(request.POST)
     if not form.is_valid():
