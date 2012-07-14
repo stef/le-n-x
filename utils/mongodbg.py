@@ -17,8 +17,8 @@
 # (C) 2009-2010 by Stefan Marsiske, <stefan.marsiske@gmail.com>
 
 from pymongo import Connection
-from pymongo.objectid import ObjectId
-from lenx.view.models import Doc, Pippi, Docs, Pippies
+from bson.objectid import ObjectId
+from lenx.view.models import Doc, Pippi
 import pprint
 
 conn = Connection()
@@ -38,13 +38,19 @@ def getRelatedDocs(_id,cutoff=7):
 
 #for p in Pippi('',oid=pippi['frag']).docs
 
-doc=Doc(docid='CELEX:32003L0098:EN:HTML')
-pprint.pprint(doc.__dict__)
-print 'asdf'
+#doc=Doc(docid='CELEX:32003L0098:EN:HTML')
+#pprint.pprint(doc.__dict__)
+#print 'asdf'
 #pprint.pprint(getRelatedDocs(doc._id))
 
-p=Pippi('',oid=ObjectId('4bfe948c865c0c49bb0003af'))
-print 'asdf'
-pprint.pprint(p.docs)
-print 'asdf'
-pprint.pprint(p.__dict__)
+#p=Pippi('',oid=ObjectId('4bfe948c865c0c49bb0003af'))
+#print 'asdf'
+#pprint.pprint(p.docs)
+#print 'asdf'
+#pprint.pprint(p.__dict__)
+
+for d in Docs.find():
+    if not 'title' in d:
+        doc=Doc(d=d)
+        d['title']=doc.title
+        Docs.save(d)
