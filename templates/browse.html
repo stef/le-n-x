@@ -116,14 +116,19 @@ var getPage = function() {
       offset-=limit;
       if(offset<0) offset=0;
       };
-   $.ajax({
-     url: "/filter",
-     data: { q: $('#query').attr('value'),
-             mine: $('#minebox').prop('checked'),
-             limit: limit,
-             offset: offset
-           }
-     }).done(redraw);
+   reload();
+}
+
+var reload = function() {
+  $.ajax({
+    url: "/filter",
+    data: { q: $('#query').attr('value'),
+            mine: $('#minebox').prop('checked'),
+            starred: $('#starredbox').prop('checked'),
+            limit: limit,
+            offset: offset
+          }
+    }).done(redraw);
 }
 
 $(document).ready(function(){
@@ -132,22 +137,14 @@ $(document).ready(function(){
       return false;
    });
 
-   $('#minebox').change(function() {
-      $.ajax({
-        url: "/filter",
-        data: { q: $('#query').attr('value'),
-                mine: $('#minebox').prop('checked'),
-                limit: limit,
-                offset: offset
-              }
-        }).done(redraw);
-   });
-
+   $('#minebox').change(reload);
+   $('#starredbox').change(reload);
    $('#limit').change(function() {
       $.ajax({
         url: "/filter",
         data: { q: $('#query').attr('value'),
                 mine: $('#minebox').prop('checked'),
+                starred: $('#starredbox').prop('checked'),
                 limit: $('#limit').val(),
                 offset: offset
               }
@@ -181,21 +178,13 @@ $(document).ready(function(){
      url: "/filter",
      }).done(redraw);
 
-     var qtimer;
-     $('#query').keyup(function() {
-       if(qtimer) {
-           clearTimeout(qtimer);
-           qtimer = null
-        }
-        qtimer = setTimeout(function() {
-           // reload rows
-           $.ajax({
-             url: "/filter",
-             data: { q: $('#query').attr('value'),
-                     mine: $('#minebox').prop('checked'),
-                   }
-             }).done(redraw);
-        }, 700)});
+   var qtimer;
+   $('#query').keyup(function() {
+     if(qtimer) {
+         clearTimeout(qtimer);
+         qtimer = null
+      }
+      qtimer = setTimeout(reload, 700)});
  });
 
 </script>
@@ -204,6 +193,7 @@ $(document).ready(function(){
 <div>
    <form name="filter">
       Filter <input id="query" type="text"></input>{% if user.is_authenticated %} Only my collection <INPUT type="checkbox" id="minebox"></input>{% endif%}
+      Starred only <INPUT type="checkbox" id="starredbox"></input>
       <div>(Found: <span id='total'></span>, showing <span id="offset"></span> - <span id="upbound"></span>)</div>
       </form>
 </div>

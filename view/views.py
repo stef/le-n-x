@@ -155,8 +155,10 @@ def filterDocs(request):
     query={}
     if q:
         query={'title': re.compile(q, re.I)}
-    mine=request.GET.get('mine')
-    if mine=='true':
+    if request.GET.get('starred')=='true':
+        query['_id']={ '$in': [ObjectId(x)
+                               for x in request.session.get('starred',())] }
+    if request.GET.get('mine')=='true':
         query['owner']=unicode(request.user)
     res=pager(request,Docs.find(query, sort=[('_id',pymongo.DESCENDING)]),'docid',False)
     starred=request.session.get('starred',set())
