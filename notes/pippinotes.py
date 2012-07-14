@@ -128,7 +128,7 @@ class PippiAnnotator:
         return paths
 
     def pippies2xpaths(self,d2,pos,l,rooturl):
-        title=d2.title.strip().decode('utf8')
+        title=d2.title.strip()#.decode('utf8')
         for p in pos:
             #print title[:30], p, len(self.paths.keys()), self.paths[p+l-1][1],len(self.doc.tokens[p+l])
             #print title[:30], p, l, len(self.paths)
