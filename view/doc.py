@@ -106,6 +106,7 @@ class DOC(object):
                 'pippiDocs' : [],
                 'pippiDocsLen' : 0,
                 'rawid' : None,
+                'title': docid,
                 })
             if not 'type' in self.__dict__:
                 self.__dict__['type']='raw'
