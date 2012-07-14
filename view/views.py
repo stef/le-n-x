@@ -244,6 +244,7 @@ def jobs(request):
         return render_to_response('error.html', {'error': 'wrong document: "%s"!' % rdoc}, context_instance=RequestContext(request))
     failed=[]
     for doc in request.GET.getlist('ids'):
+        if doc==rdoc: continue
         try:
             od=Doc(oid=ObjectId(doc))
         except:
