@@ -24,7 +24,7 @@
       <div><span id="docid"><a href="/doc/<%= this.id %>"><%= this.id %></a></span></div>
       <div>
          <form id="jobsform" action="/jobs">
-            <input type="hidden" name="doc" value="{{this.oid}}" />
+            <input type="hidden" name="doc" value="<%= this.oid%>" />
             <input type="submit" id="jobs" value="Pippi &#x2605;" />
          </form>
       </div>
