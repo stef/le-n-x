@@ -40,9 +40,10 @@ def main():
             else:
                 sys.stdout.write('.')
                 sys.stdout.flush()
-        Pippies.update({'_id' : pippi['_id']},
-                       { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs'])),
-                                   'docslen': len(pippi['docs']),}, })
+        if len(pippi['docs'])>0:
+                Pippies.update({'_id' : pippi['_id']},
+                               { '$set': { 'relevance': float(pippi['len'])/float(len(pippi['docs'])),
+                                           'docslen': len(pippi['docs']),}, })
         i=i+1
     sys.stdout.write('\n')
     sys.stdout.flush()
