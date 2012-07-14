@@ -10,7 +10,7 @@ Notes.Annotator = function (element) {
       loadFromSearch: {
         'limit': 0,
         'all_fields': 1,
-        'uri': window.location.href
+        'uri': window.location.href.split('?')[0]
        },
        urls: {
          create:  '/',
@@ -21,7 +21,7 @@ Notes.Annotator = function (element) {
        },
        annotationData: {
          // TODO decouple from hostname! also in notes/pippinotes.py
-         'uri': window.location.href
+         'uri': window.location.href.split('?')[0]
        }
     }
   };
