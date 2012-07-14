@@ -206,15 +206,15 @@ def createDoc(request):
     if not form.is_valid():
         return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
     doc=form.cleaned_data['doc']
-    if not "<html>" in doc:
-       doc="<html><head></head><body>%s</body></html>" % form.cleaned_data['doc']
+    #if not "<html>" in doc:
+    #   doc="<html><head><title></title></head><body>%s</body></html>" % doc
     docid=form.cleaned_data['docid']
-    raw=unicode(str(tidy.parseString(doc, **{'output_xhtml' : 1,
-                                  'add_xml_decl' : 0,
-                                  'indent' : 0,
-                                  'tidy_mark' : 0,
-                                  'doctype' : "strict",
-                                  'wrap' : 0})),'utf8')
+    raw=unicode(str(tidy.parseString(doc.encode('utf8'), **{'output_xhtml' : 1,
+                                                            'add_xml_decl' : 0,
+                                                            'indent' : 0,
+                                                            'tidy_mark' : 0,
+                                                            'doctype' : "strict",
+                                                            'wrap' : 0})),'utf8')
     d=Doc(raw=raw.encode('utf8'),docid=docid.encode('utf8'), owner=request.user)
     if not 'stems' in d.__dict__ or not d.stems:
         # let's calculate and cache the results
