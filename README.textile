@@ -1,7 +1,8 @@
 le-n-x is a set of tools for navigating legislation.
 
 (C) 2009-2011 by Stefan Marsiske <stefan.marsiske@gmail.com>, Adam Tauber <asciimoo@gmail.com>
-Licensed under the GNU Affero General Public License v3
+Licensed under the GNU Affero General Public License v3 (at your option) any later version.
+
 
 !http://api.flattr.com/button/button-compact-static-100x17.png!:http://flattr.com/thing/16236/Pippi-Longstrings
 
