@@ -297,4 +297,4 @@ import pymongo, hashlib, re, htmlentitydefs
 import models
 from lenx.view.eurlex import CELEXRE, Eurlex
 
-DOCTYPES=(('eurlex',Eurlex,CELEXRE))
+DOCTYPES=(('eurlex',Eurlex,CELEXRE),)
