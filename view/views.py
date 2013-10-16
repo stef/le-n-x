@@ -21,12 +21,12 @@ from django.shortcuts import render_to_response
 from django.core.management import setup_environ
 from django.core.context_processors import csrf
 from django.template import RequestContext
+from django.http import Http404
 from lenx import settings
 setup_environ(settings)
 from lenx.view.models import Pippi, TfIdf, tfidf
 from lenx.view.doc import Doc, getStemmer
 from lenx.view.db import Pippies, Frags, Docs, DocTexts, DocStems, DocTokens, fs
-from lenx.view.forms import UploadForm
 from operator import itemgetter
 import re, pymongo, cgi, json
 from bson.objectid import ObjectId
@@ -55,10 +55,7 @@ def docView(request,doc=None,cutoff=10):
     try:
         d = Doc(docid=doc, owner=request.user)
     except:
-        form = UploadForm({'docid': doc})
-        return render_to_response('upload.html',
-                                  { 'form': form, },
-                                  context_instance=RequestContext(request))
+        raise Http404
     cont = d.body
     relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=cutoff))} }, ['docid','title'])
     return render_to_response('docView.html', {'doc': d,
@@ -202,27 +199,6 @@ def delete(request, docid):
     if request.user.is_authenticated() and request.user.username==d.owner:
         d.delete()
     return HttpResponseRedirect('/browse')
-
-def createDoc(request):
-    form = UploadForm(request.POST)
-    if not form.is_valid():
-        return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
-    doc=form.cleaned_data['doc']
-    #if not "<html>" in doc:
-    #   doc="<html><head><title></title></head><body>%s</body></html>" % doc
-    docid=form.cleaned_data['docid']
-    raw=unicode(str(tidy.parseString(doc, **{'output_xhtml' : 1,
-                                             'add_xml_decl' : 0,
-                                             'indent' : 0,
-                                             'tidy_mark' : 0,
-                                            'doctype' : "strict",
-                                             'wrap' : 0})),'utf8')
-    d=Doc(raw=raw.encode('utf8'),docid=docid.encode('utf8'), owner=request.user)
-    if not 'stems' in d.__dict__ or not d.stems:
-        # let's calculate and cache the results
-        tfidf.add_input_document(d.termcnt.keys())
-        d.save()
-    return HttpResponseRedirect('/doc/%s' % (d.docid))
 
 def job(request):
     d1=request.GET.get('d1','')
@@ -455,8 +431,7 @@ def metaView(request,doc=None):
     try:
         d = Doc(docid=doc, owner=request.user)
     except:
-        form = UploadForm({'docid': doc})
-        return render_to_response('upload.html', { 'form': form, }, context_instance=RequestContext(request))
+        raise Http404
 
     relDocs = Docs.find({'_id': { '$in': list(d.getRelatedDocIds(cutoff=5))} }, ['docid','title'])
     return render_to_response('meta.html', {'doc': d,
