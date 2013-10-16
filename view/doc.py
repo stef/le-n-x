@@ -299,6 +299,4 @@ from lenx.view.eurlex import CELEXRE, Eurlex
 from lenx.view.cmt import CMTRE, Coment
 from lenx.view.etherpad import PADRE, Etherpad
 
-DOCTYPES=(('eurlex',Eurlex,CELEXRE),
-          ('co-ment',Coment,CMTRE),
-          ('etherpad',Etherpad,PADRE))
+DOCTYPES=(('eurlex',Eurlex,CELEXRE))
