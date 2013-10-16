@@ -296,7 +296,5 @@ from operator import itemgetter
 import pymongo, hashlib, re, htmlentitydefs
 import models
 from lenx.view.eurlex import CELEXRE, Eurlex
-from lenx.view.cmt import CMTRE, Coment
-from lenx.view.etherpad import PADRE, Etherpad
 
 DOCTYPES=(('eurlex',Eurlex,CELEXRE))
